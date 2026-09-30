@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.scratch/
+web/dist/
+.env
+.env.*
+!.env.example
+__pycache__/
+.pytest_cache/
+*.log
+.DS_Store
+src-tauri/target/
+books/
+.venv/

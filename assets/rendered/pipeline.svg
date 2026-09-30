@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">The nine-stage pipeline</title>
+<desc id="d">Nine stages in reading order: topic and scope, outline (human checkpoint), research, verification, drafting, figures and equations, expert review, readability, layout and export (human checkpoint). A highlight moves through the stages and pauses at the two checkpoints.</desc>
+<rect width="880" height="360" fill="#FFFFFF"/>
+<style>@keyframes hl0 { 0%, 0.00% { opacity: 0; } 1.50%, 7.59% { opacity: 1; } 9.09%, 100% { opacity: 0; } }
+.hl0 { opacity: 0; animation: hl0 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl1 { 0%, 9.09% { opacity: 0; } 10.59%, 25.77% { opacity: 1; } 27.27%, 100% { opacity: 0; } }
+.hl1 { opacity: 0; animation: hl1 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl2 { 0%, 27.27% { opacity: 0; } 28.77%, 34.86% { opacity: 1; } 36.36%, 100% { opacity: 0; } }
+.hl2 { opacity: 0; animation: hl2 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl3 { 0%, 36.36% { opacity: 0; } 37.86%, 43.95% { opacity: 1; } 45.45%, 100% { opacity: 0; } }
+.hl3 { opacity: 0; animation: hl3 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl4 { 0%, 45.45% { opacity: 0; } 46.95%, 53.05% { opacity: 1; } 54.55%, 100% { opacity: 0; } }
+.hl4 { opacity: 0; animation: hl4 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl5 { 0%, 54.55% { opacity: 0; } 56.05%, 62.14% { opacity: 1; } 63.64%, 100% { opacity: 0; } }
+.hl5 { opacity: 0; animation: hl5 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl6 { 0%, 63.64% { opacity: 0; } 65.14%, 71.23% { opacity: 1; } 72.73%, 100% { opacity: 0; } }
+.hl6 { opacity: 0; animation: hl6 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl7 { 0%, 72.73% { opacity: 0; } 74.23%, 80.32% { opacity: 1; } 81.82%, 100% { opacity: 0; } }
+.hl7 { opacity: 0; animation: hl7 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes hl8 { 0%, 81.82% { opacity: 0; } 83.32%, 98.50% { opacity: 1; } 100.00%, 100% { opacity: 0; } }
+.hl8 { opacity: 0; animation: hl8 9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }</style><g class=""><rect x="20" y="20" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="36.0" y="42.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">1  Topic + scope</text><text x="36.0" y="62.0" font-size="11.5" fill="#57606A" text-anchor="start">Topic, depth, audience, length, domain</text><text x="36.0" y="79.5" font-size="11.5" fill="#57606A" text-anchor="start">profile, citation style.</text></g>
+<rect class="hl0" x="17" y="17" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="282.0" y1="62.0" x2="301.0" y2="62.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M306.0,62.0 L299.8,65.2 L299.8,58.8 Z" fill="#57606A"/>
+<g class=""><rect x="312" y="20" width="256" height="84" rx="8" fill="rgba(168, 111, 0, 0.12)" stroke="#D0D7DE" stroke-width="1.5"/><rect x="312" y="20" width="5" height="84" rx="2" fill="#A86F00"/><text x="328.0" y="42.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">2  Outline</text><text x="328.0" y="62.0" font-size="11.5" fill="#57606A" text-anchor="start">Chapters, sections and learning goals.</text><text x="328.0" y="79.5" font-size="11.5" fill="#57606A" text-anchor="start">You edit and approve it.</text></g>
+<rect x="486" y="29" width="72" height="18" rx="4" fill="#FFFFFF" stroke="#A86F00" stroke-width="1.5"/><text x="522.0" y="42.0" font-size="11" fill="#1F2328" text-anchor="middle" font-weight="600">you decide</text>
+<rect class="hl1" x="309" y="17" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="574.0" y1="62.0" x2="593.0" y2="62.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M598.0,62.0 L591.8,65.2 L591.8,58.8 Z" fill="#57606A"/>
+<g class=""><rect x="604" y="20" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="620.0" y="42.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">3  Research</text><text x="620.0" y="62.0" font-size="11.5" fill="#57606A" text-anchor="start">Search Crossref and OpenAlex; collect</text><text x="620.0" y="79.5" font-size="11.5" fill="#57606A" text-anchor="start">candidate sources with DOIs.</text></g>
+<rect class="hl2" x="601" y="17" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<path d="M732,108 v13 H148 v7" fill="none" stroke="#57606A" stroke-width="1.5"/><path d="M148,134 l-4,-7 h8 z" fill="#57606A"/>
+<g class=""><rect x="20" y="138" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="36.0" y="160.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">4  Verification</text><text x="36.0" y="180.0" font-size="11.5" fill="#57606A" text-anchor="start">Resolve every DOI and match title, year</text><text x="36.0" y="197.5" font-size="11.5" fill="#57606A" text-anchor="start">and author; drop what fails.</text></g>
+<rect class="hl3" x="17" y="135" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="282.0" y1="180.0" x2="301.0" y2="180.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M306.0,180.0 L299.8,183.2 L299.8,176.8 Z" fill="#57606A"/>
+<g class=""><rect x="312" y="138" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="328.0" y="160.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">5  Drafting</text><text x="328.0" y="180.0" font-size="11.5" fill="#57606A" text-anchor="start">Write each section in five layers,</text><text x="328.0" y="197.5" font-size="11.5" fill="#57606A" text-anchor="start">citing only verified sources.</text></g>
+<rect class="hl4" x="309" y="135" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="574.0" y1="180.0" x2="593.0" y2="180.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M598.0,180.0 L591.8,183.2 L591.8,176.8 Z" fill="#57606A"/>
+<g class=""><rect x="604" y="138" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="620.0" y="160.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">6  Figures + equations</text><text x="620.0" y="180.0" font-size="11.5" fill="#57606A" text-anchor="start">Draw proposed plots from safe</text><text x="620.0" y="197.5" font-size="11.5" fill="#57606A" text-anchor="start">expressions; check every equation</text><text x="620.0" y="215.0" font-size="11.5" fill="#57606A" text-anchor="start">parses.</text></g>
+<rect class="hl5" x="601" y="135" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<path d="M732,226 v13 H148 v7" fill="none" stroke="#57606A" stroke-width="1.5"/><path d="M148,252 l-4,-7 h8 z" fill="#57606A"/>
+<g class=""><rect x="20" y="256" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="36.0" y="278.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">7  Expert review</text><text x="36.0" y="298.0" font-size="11.5" fill="#57606A" text-anchor="start">A separate reviewer critiques accuracy,</text><text x="36.0" y="315.5" font-size="11.5" fill="#57606A" text-anchor="start">rigor and citation support.</text></g>
+<rect class="hl6" x="17" y="253" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="282.0" y1="298.0" x2="301.0" y2="298.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M306.0,298.0 L299.8,301.2 L299.8,294.8 Z" fill="#57606A"/>
+<g class=""><rect x="312" y="256" width="256" height="84" rx="8" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5"/><text x="328.0" y="278.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">8  Readability</text><text x="328.0" y="298.0" font-size="11.5" fill="#57606A" text-anchor="start">Measure reading grade, build the</text><text x="328.0" y="315.5" font-size="11.5" fill="#57606A" text-anchor="start">glossary.</text></g>
+<rect class="hl7" x="309" y="253" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+<line x1="574.0" y1="298.0" x2="593.0" y2="298.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M598.0,298.0 L591.8,301.2 L591.8,294.8 Z" fill="#57606A"/>
+<g class=""><rect x="604" y="256" width="256" height="84" rx="8" fill="rgba(168, 111, 0, 0.12)" stroke="#D0D7DE" stroke-width="1.5"/><rect x="604" y="256" width="5" height="84" rx="2" fill="#A86F00"/><text x="620.0" y="278.0" font-size="14" fill="#1F2328" text-anchor="start" font-weight="600">9  Layout + export</text><text x="620.0" y="298.0" font-size="11.5" fill="#57606A" text-anchor="start">Web book, print PDF and EPUB. You review</text><text x="620.0" y="315.5" font-size="11.5" fill="#57606A" text-anchor="start">the final proof.</text></g>
+<rect x="778" y="265" width="72" height="18" rx="4" fill="#FFFFFF" stroke="#A86F00" stroke-width="1.5"/><text x="814.0" y="278.0" font-size="11" fill="#1F2328" text-anchor="middle" font-weight="600">you decide</text>
+<rect class="hl8" x="601" y="253" width="262" height="90" rx="10" fill="none" stroke="#0072B2" stroke-width="3"/>
+</svg>

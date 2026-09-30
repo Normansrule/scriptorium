@@ -1,0 +1,99 @@
+/* Scriptorium app. Colors come from src/core/style.ts (injected as --sc-* variables); see docs/STYLE.md. */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--sc-paper);
+  color: var(--sc-ink);
+  font: 16px/1.5 "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--sc-signal); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- top bar */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 1.5rem; border-bottom: 1px solid var(--sc-rule); }
+.brand { display: flex; align-items: center; gap: .6rem; background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; font-size: 1.15rem; }
+.brand-mark { width: 18px; height: 22px; border-radius: 2px; background: var(--sc-signal); box-shadow: inset 0 -5px 0 rgba(255, 255, 255, .35); }
+.topnav { display: flex; gap: 1.2rem; }
+.link { background: none; border: 0; padding: .2rem 0; cursor: pointer; color: var(--sc-signal); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- layout */
+.layout { display: grid; grid-template-columns: 19rem minmax(0, 1fr); min-height: calc(100vh - 57px); }
+.panel { padding: 2.2rem clamp(1rem, 4vw, 3.5rem) 5rem; max-width: 60rem; outline: none; }
+h1 { font-size: 2rem; line-height: 1.15; font-weight: 600; margin: 0 0 .5rem; letter-spacing: -0.01em; }
+.lede { font: 1.1rem/1.55 "Source Serif 4", Georgia, serif; color: var(--sc-ink); max-width: 38rem; margin: 0 0 1.6rem; }
+.hint { color: var(--sc-muted); font-size: .9rem; margin: .4rem 0; }
+
+/* ---------- the pipeline rail: nine numbered stages sewn together by one thread */
+.rail { border-right: 1px solid var(--sc-rule); background: var(--sc-panel); padding: 1.6rem 1.2rem 2rem 1.4rem; }
+.rail-title { font-weight: 600; margin: 0 0 1rem; color: var(--sc-muted); font-size: .9rem; }
+.rail ol { list-style: none; margin: 0; padding: 0; position: relative; }
+.rail ol::before { content: ""; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 2px; background: var(--sc-rule); }
+.stage { position: relative; display: grid; grid-template-columns: 28px 1fr; gap: .75rem; padding: .45rem 0 .75rem; }
+.dot { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .8rem; font-weight: 600; background: var(--sc-paper); border: 2px solid var(--sc-rule); color: var(--sc-muted); }
+.stage-name { font-weight: 600; line-height: 1.25; display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline; }
+.stage-what { color: var(--sc-muted); font-size: .84rem; line-height: 1.35; margin-top: .15rem; }
+.you-decide { font-size: .72rem; font-weight: 600; padding: 0 .4rem; border-radius: 3px; border: 1.5px solid var(--sc-checkpoint); color: var(--sc-ink); }
+.stage.checkpoint .dot { border-radius: 6px; transform: rotate(45deg); border-color: var(--sc-checkpoint); font-size: 0; }
+.stage.done .dot { background: var(--sc-signal); border-color: var(--sc-signal); color: #fff; }
+.stage.done.checkpoint .dot { background: var(--sc-checkpoint); border-color: var(--sc-checkpoint); }
+.stage.running .dot { border-color: var(--sc-signal); color: var(--sc-signal); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sc-signal) 22%, transparent); }
+.stage.waiting-for-you .dot { background: var(--sc-checkpoint); border-color: var(--sc-checkpoint); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sc-checkpoint) 25%, transparent); }
+.stage.failed .dot { border-color: var(--sc-accent); color: var(--sc-accent); }
+.stage.failed .stage-name { color: var(--sc-accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .stage.running .dot { animation: pulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--sc-signal) 8%, transparent); } }
+}
+.budget { margin: 1rem 0 0; font-size: .85rem; color: var(--sc-muted); }
+
+/* ---------- forms */
+.field { display: grid; gap: .3rem; margin: 0 0 1rem; flex: 1; min-width: 10rem; }
+.field > span { font-weight: 600; font-size: .92rem; }
+input, select, textarea { width: 100%; padding: .55rem .7rem; border: 1.5px solid var(--sc-rule); border-radius: 6px; background: var(--sc-paper); }
+textarea { resize: vertical; }
+input:focus, select:focus, textarea:focus { border-color: var(--sc-signal); outline: none; }
+.row { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+.check { display: flex; gap: .6rem; align-items: flex-start; margin: .2rem 0 1.2rem; }
+.check input { width: auto; margin-top: .25rem; }
+.more { margin: .4rem 0 1rem; } .more summary { cursor: pointer; font-weight: 600; margin-bottom: .6rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.2rem; }
+button.primary, button.secondary { border-radius: 6px; padding: .6rem 1.1rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--sc-signal); }
+button.primary { background: var(--sc-signal); color: #fff; }
+button.secondary { background: transparent; color: var(--sc-signal); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ---------- checkpoints */
+.checkpoint-flag { display: inline-block; font-weight: 600; font-size: .85rem; margin: 0 0 .7rem; padding: .15rem .6rem; border-left: 4px solid var(--sc-checkpoint); background: color-mix(in srgb, var(--sc-checkpoint) 14%, transparent); }
+.chapter-edit { border: 1.5px solid var(--sc-rule); border-radius: 8px; padding: .8rem 1rem .4rem; margin: 0 0 1rem; }
+.chapter-edit legend { font-weight: 600; padding: 0 .3rem; }
+.sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0 1rem; }
+
+/* ---------- progress + report */
+.log { padding-left: 1.2rem; color: var(--sc-ink); }
+.log li { margin: .2rem 0; }
+.report { border: 1.5px solid var(--sc-rule); border-radius: 8px; padding: .6rem 1rem; margin: 1rem 0; }
+.report summary { cursor: pointer; font-weight: 600; }
+.report ul { padding-left: 1.1rem; font-size: .92rem; }
+.report li { margin: .35rem 0; }
+.report li.problem strong { color: var(--sc-accent); }
+.report li.warning strong { color: var(--sc-ink); }
+
+/* ---------- proof */
+.sample-picker { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; }
+.tab { border: 1.5px solid var(--sc-rule); background: var(--sc-paper); border-radius: 999px; padding: .3rem .8rem; cursor: pointer; font-size: .9rem; }
+.tab.active { border-color: var(--sc-signal); background: color-mix(in srgb, var(--sc-signal) 12%, transparent); font-weight: 600; }
+.proof-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem 1rem; padding: .8rem 1rem; border-radius: 8px; background: var(--sc-panel); border: 1px solid var(--sc-rule); }
+.proof-bar .actions { margin: 0; }
+.proof { border-top: 1px solid var(--sc-rule); padding-top: .5rem; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--sc-rule); }
+  .rail ol { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  .rail ol::before { display: none; }
+  .stage-what { display: none; }
+  .topbar { padding: .6rem 16px; }
+  .topnav { gap: .8rem; font-size: .92rem; }
+  .panel { padding: 1.4rem 16px 4rem; }
+}

@@ -1,0 +1,66 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: jobs can read the repository and nothing else.
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: npm ci
+      - run: python -m pip install -r requirements.txt
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit, export and pipeline tests
+        run: npm test
+      - name: Equation checks (SymPy + Pint)
+        run: npm run test:equations
+      - name: Build the sample books (fails if KDP pre-flight fails)
+        run: npm run build:all -- --strict
+      - name: Rendered assets are up to date
+        run: npm run assets:check
+      - name: Build the web app
+        run: npm run app:build
+      - name: Dependency audit (high severity and above)
+        run: npm audit --audit-level=high --omit=dev
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sample-books
+          path: dist/
+
+  references:
+    # Re-checks every DOI against Crossref. Network-dependent, so it does not block merges.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run verify-refs
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links in docs
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --max-retries 2 --accept 200,403,429 README.md docs/*.md CONTRIBUTING.md SECURITY.md
+          fail: true

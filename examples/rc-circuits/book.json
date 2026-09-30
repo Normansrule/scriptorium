@@ -1,0 +1,360 @@
+{
+  "meta": {
+    "title": "Charge, Time, and Frequency",
+    "subtitle": "A Short, Illustrated Guide to Resistor–Capacitor Circuits",
+    "authors": ["Scriptorium sample book"],
+    "profile": "engineering",
+    "citationStyle": "ieee",
+    "audience": "Curious newcomers with high-school algebra; no calculus needed to follow the main text.",
+    "language": "en",
+    "date": "2026-09-30",
+    "license": "Text and figures: CC BY 4.0. Code that draws the figures: MIT.",
+    "colophon": "This sample was drafted with an AI assistant (Claude, by Anthropic) following the Scriptorium pipeline, then checked by hand: every reference was opened and checked against the claims it is cited for (each source's verification note says what was checked), and every equation and worked example is re-derived by the automated tests in `tests/equations/test_rc_book.py`. The figures were drawn by code (`examples/rc-circuits/figures.ts`) that was itself written with AI assistance."
+  },
+  "preface": [
+    { "kind": "para", "text": "A resistor and a capacitor are two of the cheapest parts in electronics. Put them together and you get a circuit that can **store energy**, **keep time**, and **filter signals**. This short book explains all three ideas with pictures first, then equations, then the fine print." },
+    { "kind": "para", "text": "Each section is written in five layers. You can stop after any layer and still have a correct picture: a **plain summary**, the **intuition**, the **formal detail** with equations, the **limits** of what we just said, and the **key takeaways**." },
+    { "kind": "callout", "tone": "safety", "title": "Safety", "text": "Experiments in this book use low voltages (under 30 V). Mains voltage and large charged capacitors can injure or kill; do not build mains-powered circuits without training and supervision. Electrolytic capacitors are polarized: connected backwards, they can overheat and burst." }
+  ],
+  "chapters": [
+    {
+      "id": "ch-capacitor",
+      "title": "What a Capacitor Stores",
+      "goals": [
+        "Explain what capacitance measures, using the ratio of charge to voltage.",
+        "Predict how plate area, gap and insulating material change a capacitor's capacitance.",
+        "Calculate the energy stored in a charged capacitor."
+      ],
+      "sections": [
+        {
+          "id": "sec-capacitance",
+          "title": "Capacitance: charge per volt",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "A [[capacitor]] is two conductors separated by an insulator. Push charge onto one conductor and the same amount leaves the other, leaving a voltage between them. **Capacitance** tells you how much charge the capacitor holds for each volt [@openstax-up2, §8.1]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Think of a capacitor as a wide, shallow tank. The charge is the water, and the voltage is the water level. A wide tank (large capacitance) holds a lot of water before the level rises much. A narrow tank (small capacitance) fills up quickly: a little charge makes a large voltage." },
+              { "kind": "callout", "tone": "simplification", "title": "Simplification", "text": "The tank picture matches how charge and voltage relate, but charge does not sit *inside* a capacitor like water in a tank. Equal and opposite charges sit on the two conductors, and the energy is stored in the electric field between them [@openstax-up2, §8.3]." },
+              { "kind": "figure", "id": "fig-parallel-plate", "src": "figures/parallel-plate.svg", "alt": "Side view of a parallel-plate capacitor: two horizontal plates of area A separated by gap d, positive charges on the top plate, negative on the bottom, and straight electric field lines running from top to bottom.", "caption": "The simplest capacitor is two flat plates. Positive charge on one plate and equal negative charge on the other create an electric field in the gap *d*.", "credit": "Drawn by examples/rc-circuits/figures.ts.", "provenance": "code-drawn", "width": 0.85 }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-capacitance",
+                "intuition": "Capacitance is the charge stored per volt of voltage across the capacitor.",
+                "latex": "C = \\frac{Q}{V}",
+                "where": [
+                  { "symbol": "C", "meaning": "capacitance", "unit": "F (farad) = coulomb per volt" },
+                  { "symbol": "Q", "meaning": "size of the charge on either conductor (equal and opposite on the two)", "unit": "C (coulomb)" },
+                  { "symbol": "V", "meaning": "voltage between the conductors", "unit": "V (volt)" }
+                ],
+                "example": { "text": "A capacitor holds $Q = 47\\,\\mu\\text{C}$ when charged to $V = 10\\,\\text{V}$. Its capacitance is $C = 47\\,\\mu\\text{C} / 10\\,\\text{V} = 4.7\\,\\mu\\text{F}$ (microfarads).", "check": "tests/equations/test_rc_book.py::test_capacitance_example" },
+                "validity": "For an ideal capacitor, $C$ is a constant set by the geometry and the insulating material, so $Q$ grows in proportion to $V$ [@openstax-up2, §8.1]. Real parts only approximate this: their capacitance can drift with voltage, temperature and age, by an amount the manufacturer's data sheet states."
+              },
+              { "kind": "para", "text": "For two flat plates the capacitance depends only on the size, shape and spacing of the plates and on the insulator between them, called the [[dielectric]]. A dielectric multiplies the capacitance by its dielectric constant $\\kappa$ [@openstax-up2, §8.1, §8.4]." },
+              {
+                "kind": "equation",
+                "id": "eq-parallel-plate",
+                "intuition": "Bigger plates hold more charge per volt; a wider gap holds less.",
+                "latex": "C = \\kappa\\,\\varepsilon_0 \\frac{A}{d}",
+                "where": [
+                  { "symbol": "\\kappa", "meaning": "dielectric constant of the insulator (1 for vacuum)", "unit": "— (no unit)" },
+                  { "symbol": "\\varepsilon_0", "meaning": "permittivity of free space, $8.85\\times10^{-12}$", "unit": "F/m" },
+                  { "symbol": "A", "meaning": "area of one plate", "unit": "m²" },
+                  { "symbol": "d", "meaning": "gap between the plates", "unit": "m" }
+                ],
+                "example": { "text": "Two 10 cm × 10 cm plates ($A = 0.01\\,\\text{m}^2$) 1 mm apart in vacuum: $C = 8.85\\times10^{-12} \\times 0.01 / 0.001 \\approx 88.5\\,\\text{pF}$ (picofarads). In dry air ($\\kappa = 1.00059$) the answer changes by only 0.06 % [@openstax-up2, Table 8.1].", "check": "tests/equations/test_rc_book.py::test_parallel_plate_example" },
+                "validity": "Assumes the gap is much smaller than the plates, so the field is uniform and the extra field at the edges (fringing) can be ignored, and that the dielectric fills the whole gap [@openstax-up2, §8.1, §8.4].",
+                "figure": "fig-parallel-plate"
+              }
+            ],
+            "limits": [
+              { "kind": "para", "text": "An 88.5 pF capacitor is tiny: everyday parts range from picofarads to thousands of microfarads. Real capacitors reach large values by rolling or stacking very thin layers (large $A$, small $d$) and by using insulators with a large dielectric constant $\\kappa$." },
+              { "kind": "para", "text": "Every insulator has a limit. Above a certain electric field it breaks down and conducts, which is why each capacitor has a maximum voltage rating [@openstax-up2, Table 8.1]." }
+            ],
+            "takeaways": [
+              "Capacitance $C = Q/V$ is the charge stored per volt; its unit is the farad.",
+              "For flat plates, $C$ grows with plate area and shrinks with the gap.",
+              "Never exceed a capacitor's rated voltage."
+            ]
+          }
+        },
+        {
+          "id": "sec-energy",
+          "title": "Energy in the field",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "Charging a capacitor takes work, and that work is stored as energy in the electric field between the plates. The energy grows with the **square** of the voltage [@openstax-up2, §8.3]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "The first bit of charge is easy to move, because there is no voltage pushing back yet. Each later bit has to be pushed against a larger voltage. Adding up all those pushes gives a total that grows faster than the voltage itself: double the voltage and you store four times the energy." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-energy",
+                "intuition": "Stored energy is half the capacitance times the voltage squared.",
+                "latex": "U = \\tfrac{1}{2} C V^2",
+                "where": [
+                  { "symbol": "U", "meaning": "energy stored in the capacitor", "unit": "J (joule)" },
+                  { "symbol": "C", "meaning": "capacitance", "unit": "F" },
+                  { "symbol": "V", "meaning": "voltage across the capacitor", "unit": "V" }
+                ],
+                "example": { "text": "A $100\\,\\mu\\text{F}$ capacitor charged to 12 V stores $U = \\tfrac12 \\times 100\\times10^{-6} \\times 12^2 = 7.2\\,\\text{mJ}$ (millijoules).", "check": "tests/equations/test_rc_book.py::test_energy_example" },
+                "validity": "Holds for any ideal capacitor. Equivalent forms: $U = Q^2/(2C) = \\tfrac12 QV$ [@openstax-up2, §8.3]. The factor ½ comes from adding up charge moved against a voltage that rises from 0 to $V$.",
+                "figure": "fig-energy"
+              },
+              { "kind": "figure", "id": "fig-energy", "src": "figures/energy.svg", "alt": "Plot of stored energy in millijoules against voltage from 0 to 15 volts for 100 microfarad and 47 microfarad capacitors; both curves are parabolas, and the 100 microfarad curve passes 7.2 millijoules at 12 volts.", "caption": "Energy grows with the square of the voltage: at 12 V a 100 µF capacitor stores 7.2 mJ, and doubling the voltage would store four times as much.", "credit": "Drawn by examples/rc-circuits/figures.ts from $U = \\tfrac12 CV^2$.", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "para", "text": "At 12 V this capacitor is safe to touch, but shorting its leads releases the stored energy almost at once, as a spark and heat. Shock danger comes mainly from voltage: high-voltage capacitors, such as those inside mains power supplies, can give a dangerous shock long after the power is switched off." },
+              { "kind": "para", "text": "Charging through a resistor from a fixed supply always wastes energy: the supply delivers $QV = CV^2$, the capacitor keeps $\\tfrac12 CV^2$, and the other half becomes heat in the resistor, whatever its value (checked in `test_charging_energy_split`)." },
+              { "kind": "para", "text": "Real capacitors also lose charge slowly through their insulator (leakage), so stored energy fades over time." }
+            ],
+            "takeaways": [
+              "$U = \\tfrac12 CV^2$: energy grows with the square of voltage.",
+              "Treat charged capacitors with care even when the power is off."
+            ]
+          }
+        }
+      ],
+      "summary": [
+        "A capacitor stores equal and opposite charges on two conductors; capacitance $C = Q/V$ measures charge per volt.",
+        "For flat plates, $C = \\kappa\\varepsilon_0 A/d$.",
+        "The stored energy is $U = \\tfrac12 CV^2$."
+      ],
+      "keyEquations": ["eq-capacitance", "eq-parallel-plate", "eq-energy"],
+      "furtherReading": ["openstax-up2"]
+    },
+    {
+      "id": "ch-time",
+      "title": "Charging and Discharging: Keeping Time",
+      "goals": [
+        "Explain why a capacitor charged through a resistor fills quickly at first and slowly later.",
+        "Use the time constant $\\tau = RC$ to predict how long charging and discharging take.",
+        "Choose resistor and capacitor values for a delay of a given length."
+      ],
+      "sections": [
+        {
+          "id": "sec-charging",
+          "title": "The time constant",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "When a capacitor charges through a resistor, its voltage rises along a curve that starts steep and flattens out. One number, the [[time constant]] $\\tau = RC$, sets how fast this happens. After one time constant the capacitor reaches about 63 % of the supply voltage [@openstax-up2, §10.5]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "At the moment the switch closes, the capacitor is empty, so the whole supply voltage sits across the resistor and a large current flows. As the capacitor fills, its own voltage pushes back, leaving less voltage across the resistor, so the current shrinks. The capacitor fills more and more slowly, approaching the supply voltage but never quite reaching it." },
+              { "kind": "figure", "id": "fig-rc-circuit", "src": "figures/rc-circuit.svg", "alt": "Schematic: a battery of voltage V_s, a switch, a resistor R and a capacitor C in a single loop; the capacitor voltage v_C is marked across the capacitor and the current i flows clockwise.", "caption": "The charging circuit: closing the switch connects the supply $V_s$ to the capacitor through the resistor $R$. (Schematic symbols follow common U.S. textbook style.)", "credit": "Drawn by examples/rc-circuits/figures.ts.", "provenance": "code-drawn", "width": 0.8 },
+              { "kind": "callout", "tone": "example", "title": "Analogy", "text": "Filling a rigid air tank through a narrow hose works the same way: the more air already inside, the harder it pushes back, and the slower new air flows in." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-tau",
+                "intuition": "A bigger resistor slows the current and a bigger capacitor needs more charge, so both make charging slower.",
+                "latex": "\\tau = R\\,C",
+                "where": [
+                  { "symbol": "\\tau", "meaning": "time constant", "unit": "s (second)" },
+                  { "symbol": "R", "meaning": "resistance", "unit": "Ω (ohm)" },
+                  { "symbol": "C", "meaning": "capacitance", "unit": "F (farad)" }
+                ],
+                "example": { "text": "$R = 10\\,\\text{k}\\Omega$ (kilohms) and $C = 100\\,\\mu\\text{F}$ give $\\tau = 10\\,000 \\times 100\\times10^{-6} = 1\\,\\text{s}$. Ohms times farads is seconds.", "check": "tests/equations/test_rc_book.py::test_tau_example" },
+                "validity": "Assumes ideal parts and that $R$ includes every resistance in the loop (the supply's internal resistance and wiring add to it).",
+                "figure": "fig-tau"
+              },
+              { "kind": "para", "text": "Applying Kirchhoff's voltage law around the loop — the supply voltage equals the voltage across the resistor plus the voltage across the capacitor — and solving gives the charging curve [@openstax-up2, §10.5]." },
+              {
+                "kind": "equation",
+                "id": "eq-charging",
+                "intuition": "The gap between the capacitor voltage and the supply shrinks by the same fraction in every equal slice of time.",
+                "latex": "v_C(t) = V_s\\left(1 - e^{-t/\\tau}\\right)",
+                "where": [
+                  { "symbol": "v_C(t)", "meaning": "capacitor voltage at time $t$", "unit": "V" },
+                  { "symbol": "V_s", "meaning": "supply voltage", "unit": "V" },
+                  { "symbol": "t", "meaning": "time since the switch closed", "unit": "s" },
+                  { "symbol": "\\tau", "meaning": "time constant $RC$", "unit": "s" }
+                ],
+                "example": { "text": "With $V_s = 5\\,\\text{V}$: at $t = \\tau$, $v_C = 5(1 - e^{-1}) = 3.16\\,\\text{V}$ (63.2 %); at $t = 5\\tau$, $v_C = 4.97\\,\\text{V}$ (99.3 %).", "check": "tests/equations/test_rc_book.py::test_charging_example" },
+                "validity": "Assumes the capacitor starts empty and the supply is constant. Derivation checked in `test_charging_derivation`.",
+                "figure": "fig-charging"
+              },
+              { "kind": "figure", "id": "fig-charging", "src": "figures/charging.svg", "alt": "Plot of capacitor voltage as a fraction of supply voltage against time measured in time constants, from 0 to 6. The curve rises steeply then flattens; marked points show 63.2 percent at one time constant and 99.3 percent at five time constants.", "caption": "Charging is fast at first and slow later: 63.2 % after one time constant, 99.3 % after five.", "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-charging).", "provenance": "code-drawn" },
+              { "kind": "figure", "id": "fig-tau", "src": "figures/tau.svg", "alt": "Three charging curves of capacitor voltage in volts against time in seconds for a 100 microfarad capacitor with 10, 22 and 47 kilohm resistors. Larger resistors give slower curves.", "caption": "Changing the resistor changes the time constant: with $C = 100\\,\\mu\\text{F}$, a 47 kΩ resistor takes 4.7 times as long to charge as a 10 kΩ one.", "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-charging), $V_s = 5$ V.", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "para", "text": "In theory the capacitor never finishes charging. In practice engineers treat it as full after about five time constants, when it is within 1 % of the supply." },
+              { "kind": "callout", "tone": "consensus", "title": "How settled is this?", "text": "The exponential charging law is standard textbook physics for ideal parts [@openstax-up2, §10.5]. Real capacitors add leakage, which acts like a resistor across the capacitor: it lowers the final voltage a little and shortens the time constant. For good parts in low-voltage circuits the ideal law is the right starting model; precision timing needs the data sheet." }
+            ],
+            "takeaways": [
+              "$\\tau = RC$ sets the speed of charging.",
+              "63 % after $1\\tau$, about 99 % after $5\\tau$.",
+              "Double $R$ or $C$ and charging takes twice as long."
+            ]
+          }
+        },
+        {
+          "id": "sec-discharging",
+          "title": "Discharging and half-life",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "A charged capacitor connected across a resistor empties along a falling exponential curve with the same time constant [@openstax-up2, §10.5]. It follows from that curve that the voltage halves every $0.693\\,\\tau$, no matter how full it started." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "The current out of the capacitor is proportional to its voltage. A full capacitor drains quickly; a nearly empty one drains slowly. That self-slowing drain is what makes the curve exponential, like the decay of a radioactive sample." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-discharging",
+                "intuition": "In every equal slice of time the capacitor loses the same fraction of what it has left.",
+                "latex": "v_C(t) = V_0\\, e^{-t/\\tau}",
+                "where": [
+                  { "symbol": "v_C(t)", "meaning": "capacitor voltage at time $t$", "unit": "V" },
+                  { "symbol": "V_0", "meaning": "capacitor voltage when discharge starts", "unit": "V" },
+                  { "symbol": "t", "meaning": "time since discharge started", "unit": "s" },
+                  { "symbol": "\\tau", "meaning": "time constant $RC$", "unit": "s" }
+                ],
+                "example": { "text": "Setting $e^{-t/\\tau} = \\tfrac12$ gives the half-life $t_{1/2} = \\tau\\ln 2 \\approx 0.693\\,\\tau$. With $\\tau = 1\\,\\text{s}$ the voltage halves every 0.69 s.", "check": "tests/equations/test_rc_book.py::test_half_life_example" },
+                "validity": "Assumes nothing else is connected to the capacitor. Derivation checked in `test_discharging_derivation`.",
+                "figure": "fig-discharge"
+              },
+              { "kind": "figure", "id": "fig-discharge", "src": "figures/discharge.svg", "alt": "Plot of capacitor voltage as a fraction of its starting value against time in time constants from 0 to 5. The curve falls from 1 towards 0; marked points show 50 percent at 0.693 time constants and 36.8 percent at one time constant.", "caption": "Discharge is the mirror image of charging: 36.8 % remains after one time constant, and the voltage halves every 0.693 τ.", "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-discharging).", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "para", "text": "A voltmeter connected to watch the discharge is itself a resistor in parallel, with input resistance $R_m$. The capacitor then drains through both, so the effective resistance becomes $R R_m / (R + R_m)$ and the discharge speeds up. This matters when $R$ is not much smaller than $R_m$; check your meter's input resistance in its manual." }
+            ],
+            "takeaways": [
+              "Discharge follows $V_0 e^{-t/\\tau}$ with the same $\\tau = RC$.",
+              "The voltage halves every $0.693\\,\\tau$."
+            ]
+          }
+        }
+      ],
+      "summary": [
+        "Charging through a resistor follows $v_C = V_s(1 - e^{-t/\\tau})$; discharging follows $v_C = V_0 e^{-t/\\tau}$.",
+        "The time constant $\\tau = RC$ is the only number that sets the speed.",
+        "Use about $5\\tau$ as \"fully charged\" and $0.693\\,\\tau$ as the half-life."
+      ],
+      "keyEquations": ["eq-tau", "eq-charging", "eq-discharging"],
+      "furtherReading": ["openstax-up2", "mit-6002"]
+    },
+    {
+      "id": "ch-frequency",
+      "title": "Filtering Signals: The RC Low-Pass Filter",
+      "goals": [
+        "Explain why a resistor and capacitor pass slow signals and block fast ones.",
+        "Calculate the cutoff frequency of an RC low-pass filter.",
+        "Read a Bode plot and predict the gain at any frequency."
+      ],
+      "sections": [
+        {
+          "id": "sec-cutoff",
+          "title": "Cutoff frequency",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "Swap the switch for a changing input signal and take the output across the capacitor. Slow signals pass through almost unchanged; fast signals are weakened. The dividing line is the [[cutoff frequency]], where the output has dropped by 3 decibels (dB), to about 71 % of the input [@adi-filters, ch. 8]. For this circuit it works out to $f_c = 1/(2\\pi RC)$, derived below." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "A capacitor needs time to charge. If the input changes slowly, the capacitor keeps up and the output follows the input. If the input wiggles faster than the capacitor can charge and discharge, the output barely moves: the fast wiggles are filtered out." },
+              { "kind": "figure", "id": "fig-lowpass-circuit", "src": "figures/lowpass-circuit.svg", "alt": "Schematic of an RC low-pass filter: input voltage v_in on the left, a series resistor R, and a capacitor C from the output node to ground; the output voltage v_out is taken across the capacitor.", "caption": "An RC low-pass filter is the charging circuit with a changing input: the output is the capacitor voltage.", "credit": "Drawn by examples/rc-circuits/figures.ts.", "provenance": "code-drawn", "width": 0.8 }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-cutoff",
+                "intuition": "The cutoff is where the input's period becomes comparable to the time constant, so a larger RC means a lower cutoff.",
+                "latex": "f_c = \\frac{1}{2\\pi R C}",
+                "where": [
+                  { "symbol": "f_c", "meaning": "cutoff frequency (the −3 dB point)", "unit": "Hz (hertz)" },
+                  { "symbol": "R", "meaning": "resistance", "unit": "Ω" },
+                  { "symbol": "C", "meaning": "capacitance", "unit": "F" }
+                ],
+                "example": { "text": "$R = 1.6\\,\\text{k}\\Omega$ and $C = 100\\,\\text{nF}$ (nanofarads) give $f_c = 1/(2\\pi \\times 1600 \\times 100\\times10^{-9}) \\approx 995\\,\\text{Hz}$ — close to 1 kHz.", "check": "tests/equations/test_rc_book.py::test_cutoff_example" },
+                "validity": "Assumes the source driving the filter has negligible resistance and nothing connected to the output draws current. Source resistance adds to $R$. A resistive load $R_L$ both lowers the gain at low frequencies to $R_L/(R + R_L)$ and raises the cutoff to $1/(2\\pi (R \\parallel R_L) C)$; a capacitive load adds to $C$. The $2\\pi$ appears because $1/RC$ is an angular frequency, measured in radians per second, and one cycle is $2\\pi$ radians."
+              },
+              {
+                "kind": "equation",
+                "id": "eq-gain",
+                "intuition": "The output is a voltage divider between the resistor and the capacitor, and the capacitor's opposition to current falls as frequency rises.",
+                "latex": "\\lvert H(f) \\rvert = \\frac{1}{\\sqrt{1 + \\left(f/f_c\\right)^2}}",
+                "where": [
+                  { "symbol": "\\lvert H(f) \\rvert", "meaning": "gain: output amplitude divided by input amplitude", "unit": "— (no unit)" },
+                  { "symbol": "f", "meaning": "frequency of the input", "unit": "Hz" },
+                  { "symbol": "f_c", "meaning": "cutoff frequency", "unit": "Hz" }
+                ],
+                "example": { "text": "At $f = f_c$ the gain is $1/\\sqrt2 = 0.707$. In decibels (Eq. (eq-db) in the next section), that is $20\\log_{10}(0.707) = -3.01\\,\\text{dB}$. At $f = 10 f_c$ the gain is 0.0995, or $-20.0\\,\\text{dB}$.", "check": "tests/equations/test_rc_book.py::test_gain_examples" },
+                "validity": "Sine-wave inputs, after any start-up transient has died away; ideal parts; no load. Derivation from the voltage divider checked in `test_gain_derivation`.",
+                "figure": "fig-bode"
+              }
+            ],
+            "limits": [
+              { "kind": "para", "text": "The cutoff is not a wall. At $f_c$ the signal is already down to 70.7 % of its amplitude, and above it the gain keeps falling gradually, so a simple RC filter only weakens unwanted frequencies; it does not remove them." }
+            ],
+            "takeaways": [
+              "$f_c = 1/(2\\pi RC)$ separates frequencies that pass from those that are weakened.",
+              "At $f_c$ the gain is 0.707 (−3 dB)."
+            ]
+          }
+        },
+        {
+          "id": "sec-bode",
+          "title": "Reading a Bode plot",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "A [[Bode plot]] shows gain in decibels against frequency on a logarithmic scale. For an RC low-pass filter the curve is close to two straight lines: flat well below the cutoff, and falling 20 dB for every factor of ten in frequency well above it [@adi-filters, ch. 8]. At the cutoff itself the true curve sits 3 dB below the corner where the lines meet." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Decibels turn multiplying into adding, and a log frequency axis gives each factor of ten the same width. With both, the filter's curved gain turns into two nearly straight lines that are easy to sketch by hand: flat, then sloping down." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-db",
+                "intuition": "Decibels measure a ratio of amplitudes on a log scale, so every factor of 10 is 20 dB.",
+                "latex": "G_{\\text{dB}} = 20 \\log_{10} \\lvert H \\rvert",
+                "where": [
+                  { "symbol": "G_{\\text{dB}}", "meaning": "gain in decibels", "unit": "dB (decibel)" },
+                  { "symbol": "\\lvert H \\rvert", "meaning": "amplitude ratio, output over input", "unit": "— (no unit)" }
+                ],
+                "example": { "text": "Far above cutoff $\\lvert H\\rvert \\approx f_c/f$, so each tenfold increase in $f$ divides the gain by 10: $20\\log_{10}(1/10) = -20\\,\\text{dB}$ per decade.", "check": "tests/equations/test_rc_book.py::test_rolloff_asymptote" },
+                "validity": "The factor 20 applies to amplitude ratios (voltage, current). Power ratios use 10."
+              },
+              { "kind": "figure", "id": "fig-bode", "src": "figures/bode.svg", "alt": "Bode magnitude plot of gain in decibels against frequency from 10 hertz to 100 kilohertz on a log scale for an RC low-pass filter with cutoff 995 hertz. The curve is flat near 0 decibels, passes minus 3 decibels at the cutoff, and then falls along a dashed straight asymptote of minus 20 decibels per decade.", "caption": "The Bode plot of an RC low-pass filter: flat below cutoff, −3 dB at $f_c \\approx 995$ Hz, then falling 20 dB per decade.", "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-gain), $R = 1.6$ kΩ, $C = 100$ nF.", "provenance": "code-drawn" },
+              { "kind": "figure", "id": "fig-cutoff-shift", "src": "figures/cutoff-shift.svg", "alt": "Three Bode magnitude curves for capacitors of 10, 100 and 1000 nanofarads with a 1.6 kilohm resistor. Each curve has the same shape but is shifted: the larger the capacitor, the lower the cutoff frequency.", "caption": "Changing $C$ slides the whole curve along the frequency axis without changing its shape: ten times the capacitance gives one tenth the cutoff.", "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-gain), $R = 1.6$ kΩ.", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "para", "text": "A single RC stage falls at only 20 dB per decade. When a design needs a sharper edge, engineers use higher-order filters. The Sallen–Key circuit, introduced in 1955 [@sallen-key-1955], adds an amplifier to resistors and capacitors and is one of the most widely used ways to build them [@adi-filters, ch. 8]." },
+              { "kind": "callout", "tone": "simplification", "title": "Simplification", "text": "We have shown only the gain. A full Bode plot also shows phase: the output lags the input by 45° at the cutoff frequency (checked in `test_phase_at_cutoff`). Phase matters when filters sit inside feedback loops." }
+            ],
+            "takeaways": [
+              "On a Bode plot the RC low-pass is flat, then falls at −20 dB per decade.",
+              "Changing $R$ or $C$ slides the curve left or right; the shape stays the same."
+            ]
+          }
+        }
+      ],
+      "summary": [
+        "An RC low-pass filter passes slow signals and weakens fast ones.",
+        "Cutoff $f_c = 1/(2\\pi RC)$; gain $\\lvert H\\rvert = 1/\\sqrt{1+(f/f_c)^2}$, which is −3 dB at $f_c$.",
+        "Above cutoff the gain falls 20 dB per decade; sharper filters need more stages."
+      ],
+      "keyEquations": ["eq-cutoff", "eq-gain", "eq-db"],
+      "furtherReading": ["adi-filters", "sallen-key-1955", "mit-6002"]
+    }
+  ],
+  "glossary": [
+    { "term": "capacitor", "definition": "A component made of two conductors separated by an insulator, which stores equal and opposite charges and the energy of the electric field between them." },
+    { "term": "dielectric", "definition": "The insulating material between a capacitor's conductors. Its dielectric constant $\\kappa$ says how much it raises the capacitance compared with vacuum." },
+    { "term": "time constant", "definition": "The product $\\tau = RC$, in seconds; the time for a charging capacitor to reach about 63 % of its final voltage." },
+    { "term": "cutoff frequency", "definition": "The frequency $f_c = 1/(2\\pi RC)$ at which an RC filter's gain has fallen to $1/\\sqrt2$ (−3 dB)." },
+    { "term": "Bode plot", "definition": "A graph of a circuit's gain in decibels (and often its phase) against frequency on a logarithmic axis." }
+  ],
+  "bibliography": "references.json"
+}

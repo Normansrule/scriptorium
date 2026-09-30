@@ -1,0 +1,35 @@
+{
+  "id": "engineering",
+  "name": "Engineering",
+  "description": "Electrical, mechanical, civil and computer engineering: circuits, signals, structures, machines, control.",
+  "citationStyle": "ieee",
+  "databases": ["crossref", "openalex", "arxiv"],
+  "figureTypes": [
+    { "id": "circuit", "name": "Circuit schematic", "description": "Code-drawn schematic with labeled components and node voltages." },
+    { "id": "plot", "name": "Plot from equations or data", "description": "Line plot of a verified equation or dataset, key points labeled directly." },
+    { "id": "block-diagram", "name": "Block diagram", "description": "Signal or system flow, left to right." },
+    { "id": "free-body", "name": "Free-body diagram", "description": "Forces as arrows from the body, with magnitudes and angles." },
+    { "id": "bode", "name": "Bode plot", "description": "Magnitude (dB) and phase versus log frequency." }
+  ],
+  "units": {
+    "system": "SI",
+    "conventions": [
+      "Use SI units with SI prefixes: 4.7 kΩ, 100 nF, 1.6 ms.",
+      "Put a space between number and unit (10 V), except for degrees of angle (90°).",
+      "Write the unit name in words the first time it appears in a chapter: 10 µF (microfarads).",
+      "Frequency f is in hertz (Hz); angular frequency ω is in radians per second (rad/s). Never mix them without the 2π."
+    ]
+  },
+  "safetyNotes": [
+    "Experiments in this book use low voltages (under 30 V). Mains voltage and large charged capacitors can injure or kill; do not build mains-powered circuits without training and supervision."
+  ],
+  "restrictedDetail": [
+    "Designs whose main purpose is to harm people or disable safety systems",
+    "Step-by-step instructions for high-energy discharge devices"
+  ],
+  "requiresProfessionalReview": false,
+  "draftingNotes": [
+    "Every circuit example must use component values a student can buy (E12/E24 resistor series, common capacitor values).",
+    "State whether a model is ideal (zero wire resistance, ideal capacitor) and what a real part does differently."
+  ]
+}

@@ -1,0 +1,4 @@
+# Python is used only to verify the book's equations (tests/equations) and to take README screenshots.
+sympy==1.14.0
+pint==0.25.3
+pytest==9.1.1

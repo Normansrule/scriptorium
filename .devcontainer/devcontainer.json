@@ -1,0 +1,9 @@
+{
+  "name": "Scriptorium",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+  },
+  "postCreateCommand": "npm ci && python -m pip install -r requirements.txt && npm run demo",
+  "forwardPorts": [5173]
+}

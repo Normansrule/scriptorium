@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 352" width="880" height="352" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">The five writing layers</title>
+<desc id="d">Every section is written in five layers, each a little deeper: in short, intuition, the detail (equations), limits, key takeaways. A reader can stop after any layer and still have a correct picture.</desc>
+<rect width="880" height="352" fill="#0D1117"/>
+<rect x="16" y="16" width="848" height="56" rx="8" fill="#161B22" stroke="#30363D" stroke-width="1.5"/>
+<text x="32.0" y="40.0" font-size="14" fill="#E6EDF3" text-anchor="start" font-weight="600">1  In short</text>
+<text x="32.0" y="59.0" font-size="12" fill="#8B949E" text-anchor="start">One plain paragraph: the whole idea, no jargon.</text>
+<text x="848.0" y="49.0" font-size="12.5" fill="#E6EDF3" text-anchor="end" font-style="italic">A capacitor charged through a resistor fills fast, then slowly.</text>
+<rect x="34" y="82" width="830" height="56" rx="8" fill="#161B22" stroke="#30363D" stroke-width="1.5"/>
+<text x="50.0" y="106.0" font-size="14" fill="#E6EDF3" text-anchor="start" font-weight="600">2  Intuition</text>
+<text x="50.0" y="125.0" font-size="12" fill="#8B949E" text-anchor="start">Analogy and picture before any math.</text>
+<text x="848.0" y="115.0" font-size="12.5" fill="#E6EDF3" text-anchor="end" font-style="italic">Filling a rigid tank through a narrow hose.</text>
+<rect x="52" y="148" width="812" height="56" rx="8" fill="rgba(61, 149, 201, 0.2)" stroke="#30363D" stroke-width="1.5"/>
+<text x="68.0" y="172.0" font-size="14" fill="#E6EDF3" text-anchor="start" font-weight="600">3  The detail</text>
+<text x="68.0" y="191.0" font-size="12" fill="#8B949E" text-anchor="start">Numbered equations, every symbol with units, a checked worked example.</text>
+<text x="848.0" y="181.0" font-size="12.5" fill="#E6EDF3" text-anchor="end" font-style="italic">τ = RC;  v(t) = Vₛ(1 − e^(−t/τ))</text>
+<rect x="70" y="214" width="794" height="56" rx="8" fill="#161B22" stroke="#30363D" stroke-width="1.5"/>
+<text x="86.0" y="238.0" font-size="14" fill="#E6EDF3" text-anchor="start" font-weight="600">4  Limits</text>
+<text x="86.0" y="257.0" font-size="12" fill="#8B949E" text-anchor="start">Where the model breaks, what real parts do differently.</text>
+<text x="848.0" y="247.0" font-size="12.5" fill="#E6EDF3" text-anchor="end" font-style="italic">Leakage and meter resistance change the numbers.</text>
+<rect x="88" y="280" width="776" height="56" rx="8" fill="#161B22" stroke="#30363D" stroke-width="1.5"/>
+<text x="104.0" y="304.0" font-size="14" fill="#E6EDF3" text-anchor="start" font-weight="600">5  Key takeaways</text>
+<text x="104.0" y="323.0" font-size="12" fill="#8B949E" text-anchor="start">Two or three lines to remember.</text>
+<text x="848.0" y="313.0" font-size="12.5" fill="#E6EDF3" text-anchor="end" font-style="italic">63 % after 1τ, 99 % after 5τ.</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 190" width="380" height="190" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">RC low-pass filter</title>
+<desc id="d">Input through series resistor R; capacitor C from output node to ground; output across C.</desc>
+<rect width="380" height="190" fill="#0D1117"/>
+<circle cx="50" cy="50" r="4" fill="#0D1117" stroke="#E6EDF3" stroke-width="1.75"/>
+<circle cx="50" cy="150" r="4" fill="#0D1117" stroke="#E6EDF3" stroke-width="1.75"/>
+<polyline points="54,50 120,50 123.66666666666667,43 131,57 138.33333333333334,43 145.66666666666666,57 153,43 160.33333333333334,57 164,50 230,50" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><text x="142.0" y="36.0" font-size="13" fill="#E6EDF3" text-anchor="middle" font-style="italic">R</text>
+<polyline points="230,50 326,50" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="330" cy="50" r="4" fill="#0D1117" stroke="#E6EDF3" stroke-width="1.75"/>
+<circle cx="230" cy="50" r="3.2" fill="#E6EDF3"/>
+<polyline points="230,50 230,93" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><polyline points="230,107 230,150" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><line x1="214.0" y1="93.0" x2="246.0" y2="93.0" stroke="#E6EDF3" stroke-width="2.5" stroke-linecap="round"/><line x1="214.0" y1="107.0" x2="246.0" y2="107.0" stroke="#E6EDF3" stroke-width="2.5" stroke-linecap="round"/><text x="208.0" y="105.0" font-size="13" fill="#E6EDF3" text-anchor="end" font-style="italic">C</text>
+<polyline points="54,150 326,150" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="330" cy="150" r="4" fill="#0D1117" stroke="#E6EDF3" stroke-width="1.75"/>
+<circle cx="230" cy="150" r="3.2" fill="#E6EDF3"/>
+<line x1="216.0" y1="158.0" x2="244.0" y2="158.0" stroke="#E6EDF3" stroke-width="1.75" stroke-linecap="round"/><line x1="221.0" y1="163.0" x2="239.0" y2="163.0" stroke="#E6EDF3" stroke-width="1.75" stroke-linecap="round"/><line x1="226.0" y1="168.0" x2="234.0" y2="168.0" stroke="#E6EDF3" stroke-width="1.75" stroke-linecap="round"/>
+<polyline points="230,150 230,158" fill="none" stroke="#E6EDF3" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="50.0" y="36.0" font-size="12" fill="#3D95C9" text-anchor="middle" font-weight="600">vᵢₙ (input)</text>
+<text x="330.0" y="36.0" font-size="12" fill="#E0651F" text-anchor="middle" font-weight="600">vₒᵤₜ (output)</text>
+</svg>

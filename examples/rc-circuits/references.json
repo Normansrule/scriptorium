@@ -1,0 +1,92 @@
+[
+  {
+    "id": "openstax-up2",
+    "type": "book",
+    "title": "University Physics Volume 2",
+    "author": [
+      { "family": "Ling", "given": "Samuel J." },
+      { "family": "Sanny", "given": "Jeff" },
+      { "family": "Moebs", "given": "William" }
+    ],
+    "publisher": "OpenStax",
+    "issued": { "date-parts": [[2016, 10, 6]] },
+    "URL": "https://openstax.org/details/books/university-physics-volume-2",
+    "accessed": { "date-parts": [[2026, 9, 30]] },
+    "license": "CC BY-NC-SA 4.0 (as shown on the book pages, 2026-09-30); cited, not reproduced",
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-09-30",
+      "note": "Publisher pages read for each cited section: §8.1 gives C = Q/V (Eq. 8.1), C = ε0A/d (Eq. 8.3) and ε0 = 8.85×10⁻¹² F/m; §8.4 introduces the dielectric constant κ (vacuum = 1); §8.3 gives U = ½CV² = Q²/(2C) = ½QV; Table 8.1 (§8.5) gives κ = 1.00059 for dry air at 1 atm; §10.5 gives τ = RC, V_C(t) = ε(1 − e^(−t/τ)), the 0.632 point at t = τ, and exponential discharge.",
+      "supports": [
+        "C = Q/V (§8.1)",
+        "parallel-plate C = ε0 A/d, ε0 = 8.85×10⁻¹² F/m (§8.1)",
+        "U = ½CV² (§8.3)",
+        "dielectric constant of dry air 1.00059 (Table 8.1, §8.5)",
+        "τ = RC, charging and discharging exponentials, 63.2 % at t = τ (§10.5)",
+        "dielectric constant κ multiplies capacitance (§8.4)"
+      ]
+    }
+  },
+  {
+    "id": "mit-6002",
+    "type": "webpage",
+    "title": "6.002 Circuits and Electronics, Spring 2007",
+    "author": [{ "family": "Agarwal", "given": "Anant" }],
+    "container-title": "MIT OpenCourseWare",
+    "publisher": "Massachusetts Institute of Technology",
+    "issued": { "date-parts": [[2007]] },
+    "URL": "https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/",
+    "accessed": { "date-parts": [[2026, 9, 30]] },
+    "license": "CC BY-NC-SA 4.0",
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-09-30",
+      "note": "Course page lists Prof. Anant Agarwal, Spring 2007, coverage of energy-storage elements and first- and second-order networks, and time- and frequency-domain design; textbook is Agarwal & Lang (2005).",
+      "supports": ["further reading on first-order RC circuits and frequency response"]
+    }
+  },
+  {
+    "id": "adi-filters",
+    "type": "chapter",
+    "title": "Chapter 8: Analog Filters",
+    "author": [{ "literal": "Analog Devices" }],
+    "editor": [{ "family": "Zumbahlen", "given": "Hank" }],
+    "container-title": "Basic Linear Design",
+    "publisher": "Analog Devices",
+    "issued": { "date-parts": [[2007]] },
+    "ISBN": "9780916550288",
+    "URL": "https://www.analog.com/media/en/training-seminars/design-handbooks/Basic-Linear-Design/Chapter8.pdf",
+    "accessed": { "date-parts": [[2026, 9, 30]] },
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-09-30",
+      "note": "Manufacturer design handbook chapter (PDF on analog.com). Defines cutoff as the −3 dB point for a Butterworth response, states each pole gives −6 dB/octave or −20 dB/decade, and describes the Sallen–Key topology as one of the most widely used. Editor and year from the handbook's introduction (Hank Zumbahlen, Editor, © 2007 Analog Devices), confirmed by web search 2026-09-30. Page locators were not recorded; citations give the chapter.",
+      "supports": ["cutoff defined as the −3 dB point", "−20 dB/decade per pole", "Sallen–Key is widely used"]
+    }
+  },
+  {
+    "id": "sallen-key-1955",
+    "type": "article-journal",
+    "title": "A practical method of designing RC active filters",
+    "author": [
+      { "family": "Sallen", "given": "R. P." },
+      { "family": "Key", "given": "E. L." }
+    ],
+    "container-title": "IRE Transactions on Circuit Theory",
+    "volume": "2",
+    "issue": "1",
+    "page": "74-85",
+    "issued": { "date-parts": [[1955, 3]] },
+    "DOI": "10.1109/tct.1955.6500159",
+    "verification": {
+      "status": "verified",
+      "method": "crossref",
+      "checkedAt": "2026-09-30",
+      "note": "Crossref record for DOI 10.1109/tct.1955.6500159 matches title, authors (Sallen, Key), year 1955, journal, volume 2, issue 1, pages 74–85.",
+      "supports": ["origin of the Sallen–Key active RC filter (further reading)"]
+    }
+  }
+]
