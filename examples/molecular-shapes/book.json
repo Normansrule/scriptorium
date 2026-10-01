@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "title": "Shapes and Solutions",
+    "subtitle": "A One-Chapter Sample on Molecular Geometry, Concentration and pH",
+    "authors": ["Scriptorium sample book"],
+    "profile": "chemistry",
+    "citationStyle": "american-chemical-society",
+    "audience": "Curious newcomers with high-school algebra; no chemistry background needed.",
+    "language": "en",
+    "date": "2026-10-01",
+    "license": "Text and figures: CC BY 4.0. Code that draws the figures and models: MIT.",
+    "colophon": "This gallery sample was drafted with an AI assistant (Claude, by Anthropic) following the Scriptorium pipeline and checked by hand: the cited textbook sections were read for each claim (the bibliography's verification note lists what was checked), and every equation, worked example and 3D-model angle is re-derived by `tests/equations/test_chemistry.py`. Figures and models were drawn by code (`examples/molecular-shapes/figures.ts`) written with AI assistance.",
+    "webUrl": "https://normansrule.github.io/scriptorium/books/molecular-shapes/",
+    "description": "Why is a water molecule bent while carbon dioxide is straight? How do chemists dilute a solution to exactly the strength they need, and what does pH 3 really mean? This short illustrated sample answers all three with rotatable 3D models, step-by-step worked examples and every equation checked by code.",
+    "keywords": ["bond angles explained", "VSEPR theory", "molarity and dilution", "pH scale explained", "chemistry for beginners", "3D molecule models", "illustrated chemistry guide"],
+    "categories": ["Science & Math > Chemistry > General & Reference"]
+  },
+  "preface": [
+    { "kind": "para", "text": "This is a one-chapter gallery sample for the chemistry profile. It shows how a Scriptorium book handles **3D structures**: on the web you can rotate each molecule; in print and in the ebook you get three fixed views, and in print a QR code that opens the interactive model." },
+    { "kind": "callout", "tone": "safety", "title": "Safety", "text": "This book explains chemistry; it is not a laboratory manual. Do not try reactions described here without proper training, safety equipment and supervision, and always read the safety data sheet of every chemical first." }
+  ],
+  "chapters": [
+    {
+      "id": "ch-shapes-solutions",
+      "title": "Shapes and Solutions",
+      "goals": [
+        "Explain why groups of electrons around an atom give a molecule its shape.",
+        "Calculate the angle between bonds in a perfect tetrahedron.",
+        "Calculate a concentration, plan a dilution, and convert between hydronium concentration and pH."
+      ],
+      "sections": [
+        {
+          "id": "sec-shape",
+          "title": "Why molecules have shapes",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "The electron groups around a central atom — bonds and lone pairs — repel each other and settle as far apart as they can. That arrangement fixes the shape of the molecule. This idea is called valence shell electron-pair repulsion (VSEPR) theory [@openstax-chem2e, §7.6]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Picture balloons tied together at their necks: two point in opposite directions, three spread into a flat triangle, four point to the corners of a pyramid with a triangular base. Each balloon pushes the others away, and the only stable arrangement is the one that gives every balloon the most room." },
+              { "kind": "callout", "tone": "simplification", "title": "Simplification", "text": "Balloons stand in for regions of electron density. Electrons are not little balloons; the analogy only captures the push-apart rule." },
+              {
+                "kind": "model3d",
+                "id": "fig-methane",
+                "src": "models/methane.json",
+                "alt": "Ball-and-stick model of methane: a gray carbon atom in the center bonded to four white hydrogen atoms that point to the corners of a tetrahedron; the angle between two bonds is marked 109.5 degrees.",
+                "caption": "Methane has four bonds and no lone pairs, so its hydrogen atoms point to the corners of a regular tetrahedron, every H–C–H angle 109.5° [@openstax-chem2e, §7.6]. The front view looks straight at the plane of two bonds, so the arc shows the angle at its true size.",
+                "credit": "Shape model built by examples/molecular-shapes/figures.ts from the cited angle; bond lengths drawn equal.",
+                "provenance": "code-drawn",
+                "scale": "schematic",
+                "views": [
+                  { "src": "figures/methane-front.svg", "label": "front", "yaw": 0, "pitch": -45 },
+                  { "src": "figures/methane-side.svg", "label": "side", "yaw": 90, "pitch": 0 },
+                  { "src": "figures/methane-angled.svg", "label": "angled", "yaw": 30, "pitch": -20 }
+                ],
+                "annotations": [{ "type": "angle", "atoms": [1, 0, 2], "label": "109.5°" }]
+              }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-tetrahedral",
+                "intuition": "Four groups spaced as evenly as possible point to alternate corners of a cube, and that geometry fixes the angle between any two of them.",
+                "latex": "\\theta_{\\text{tet}} = \\arccos\\left(-\\tfrac{1}{3}\\right)",
+                "where": [
+                  { "symbol": "\\theta_{\\text{tet}}", "meaning": "angle between any two bonds in a perfect tetrahedron", "unit": "° (degree)" }
+                ],
+                "example": { "text": "$\\arccos(-1/3) = 109.47\\degree$, which rounds to the $109.5\\degree$ the textbook gives for every H–C–H angle in methane [@openstax-chem2e, §7.6].", "check": "tests/equations/test_chemistry.py::test_tetrahedral_angle" },
+                "validity": "Exact only for four identical groups and no lone pairs. Lone pairs take up more room than bonds and squeeze the bond angles below this value.",
+                "figure": "fig-methane"
+              },
+              { "kind": "para", "text": "Water also has four electron groups around its central atom, but two of them are lone pairs. The lone pairs push the two O–H bonds closer together, so the H–O–H angle is 104.5° and the molecule is **bent** [@openstax-chem2e, §7.6]. Ammonia, with one lone pair, ends up in between: its H–N–H angles are slightly smaller than 109.5° [@openstax-chem2e, §7.6]. Carbon dioxide has only two electron groups around carbon, so it is **linear**, with a 180° angle [@openstax-chem2e, §7.6]." },
+              {
+                "kind": "model3d",
+                "id": "fig-water",
+                "src": "models/water.json",
+                "alt": "Ball-and-stick model of water: a red oxygen atom bonded to two white hydrogen atoms, bent, with the angle between the bonds marked 104.5 degrees; the side view shows the molecule edge-on.",
+                "caption": "Water is bent: two lone pairs on oxygen squeeze the H–O–H angle to 104.5° [@openstax-chem2e, §7.6]. Seen edge-on (side view) the two hydrogen atoms line up and the bend disappears — one reason a single picture of a molecule can mislead.",
+                "credit": "Shape model built by examples/molecular-shapes/figures.ts from the cited angle; bond lengths drawn equal.",
+                "provenance": "code-drawn",
+                "scale": "schematic",
+                "views": [
+                  { "src": "figures/water-front.svg", "label": "front", "yaw": 0, "pitch": 0 },
+                  { "src": "figures/water-side.svg", "label": "side", "yaw": 90, "pitch": 0 },
+                  { "src": "figures/water-angled.svg", "label": "angled", "yaw": 35, "pitch": -30 }
+                ],
+                "annotations": [{ "type": "angle", "atoms": [1, 0, 2], "label": "104.5°" }]
+              }
+            ],
+            "limits": [
+              { "kind": "callout", "tone": "simplification", "title": "What VSEPR does not tell you", "text": "VSEPR explains *why* water's angle is smaller than 109.5°, but on its own it does not produce the number 104.5°; that value is measured. It also says nothing about bond lengths, which is why the models here draw every bond the same length." }
+            ],
+            "takeaways": [
+              "Electron groups spread out as far as possible; that sets the shape.",
+              "Four groups and no lone pairs give a tetrahedron with $109.5\\degree$ angles.",
+              "Lone pairs squeeze bond angles: water is bent at $104.5\\degree$."
+            ]
+          }
+        },
+        {
+          "id": "sec-solutions",
+          "title": "Concentration, dilution and pH",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "Chemists describe how strong a solution is by its [[molarity]]: the number of moles of dissolved substance in each liter of solution [@openstax-chem2e, §3.3]. Diluting a solution adds solvent but keeps the amount of dissolved substance the same. The [[pH]] scale turns very small hydronium concentrations into everyday numbers [@openstax-chem2e, §14.2]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Stir one spoon of sugar into a cup of water, then pour that into a jug and top it up. There is still exactly one spoon of sugar, but it is spread through more water, so each sip is less sweet. Dilution changes the concentration, never the amount." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-molarity",
+                "intuition": "Concentration is how much substance sits in each liter of the finished solution.",
+                "latex": "M = \\frac{n}{V}",
+                "where": [
+                  { "symbol": "M", "meaning": "molarity (concentration)", "unit": "mol/L, written M" },
+                  { "symbol": "n", "meaning": "amount of dissolved substance (solute)", "unit": "mol" },
+                  { "symbol": "V", "meaning": "volume of the solution", "unit": "L" }
+                ],
+                "example": { "text": "Dissolving 0.250 mol of sodium chloride and making the solution up to 0.500 L gives $M = 0.250 / 0.500 = 0.500$ M.", "check": "tests/equations/test_chemistry.py::test_molarity_example" },
+                "validity": "$V$ is the volume of the whole solution, not of the water added [@openstax-chem2e, §3.3]. Volumes change slightly with temperature, so precise work states the temperature."
+              },
+              {
+                "kind": "equation",
+                "id": "eq-dilution",
+                "intuition": "Adding solvent spreads the same moles through more volume, so concentration times volume stays constant.",
+                "latex": "C_1 V_1 = C_2 V_2",
+                "where": [
+                  { "symbol": "C_1, V_1", "meaning": "concentration and volume before dilution", "unit": "M, L" },
+                  { "symbol": "C_2, V_2", "meaning": "concentration and volume after dilution", "unit": "M, L" }
+                ],
+                "example": { "text": "To dilute 50.0 mL of a 2.00 M solution to 0.500 M: $V_2 = C_1 V_1 / C_2 = 2.00 \\times 50.0 / 0.500 = 200$ mL. Both sides hold 0.100 mol of solute.", "check": "tests/equations/test_chemistry.py::test_dilution_example" },
+                "validity": "Assumes no solute is lost or reacts [@openstax-chem2e, §3.3]. Make the solution up to the final volume and measure it after mixing; volumes of two liquids do not always add exactly.",
+                "figure": "fig-dilution"
+              },
+              { "kind": "figure", "id": "fig-dilution", "src": "figures/dilution.svg", "alt": "Plot of concentration in moles per liter against final volume in liters for 0.100 moles of solute; a falling curve starts at 2.00 M at 0.05 L and passes 0.500 M at 0.200 L.", "caption": "Diluting 0.100 mol of solute: doubling the volume halves the concentration, so 50.0 mL at 2.00 M becomes 200 mL at 0.500 M.", "credit": "Drawn by examples/molecular-shapes/figures.ts from Eq. (eq-dilution).", "provenance": "code-drawn" },
+              {
+                "kind": "equation",
+                "id": "eq-ph",
+                "intuition": "pH counts how many factors of ten the hydronium concentration is below 1 mol/L.",
+                "latex": "\\mathrm{pH} = -\\log_{10}[\\text{H}_3\\text{O}^+]",
+                "where": [
+                  { "symbol": "\\mathrm{pH}", "meaning": "acidity on a logarithmic scale", "unit": "— (no unit)" },
+                  { "symbol": "[\\text{H}_3\\text{O}^+]", "meaning": "hydronium ion concentration, as a number of mol/L", "unit": "mol/L" }
+                ],
+                "example": { "text": "In pure water at 25 °C, $[\\text{H}_3\\text{O}^+] = 1.0 \\times 10^{-7}$ M, so pH $= 7.00$ [@openstax-chem2e, §14.2]. A solution with $[\\text{H}_3\\text{O}^+] = 1.0 \\times 10^{-3}$ M has pH $= 3.00$.", "check": "tests/equations/test_chemistry.py::test_ph_examples" },
+                "validity": "The logarithm takes the concentration as a plain number of mol/L. The value 7.00 for pure water is for 25 °C, the temperature the textbook gives it for [@openstax-chem2e, §14.2].",
+                "figure": "fig-ph"
+              },
+              { "kind": "figure", "id": "fig-ph", "src": "figures/ph.svg", "alt": "Plot of pH from 0 to 14 against hydronium concentration on a logarithmic axis from 10 to the minus 14 to 1 mole per liter; a straight falling line, with points at 10 to the minus 7 (pH 7) and 10 to the minus 3 (pH 3).", "caption": "On a logarithmic axis pH is a straight line: every tenfold rise in hydronium concentration lowers pH by exactly one.", "credit": "Drawn by examples/molecular-shapes/figures.ts from Eq. (eq-ph).", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "para", "text": "Because pH is logarithmic, a change of one pH unit is a tenfold change in hydronium concentration: pH 3 is 10 000 times more hydronium than pH 7, not 'a bit more acidic'." }
+            ],
+            "takeaways": [
+              "Molarity $M = n/V$ counts moles per liter of solution.",
+              "Dilution keeps moles constant: $C_1V_1 = C_2V_2$.",
+              "pH $= -\\log_{10}[\\text{H}_3\\text{O}^+]$; each pH unit is a factor of ten."
+            ]
+          }
+        }
+      ],
+      "summary": [
+        "Electron groups repel and spread out, which fixes molecular shape; lone pairs squeeze bond angles.",
+        "A perfect tetrahedron has bond angles of $\\arccos(-1/3) \\approx 109.5\\degree$; water is bent at $104.5\\degree$.",
+        "Molarity, dilution and pH connect amounts, volumes and acidity with three short equations."
+      ],
+      "keyEquations": ["eq-tetrahedral", "eq-molarity", "eq-dilution", "eq-ph"],
+      "furtherReading": ["openstax-chem2e"]
+    }
+  ],
+  "glossary": [
+    { "term": "molarity", "definition": "Concentration expressed as moles of solute per liter of solution, written M." },
+    { "term": "pH", "definition": "The negative base-10 logarithm of the hydronium ion concentration in mol/L; lower pH means more acidic." }
+  ],
+  "bibliography": "references.json"
+}

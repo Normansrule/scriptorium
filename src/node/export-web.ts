@@ -7,13 +7,14 @@ import { join } from 'node:path';
 import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import type { Book } from '../core/book.ts';
-import { bookCss, renderHtml, type HtmlContext } from '../render/html.ts';
+import { buildSync } from 'esbuild';
+import { bookCss, hasModels, renderHtml, type HtmlContext } from '../render/html.ts';
 import { REPO_ROOT } from './load.ts';
 
 export const PURIFY_CONFIG = {
   USE_PROFILES: { html: true, mathMl: true, svg: false },
   ADD_TAGS: ['picture', 'source', 'annotation', 'semantics'],
-  ADD_ATTR: ['srcset', 'media', 'loading', 'encoding', 'aria-hidden'],
+  ADD_ATTR: ['srcset', 'media', 'loading', 'encoding', 'aria-hidden', 'data-model'],
   // DOMPurify's default URI rule blocks javascript:, vbscript: and data: in links.
   ADD_URI_SAFE_ATTR: ['media', 'aria-hidden', 'encoding'],
   FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form'],
@@ -51,11 +52,27 @@ export function copyFigures(bookDir: string, outDir: string): void {
   for (const f of readdirSync(src)) if (/\.(svg|png)$/.test(f)) cpSync(join(src, f), join(outDir, 'figures', f));
 }
 
+/** Bundle the 3D viewer (src/render/viewer3d-client.ts) into one classic script. */
+export function bundleViewer(): string {
+  const res = buildSync({
+    entryPoints: [join(REPO_ROOT, 'src', 'render', 'viewer3d-client.ts')],
+    bundle: true,
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2020',
+    minify: true,
+    write: false,
+    legalComments: 'none',
+  });
+  return res.outputFiles[0]!.text;
+}
+
 export function exportWeb(book: Book, bookDir: string, ctx: Omit<HtmlContext, 'figureBase'>, outDir: string): string {
   mkdirSync(outDir, { recursive: true });
   const html = sanitizePage(renderHtml(book, { ...ctx, figureBase: 'figures/' }));
   writeFileSync(join(outDir, 'index.html'), html);
   copyWebAssets(outDir);
   copyFigures(bookDir, outDir);
+  if (hasModels(book)) writeFileSync(join(outDir, 'assets', 'viewer3d.js'), bundleViewer());
   return join(outDir, 'index.html');
 }

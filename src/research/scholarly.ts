@@ -16,7 +16,7 @@ export interface ScholarlyHit {
   year?: number;
   authors: Array<{ family: string; given?: string }>;
   container?: string;
-  source: 'crossref' | 'openalex';
+  source: 'crossref' | 'openalex' | 'pubmed';
 }
 
 const STOP = new Set(['a', 'an', 'the', 'of', 'and', 'in', 'on', 'for', 'to', 'with', 'by']);

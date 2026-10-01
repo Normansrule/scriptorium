@@ -14,7 +14,6 @@ import { batteryV, capacitorV, dot, ground, resistorH, switchH, terminal, wire }
 import { seriesOrder, type Mode } from '../../src/core/style.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const out = join(here, 'figures');
 
 type Draw = (mode: Mode) => string;
 
@@ -219,20 +218,20 @@ const figures: Record<string, Draw> = {
   },
 };
 
-export function drawAll(dir = out): string[] {
-  mkdirSync(dir, { recursive: true });
+/** Writes every figure into <root>/figures/ and returns the paths relative to <root>. */
+export function drawAll(root = here): string[] {
+  mkdirSync(join(root, 'figures'), { recursive: true });
   const written: string[] = [];
   for (const [name, draw] of Object.entries(figures)) {
     for (const mode of ['light', 'dark'] as const) {
-      const file = join(dir, mode === 'light' ? `${name}.svg` : `${name}.dark.svg`);
-      writeFileSync(file, draw(mode));
-      written.push(file);
+      const rel = `figures/${mode === 'light' ? `${name}.svg` : `${name}.dark.svg`}`;
+      writeFileSync(join(root, rel), draw(mode));
+      written.push(rel);
     }
   }
   return written;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const files = drawAll();
-  console.log(`Drew ${files.length} figure files in ${out}`);
+  console.log(`Drew ${drawAll().length} figure files in ${join(here, 'figures')}`);
 }

@@ -91,10 +91,36 @@ export const Figure = z.object({
   width: z.number().min(0.2).max(1).default(1),
 });
 
-export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure]);
+/**
+ * A 3D structure (molecule, protein, DNA). The web book shows it in an interactive viewer;
+ * print and EPUB show 2–3 rendered views plus a link (and, in print, a QR code) to the
+ * interactive version. Shares figure numbering with `figure`.
+ */
+export const Model3D = z.object({
+  kind: z.literal('model3d'),
+  id: z.string().regex(/^fig-[a-z0-9-]+$/),
+  /** Model file relative to the book (.json, .xyz, .pdb, .sdf, .mol); see src/core/molecule.ts. */
+  src: z.string(),
+  alt: z.string().min(10),
+  caption: Inline,
+  credit: z.string(),
+  provenance: Provenance,
+  /** 'to-scale': coordinates are real (draws a scale bar). 'schematic': shape only (says so on the image). */
+  scale: z.enum(['to-scale', 'schematic']),
+  scaleNote: z.string().optional(),
+  /** Atom drawing size multiplier for the interactive viewer (use < 1 for crowded structures; match the stills). */
+  atomScale: z.number().min(0.2).max(1.5).optional(),
+  /** Pre-rendered stills (light SVG path; the dark one is `.dark.svg`) with the rotation that made them. */
+  views: z.array(z.object({ src: z.string(), label: z.string(), yaw: z.number(), pitch: z.number() })).min(2).max(3),
+  annotations: z.array(z.object({ type: z.literal('angle'), atoms: z.tuple([z.number().int(), z.number().int(), z.number().int()]), label: z.string() })).default([]),
+  width: z.number().min(0.2).max(1).default(1),
+});
+
+export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure, Model3D]);
 export type Block = z.infer<typeof Block>;
 export type Equation = z.infer<typeof Equation>;
 export type Figure = z.infer<typeof Figure>;
+export type Model3D = z.infer<typeof Model3D>;
 
 // ---------------------------------------------------------------------------
 // Sections, chapters, book
@@ -140,7 +166,18 @@ export const BookMeta = z.object({
   license: z.string(),
   /** Short statement printed on the copyright page, e.g. how AI was used. */
   colophon: Inline.optional(),
+  /** Where the web edition will live; print and EPUB link 3D models here. */
+  webUrl: z.string().url().optional(),
+  /** Figure id to show on the front cover (default: the first figure or 3D model). */
+  coverFigure: z.string().regex(/^fig-[a-z0-9-]+$/).optional(),
+  /** Back-cover and store description (≤ 4000 characters for KDP; checked by src/kdp/metadata.ts). */
+  description: z.string().optional(),
+  /** Up to seven KDP keywords or short phrases (checked by src/kdp/metadata.ts). */
+  keywords: z.array(z.string().min(1)).optional(),
+  /** Up to three KDP categories, as the category path text (checked by src/kdp/metadata.ts). */
+  categories: z.array(z.string()).optional(),
 });
+export type BookMeta = z.infer<typeof BookMeta>;
 
 export const Book = z.object({
   meta: BookMeta,
@@ -181,18 +218,21 @@ export const Reference = z
     issued: z.object({ 'date-parts': z.array(z.array(z.number())) }).optional(),
     'container-title': z.string().optional(),
     publisher: z.string().optional(),
+    'publisher-place': z.string().optional(),
     volume: z.string().optional(),
     issue: z.string().optional(),
     page: z.string().optional(),
     edition: z.string().optional(),
     DOI: z.string().optional(),
+    /** PubMed ID, for medical and biological sources without a DOI. */
+    PMID: z.string().regex(/^\d{1,9}$/).optional(),
     ISBN: z.string().optional(),
     URL: z.string().url().optional(),
     accessed: z.object({ 'date-parts': z.array(z.array(z.number())) }).optional(),
     license: z.string().optional(),
     verification: Verification,
   })
-  .refine((r) => r.DOI || r.URL || r.ISBN, { message: 'A reference needs a DOI, URL or ISBN so it can be checked.' })
+  .refine((r) => r.DOI || r.URL || r.ISBN || r.PMID, { message: 'A reference needs a DOI, PMID, URL or ISBN so it can be checked.' })
   .refine((r) => r.issued || r.accessed, { message: 'A reference needs a publication date or, for undated web documents, an access date.' });
 export type Reference = z.infer<typeof Reference>;
 export const Bibliography = z.array(Reference);
@@ -215,7 +255,11 @@ export function allInlineText(book: Book): string[] {
     if (block.kind === 'para' || block.kind === 'callout') out.push(block.text);
     if (block.kind === 'list') out.push(...block.items);
     if (block.kind === 'equation') out.push(block.intuition, block.example.text, block.validity, ...block.where.map((w) => w.meaning));
-    if (block.kind === 'figure') out.push(block.caption);
+    if (block.kind === 'figure' || block.kind === 'model3d') out.push(block.caption);
+  }
+  for (const block of book.preface) {
+    if (block.kind === 'para' || block.kind === 'callout') out.push(block.text);
+    if (block.kind === 'list') out.push(...block.items);
   }
   for (const ch of book.chapters) {
     out.push(...ch.goals, ...ch.summary);
@@ -231,4 +275,12 @@ export function citedIds(book: Book): Set<string> {
   for (const t of allInlineText(book)) for (const m of t.matchAll(re)) ids.add(m[1]!);
   for (const ch of book.chapters) ch.furtherReading.forEach((id) => ids.add(id));
   return ids;
+}
+
+/** Glossary terms linked with [[term]] that have no glossary entry (compared case-insensitively). */
+export function missingTerms(book: Book): string[] {
+  const have = new Set(book.glossary.map((g) => g.term.toLowerCase()));
+  const used = new Set<string>();
+  for (const t of allInlineText(book)) for (const m of t.matchAll(/\[\[([^\]]+)\]\]/g)) used.add(m[1]!.toLowerCase());
+  return [...used].filter((t) => !have.has(t));
 }

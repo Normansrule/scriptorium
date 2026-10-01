@@ -31,7 +31,7 @@ export function buildDisclosure(book: Book, opts: { coverProvenance?: Provenance
     for (const s of ch.sections) {
       text.push({ where: `${ch.title} › ${s.title}`, provenance: s.provenance });
       for (const b of [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits]) {
-        if (b.kind === 'figure') images.push({ where: `${b.id} (${ch.title})`, provenance: b.provenance });
+        if (b.kind === 'figure' || b.kind === 'model3d') images.push({ where: `${b.id} (${ch.title})`, provenance: b.provenance });
       }
     }
   }

@@ -15,6 +15,10 @@ import type { Budget } from '../llm/budget.ts';
 import { draftPrompt, outlinePrompt, reviewPrompt } from '../llm/prompts.ts';
 import { guardCitations, injectionSignals, parseModelJson, wrapUntrusted } from '../llm/untrusted.ts';
 import { fetchAbstract, matchReference, resolveDoi, searchCrossref, searchOpenAlex, type ScholarlyHit, type ScholarlyOptions } from '../research/scholarly.ts';
+import { searchPubMed, verifyPmid, type PubMedHit } from '../research/pubmed.ts';
+import { fetchPdbEntry, fetchPubChem3D, type FetchedStructure } from '../research/structures.ts';
+import { renderMoleculeSvg, STILL } from '../render/molecule-svg.ts';
+import type { Model } from './molecule.ts';
 import { plot, type PlotSpec } from '../render/svg.ts';
 import { renderMath } from '../render/html.ts';
 
@@ -79,6 +83,23 @@ const PlotBlock = z.object({
 });
 type PlotBlock = z.infer<typeof PlotBlock>;
 
+const StructureBlock = z.object({
+  kind: z.literal('structure'),
+  id: z.string().regex(/^fig-[a-z0-9-]+$/),
+  source: z.enum(['pubchem', 'pdb']),
+  /** compound name for PubChem, four-character entry ID for the Protein Data Bank */
+  name: z.string().min(1).max(80),
+  alt: z.string().min(10),
+  caption: z.string(),
+});
+
+/** The three standard views every 3D figure prints. */
+export const STANDARD_VIEWS = [
+  { label: 'front', yaw: 0, pitch: 0 },
+  { label: 'side', yaw: 90, pitch: 0 },
+  { label: 'angled', yaw: 35, pitch: -30 },
+] as const;
+
 const DraftBlock = z.union([PlotBlock, z.any()]);
 const Draft = z.object({
   summary: z.array(DraftBlock).min(1),
@@ -112,6 +133,8 @@ export interface PipelineState {
   abstracts: Record<string, string>;
   drafts: Record<string, z.infer<typeof Draft>>; // by section id
   figures: Record<string, { light: string; dark: string }>; // fig id → SVG
+  /** 3D models fetched for model3d figures, keyed by their src path in the book. */
+  models: Record<string, Model>;
   book?: Book;
   report: ReportItem[];
   readability: Record<string, number>; // section id → grade
@@ -135,6 +158,7 @@ export function newState(scope: Scope): PipelineState {
     abstracts: {},
     drafts: {},
     figures: {},
+    models: {},
     report: [],
     readability: {},
   };
@@ -155,7 +179,9 @@ function hitToReference(h: ScholarlyHit, today: string): Reference {
     issued: { 'date-parts': [[h.year ?? 0]] },
     'container-title': h.container,
     DOI: h.doi,
-    verification: { status: 'unverified', method: 'crossref', checkedAt: today, note: `found by ${h.source} search`, supports: [] },
+    PMID: (h as PubMedHit).pmid || undefined,
+    URL: !h.doi && (h as PubMedHit).pmid ? `https://pubmed.ncbi.nlm.nih.gov/${(h as PubMedHit).pmid}/` : undefined,
+    verification: { status: 'unverified', method: h.doi ? 'crossref' : 'pubmed', checkedAt: today, note: `found by ${h.source} search`, supports: [] },
   };
 }
 
@@ -191,9 +217,17 @@ async function stageResearch(st: PipelineState, d: PipelineDeps): Promise<void> 
         st.report.push({ stage: 'research', level: 'warning', where: q, message: (e as Error).message });
       }
     }
+    if (d.profile.databases.includes('pubmed')) {
+      try {
+        hits.push(...(await searchPubMed(q, 5, d.scholarly)));
+      } catch (e) {
+        st.report.push({ stage: 'research', level: 'warning', where: q, message: (e as Error).message });
+      }
+    }
     for (const h of hits) {
-      if (!h.doi || seen.has(h.doi) || !h.title) continue;
-      seen.add(h.doi);
+      const key = h.doi ?? ((h as PubMedHit).pmid ? `pmid:${(h as PubMedHit).pmid}` : '');
+      if (!key || seen.has(key) || !h.title) continue;
+      seen.add(key);
       const ref = hitToReference(h, today);
       if (!st.candidates.some((c) => c.id === ref.id)) st.candidates.push(ref);
     }
@@ -206,6 +240,16 @@ async function stageVerify(st: PipelineState, d: PipelineDeps): Promise<void> {
   for (const ref of st.candidates) {
     d.onEvent?.({ stage: 'verify', status: 'running', message: ref.title, progress: i++ / st.candidates.length });
     try {
+      if (!ref.DOI && ref.PMID) {
+        const v = await verifyPmid(ref.PMID, ref.title, d.scholarly);
+        if (!v.ok) {
+          st.report.push({ stage: 'verify', level: 'warning', where: ref.id, message: `${v.note}; dropped.` });
+          continue;
+        }
+        st.abstracts[ref.id] = '';
+        st.verified.push({ ...ref, verification: { ...ref.verification, status: 'verified', method: 'pubmed', checkedAt: today, note: v.note } });
+        continue;
+      }
       const hit = await resolveDoi(ref.DOI!, d.scholarly);
       if (!hit) {
         st.report.push({ stage: 'verify', level: 'warning', where: ref.id, message: `DOI ${ref.DOI} does not resolve; dropped.` });
@@ -278,21 +322,53 @@ function plotToSpec(p: PlotBlock): PlotSpec {
   };
 }
 
-async function stageFigures(st: PipelineState, _d: PipelineDeps): Promise<void> {
+async function structureToModel3d(sb: z.infer<typeof StructureBlock>, st: PipelineState, d: PipelineDeps): Promise<unknown> {
+  const fetched: FetchedStructure = sb.source === 'pubchem' ? await fetchPubChem3D(sb.name, d.scholarly) : await fetchPdbEntry(sb.name, d.scholarly);
+  const slug = sb.id.replace(/^fig-/, '');
+  const src = `models/${slug}.json`;
+  st.models[src] = fetched.model;
+  const views = STANDARD_VIEWS.map((v) => {
+    const key = `${sb.id}--${v.label}`;
+    st.figures[key] = {
+      light: renderMoleculeSvg(fetched.model, v, { ...STILL, mode: 'light', scale: 'to-scale', title: `${sb.alt} (${v.label})` }),
+      dark: renderMoleculeSvg(fetched.model, v, { ...STILL, mode: 'dark', scale: 'to-scale', title: `${sb.alt} (${v.label})` }),
+    };
+    return { src: `figures/${slug}--${v.label}.svg`, label: v.label, yaw: v.yaw, pitch: v.pitch };
+  });
+  return { kind: 'model3d', id: sb.id, src, alt: sb.alt, caption: sb.caption, credit: `${fetched.credit} ${fetched.url}`, provenance: 'third-party', scale: 'to-scale', views, annotations: [], width: 1 };
+}
+
+async function stageFigures(st: PipelineState, d: PipelineDeps): Promise<void> {
+  const allow3d = d.profile.figureTypes.some((f) => f.id === 'molecule-3d' || f.id === 'structure-3d');
   for (const [sid, draft] of Object.entries(st.drafts)) {
     for (const layerName of ['summary', 'intuition', 'formal', 'limits'] as const) {
-      draft[layerName] = draft[layerName].flatMap((b: unknown) => {
+      const out: unknown[] = [];
+      for (const b of draft[layerName] as unknown[]) {
+        const sb = StructureBlock.safeParse(b);
+        if (sb.success) {
+          if (!allow3d) {
+            st.report.push({ stage: 'figures', level: 'warning', where: `${sid}/${sb.data.id}`, message: `The ${d.profile.name} profile has no 3D figure type; structure dropped.` });
+            continue;
+          }
+          try {
+            out.push(await structureToModel3d(sb.data, st, d));
+            st.report.push({ stage: 'figures', level: 'info', where: `${sid}/${sb.data.id}`, message: `3D coordinates downloaded from ${sb.data.source === 'pubchem' ? 'PubChem' : 'the Protein Data Bank'} for "${sb.data.name}"; check the structure is the one the text describes.` });
+          } catch (e) {
+            st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${sb.data.id}`, message: `3D structure dropped: ${(e as Error).message}` });
+          }
+          continue;
+        }
         const pb = PlotBlock.safeParse(b);
         if (pb.success) {
           try {
             pb.data.series.forEach((s) => compile(s.expr));
             const spec = plotToSpec(pb.data);
             st.figures[pb.data.id] = { light: plot(spec, 'light'), dark: plot(spec, 'dark') };
-            return [{ kind: 'figure', id: pb.data.id, src: `figures/${pb.data.id.replace(/^fig-/, '')}.svg`, alt: pb.data.alt, caption: pb.data.caption, credit: 'Drawn by Scriptorium from the expression proposed in drafting.', provenance: 'ai-generated', width: 1 }];
+            out.push({ kind: 'figure', id: pb.data.id, src: `figures/${pb.data.id.replace(/^fig-/, '')}.svg`, alt: pb.data.alt, caption: pb.data.caption, credit: 'Drawn by Scriptorium from the expression proposed in drafting.', provenance: 'ai-generated', width: 1 });
           } catch (e) {
             st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${pb.data.id}`, message: `Plot dropped: ${(e as Error).message}` });
-            return [];
           }
+          continue;
         }
         const eq = b as { kind?: string; id?: string; latex?: string; example?: { check?: string } };
         if (eq.kind === 'equation') {
@@ -300,13 +376,14 @@ async function stageFigures(st: PipelineState, _d: PipelineDeps): Promise<void> 
             renderMath(eq.latex ?? '', true);
           } catch (e) {
             st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${eq.id}`, message: `Equation does not parse and was dropped: ${(e as Error).message}` });
-            return [];
+            continue;
           }
           st.report.push({ stage: 'figures', level: 'warning', where: `${sid}/${eq.id}`, message: 'Equation and worked example are unverified: add a SymPy/Pint check in tests/equations and set example.check before publishing.' });
           eq.example = { ...(eq.example ?? {}), check: 'unverified' };
         }
-        return [b];
-      });
+        out.push(b);
+      }
+      draft[layerName] = out;
     }
   }
 }

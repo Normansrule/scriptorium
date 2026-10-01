@@ -103,7 +103,7 @@ export interface PlotSpec {
   title: string;
   desc: string;
   x: { label: string; from: number; to: number; log?: boolean; ticks?: number[]; tickFormat?: (v: number) => string };
-  y: { label: string; from: number; to: number; ticks?: number[]; tickFormat?: (v: number) => string };
+  y: { label: string; from: number; to: number; log?: boolean; ticks?: number[]; tickFormat?: (v: number) => string };
   series: Series[];
   points?: KeyPoint[];
   /** straight reference lines in data coordinates */
@@ -122,8 +122,13 @@ export function plot(spec: PlotSpec, mode: Mode): string {
   const ph = H - m.t - m.b;
   const lx = (v: number) => (spec.x.log ? Math.log10(v) : v);
   const X = (v: number) => m.l + ((lx(v) - lx(spec.x.from)) / (lx(spec.x.to) - lx(spec.x.from))) * pw;
-  const Y = (v: number) => m.t + ph - ((v - spec.y.from) / (spec.y.to - spec.y.from)) * ph;
-  const clampY = (v: number) => Math.min(Math.max(v, spec.y.from - (spec.y.to - spec.y.from) * 0.02), spec.y.to);
+  const ly = (v: number) => (spec.y.log ? Math.log10(v) : v);
+  const Y = (v: number) => m.t + ph - ((ly(v) - ly(spec.y.from)) / (ly(spec.y.to) - ly(spec.y.from))) * ph;
+  const clampY = (v: number) => {
+    const lo = ly(spec.y.from) - (ly(spec.y.to) - ly(spec.y.from)) * 0.02;
+    const t = Math.min(Math.max(spec.y.log && v <= 0 ? -Infinity : ly(v), lo), ly(spec.y.to));
+    return spec.y.log ? 10 ** t : t;
+  };
 
   const parts: string[] = [];
   const fmt = (f: ((v: number) => string) | undefined, v: number) => (f ? f(v) : String(Math.round(v * 1000) / 1000));

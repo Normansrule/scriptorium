@@ -32,6 +32,7 @@ function blockTexts(b: Block): string[] {
     case 'equation':
       return [b.intuition, ...b.where.map((w) => w.meaning), b.example.text, b.validity];
     case 'figure':
+    case 'model3d':
       return [b.caption];
   }
 }
@@ -53,7 +54,7 @@ export function numberBook(book: Book): Numbering {
     for (const s of ch.sections) {
       const l = s.layers;
       for (const b of [...l.summary, ...l.intuition, ...l.formal, ...l.limits]) {
-        if (b.kind === 'figure') figure.set(b.id, `${ci + 1}.${++f}`);
+        if (b.kind === 'figure' || b.kind === 'model3d') figure.set(b.id, `${ci + 1}.${++f}`);
         if (b.kind === 'equation') equation.set(b.id, `${ci + 1}.${++e}`);
         scan(blockTexts(b));
       }

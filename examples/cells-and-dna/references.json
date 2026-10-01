@@ -1,0 +1,29 @@
+[
+  {
+    "id": "openstax-bio2e",
+    "type": "book",
+    "title": "Biology 2e",
+    "author": [
+      { "family": "Clark", "given": "Mary Ann" },
+      { "family": "Douglas", "given": "Matthew" },
+      { "family": "Choi", "given": "Jung" }
+    ],
+    "publisher": "OpenStax",
+    "publisher-place": "Houston, TX, USA",
+    "issued": { "date-parts": [[2018, 3, 28]] },
+    "URL": "https://openstax.org/details/books/biology-2e",
+    "accessed": { "date-parts": [[2026, 10, 1]] },
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-10-01",
+      "note": "Publisher pages read for each cited section; authors, place and date taken from the citation block on the §14.2 page. §4.2 gives prokaryotic cells 0.1–5.0 µm in diameter and eukaryotic cells 10–100 µm, the sphere formulas 4πr² and 4πr³/3, and states that surface area-to-volume ratio decreases as a cell grows, limiting diffusion. §14.2 gives a uniform 2 nm diameter, 0.34 nm between base pairs, 3.4 nm per turn, 10 base pairs per turn, A–T and G–C pairing, and major and minor grooves.",
+      "supports": [
+        "prokaryote diameter 0.1–5.0 µm; eukaryote 10–100 µm (§4.2)",
+        "sphere surface area 4πr², volume 4πr³/3; SA/V falls as cells grow (§4.2)",
+        "DNA diameter 2 nm; 0.34 nm per base pair; 3.4 nm and 10 bp per turn (§14.2)",
+        "A pairs with T, G with C; major and minor grooves (§14.2)"
+      ]
+    }
+  }
+]

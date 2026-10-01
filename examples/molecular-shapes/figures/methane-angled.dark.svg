@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" width="150" height="150" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Methane (CH4), tetrahedral, angled view</title>
+<desc id="d">5 atoms</desc>
+<rect width="150" height="150" fill="#0D1117"/>
+<circle cx="86.4" cy="118.9" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="82.6" cy="115.1" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<circle cx="32.4" cy="49.6" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="28.6" cy="45.8" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<line x1="75.0" y1="75.0" x2="86.4" y2="118.9" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<g><circle cx="86.4" cy="118.9" r="7.4" fill="#FFFFFF"/><text x="86.4" y="123.2" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<line x1="75.0" y1="75.0" x2="32.4" y2="49.6" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<g><circle cx="32.4" cy="49.6" r="7.4" fill="#FFFFFF"/><text x="32.4" y="53.9" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<circle cx="75.0" cy="75.0" r="17.3" fill="#909090" stroke="#0D1117" stroke-width="1.25"/><circle cx="69.5" cy="69.5" r="4.8" fill="#FFFFFF" fill-opacity="0.45"/>
+<line x1="75.0" y1="75.0" x2="117.6" y2="41.8" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<circle cx="117.6" cy="41.8" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="113.8" cy="38.0" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<g><circle cx="117.6" cy="41.8" r="7.4" fill="#FFFFFF"/><text x="117.6" y="46.1" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<line x1="75.0" y1="75.0" x2="63.6" y2="89.7" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<g><circle cx="75.0" cy="75.0" r="10.7" fill="#909090"/><text x="75.0" y="79.3" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">C</text></g>
+<circle cx="63.6" cy="89.7" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="59.8" cy="85.9" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<g><circle cx="63.6" cy="89.7" r="7.4" fill="#FFFFFF"/><text x="63.6" y="94.1" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<text x="144.0" y="144.0" font-size="12" fill="#8B949E" text-anchor="end">lengths not to scale</text>
+</svg>

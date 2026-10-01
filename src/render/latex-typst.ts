@@ -59,7 +59,7 @@ const SYMBOLS: Record<string, string> = {
 
 const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
-const FUNCS = new Set(['ln', 'log', 'exp', 'sin', 'cos', 'tan', 'arctan', 'max', 'min', 'lim']);
+const FUNCS = new Set(['ln', 'log', 'exp', 'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'max', 'min', 'lim']);
 
 type Tok = { k: 'cmd'; v: string } | { k: 'open' } | { k: 'close' } | { k: 'char'; v: string } | { k: 'num'; v: string };
 

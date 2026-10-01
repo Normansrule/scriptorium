@@ -39,18 +39,18 @@ for (const [name, fn] of Object.entries(svgs)) {
   }
 }
 
-// Book figures are assets too: every examples/<book>/figures.ts.
+// Book figures and generated models are assets too: every examples/<book>/figures.ts.
 let figureFiles = 0;
 for (const book of readdirSync(join(root, 'examples'))) {
   const script = join(root, 'examples', book, 'figures.ts');
   if (!existsSync(script)) continue;
-  const mod = (await import(pathToFileURL(script).href)) as { drawAll: (dir?: string) => string[] };
+  const mod = (await import(pathToFileURL(script).href)) as { drawAll: (root?: string) => string[] };
   if (check) {
     const tmp = join(root, '.scratch', 'figcheck', book);
     rmSync(tmp, { recursive: true, force: true });
-    for (const f of mod.drawAll(tmp)) {
-      const committed = join(root, 'examples', book, 'figures', f.split(/[\\/]/).pop()!);
-      if (!existsSync(committed) || readFileSync(committed, 'utf8') !== readFileSync(f, 'utf8')) {
+    for (const rel of mod.drawAll(tmp)) {
+      const committed = join(root, 'examples', book, rel);
+      if (!existsSync(committed) || readFileSync(committed, 'utf8') !== readFileSync(join(tmp, rel), 'utf8')) {
         console.error(`✗ stale: ${committed}`);
         stale++;
       }
@@ -63,8 +63,8 @@ if (check) {
   if (stale) {
     console.error(`${stale} rendered asset(s) are out of date. Run: npm run assets`);
     process.exitCode = 1;
-  } else console.log(`✓ All rendered SVG assets match their sources (${Object.keys(svgs).length * 2} README SVGs, ${figureFiles} book figures).`);
+  } else console.log(`✓ All rendered SVG assets match their sources (${Object.keys(svgs).length * 2} README SVGs, ${figureFiles} book figure and model files).`);
 } else {
-  console.log(`✓ Wrote ${Object.keys(svgs).length * 2} README SVGs to assets/rendered and redrew ${figureFiles} book figure files.`);
+  console.log(`✓ Wrote ${Object.keys(svgs).length * 2} README SVGs to assets/rendered and redrew ${figureFiles} book figure and model files.`);
   console.log('  Screenshots: python scripts/screenshots.py (needs npm run demo, npm run app:build and Playwright Chromium).');
 }

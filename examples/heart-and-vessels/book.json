@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "title": "Pump and Pipes",
+    "subtitle": "A One-Chapter Sample on Cardiac Output, Blood Pressure and Vessel Resistance",
+    "authors": ["Scriptorium sample book"],
+    "profile": "medicine",
+    "citationStyle": "american-medical-association",
+    "audience": "Curious newcomers and first-year health-science students with high-school algebra.",
+    "language": "en",
+    "date": "2026-10-01",
+    "license": "Text and figures: CC BY 4.0. Code that draws the figures: MIT.",
+    "colophon": "This gallery sample was drafted with an AI assistant (Claude, by Anthropic) following the Scriptorium pipeline and checked by hand: the cited textbook sections were read for each claim (the bibliography's verification note lists what was checked), and every equation and worked example is re-derived by `tests/equations/test_medicine.py`. Figures were drawn by code (`examples/heart-and-vessels/figures.ts`) written with AI assistance. It has not been reviewed by a licensed health professional.",
+    "description": "How much blood does a resting heart pump each minute? What do the two numbers of a blood pressure reading mean, and why does narrowing a blood vessel by half make it sixteen times harder for blood to flow? This short illustrated sample explains the physiology with three short equations, worked examples checked by code, and clear limits. Educational only: not medical advice.",
+    "keywords": ["heart rate and stroke volume", "mean arterial pressure", "blood pressure explained", "vascular resistance", "cardiovascular physiology", "physiology for beginners", "illustrated physiology guide"],
+    "categories": ["Medical Books > Basic Sciences > Physiology"]
+  },
+  "preface": [
+    { "kind": "para", "text": "This is a one-chapter gallery sample for the medicine profile. It shows how a Scriptorium book handles a domain that needs extra care: every clinical number is cited, normal ranges are given with their source, and the book says plainly what it is not." },
+    { "kind": "callout", "tone": "safety", "title": "Educational only", "text": "This book is for education only. It does not give medical advice, diagnosis or treatment, and it must not be used to make decisions about anyone's health. Ask a qualified health professional about any medical question." },
+    { "kind": "callout", "tone": "safety", "title": "Not professionally reviewed", "text": "The medicine profile requires review by a licensed health professional before a book is published. This sample has **not** had that review; it is here to show the format, not to teach clinical practice." }
+  ],
+  "chapters": [
+    {
+      "id": "ch-pump-pipes",
+      "title": "Pump and Pipes",
+      "goals": [
+        "Calculate cardiac output from heart rate and stroke volume.",
+        "Estimate mean arterial pressure from a blood pressure reading.",
+        "Explain why small changes in a blood vessel's radius cause large changes in resistance to flow."
+      ],
+      "sections": [
+        {
+          "id": "sec-cardiac-output",
+          "title": "How much blood the heart pumps",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "[[Cardiac output]] is the volume of blood each ventricle pumps in one minute. It is the number of beats per minute times the volume pumped with each beat, the [[stroke volume]] [@openstax-ap2e, §19.4]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Think of filling a bucket with a cup: how fast the bucket fills depends on how big the cup is and how many scoops you make each minute. The heart can raise its output either way — by beating faster or by pushing out more with each beat." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-cardiac-output",
+                "intuition": "Output per minute is beats per minute times volume per beat.",
+                "latex": "\\mathrm{CO} = \\mathrm{HR} \\times \\mathrm{SV}",
+                "where": [
+                  { "symbol": "\\mathrm{CO}", "meaning": "cardiac output, blood pumped by each ventricle per minute", "unit": "L/min" },
+                  { "symbol": "\\mathrm{HR}", "meaning": "heart rate", "unit": "beats per minute (bpm)" },
+                  { "symbol": "\\mathrm{SV}", "meaning": "stroke volume, blood pumped by one ventricle per beat", "unit": "mL" }
+                ],
+                "example": { "text": "The textbook's resting values for a 70 kg adult are about 75 bpm and 70 mL per beat: $75 \\times 70$ mL $= 5250$ mL/min $= 5.25$ L/min, inside its stated range of 4.0–8.0 L/min [@openstax-ap2e, §19.4].", "check": "tests/equations/test_medicine.py::test_cardiac_output_example" },
+                "validity": "These are average resting values for one textbook population, not targets for any individual. The textbook gives stroke volume as 55–100 mL and resting heart rate as 60–100 bpm in some individuals [@openstax-ap2e, §19.4]; both change with exercise, posture, age and health.",
+                "figure": "fig-cardiac-output"
+              },
+              { "kind": "figure", "id": "fig-cardiac-output", "src": "figures/cardiac-output.svg", "alt": "Plot of cardiac output in litres per minute against heart rate from 50 to 110 beats per minute; three straight rising lines for stroke volumes of 100, 70 and 55 millilitres; a marked point at 75 beats per minute on the 70 millilitre line gives 5.25 litres per minute.", "caption": "Cardiac output $= \\mathrm{HR} \\times \\mathrm{SV}$ for the textbook's range of stroke volumes (55–100 mL). The marked point is its average resting example: 75 bpm × 70 mL = 5.25 L/min.", "credit": "Drawn by examples/heart-and-vessels/figures.ts from Eq. (eq-cardiac-output).", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "callout", "tone": "simplification", "title": "Simplification", "text": "The equation treats heart rate and stroke volume as independent. In the body they are linked: as heart rate rises the ventricles have less time to fill, and above about 160 bpm cardiac output actually falls because stroke volume drops faster than heart rate rises [@openstax-ap2e, §19.4]." }
+            ],
+            "takeaways": [
+              "$\\mathrm{CO} = \\mathrm{HR} \\times \\mathrm{SV}$.",
+              "A textbook resting example: 75 bpm × 70 mL = 5.25 L/min.",
+              "Ranges, not single values, describe what is typical."
+            ]
+          }
+        },
+        {
+          "id": "sec-pressure",
+          "title": "Pressure and resistance",
+          "provenance": "ai-generated",
+          "layers": {
+            "summary": [
+              { "kind": "para", "text": "A blood pressure reading has two numbers: the highest pressure in the arteries during a heartbeat (systolic) and the lowest between beats (diastolic), in millimetres of mercury (mm Hg). Their difference is the [[pulse pressure]]. A single number, the [[mean arterial pressure]], summarizes the pressure that drives blood through the tissues [@openstax-ap2e, §20.2]." },
+              { "kind": "para", "text": "How much blood flows depends on that pressure difference and on the resistance of the vessels; resistance depends on the blood's viscosity and on each vessel's length and radius [@openstax-ap2e, §20.2]." }
+            ],
+            "intuition": [
+              { "kind": "para", "text": "Drinking through a straw shows the idea: a thick milkshake (higher viscosity), a longer straw, or a narrower straw all make you suck harder for the same sip. Of the three, the width of the straw matters most." }
+            ],
+            "formal": [
+              {
+                "kind": "equation",
+                "id": "eq-map",
+                "intuition": "The mean is not halfway between the two numbers: it sits one third of the way up from the lower number to the higher one.",
+                "latex": "\\mathrm{MAP} \\approx \\mathrm{DBP} + \\frac{\\mathrm{SBP} - \\mathrm{DBP}}{3}",
+                "where": [
+                  { "symbol": "\\mathrm{MAP}", "meaning": "mean arterial pressure", "unit": "mm Hg" },
+                  { "symbol": "\\mathrm{SBP}", "meaning": "systolic blood pressure (the higher number)", "unit": "mm Hg" },
+                  { "symbol": "\\mathrm{DBP}", "meaning": "diastolic blood pressure (the lower number)", "unit": "mm Hg" }
+                ],
+                "example": { "text": "For a reading of 120/80 mm Hg, which the textbook calls a normal adult blood pressure: pulse pressure $= 120 - 80 = 40$ mm Hg, and $\\mathrm{MAP} \\approx 80 + 40/3 = 93.3$ mm Hg, inside the textbook's normal range of 70–110 mm Hg [@openstax-ap2e, §20.2].", "check": "tests/equations/test_medicine.py::test_map_example" },
+                "validity": "The textbook presents this as an approximation [@openstax-ap2e, §20.2]. It is a teaching estimate, not a substitute for a measured value, and a single reading says nothing on its own about anyone's health."
+              },
+              {
+                "kind": "equation",
+                "id": "eq-resistance-radius",
+                "intuition": "Halving a vessel's radius does not double its resistance — it multiplies it by two to the fourth power.",
+                "latex": "R \\propto \\frac{1}{r^4}",
+                "where": [
+                  { "symbol": "R", "meaning": "resistance of a blood vessel to flow", "unit": "relative (compared with the original vessel)" },
+                  { "symbol": "r", "meaning": "radius of the vessel (half its diameter)", "unit": "relative (compared with the original vessel)" }
+                ],
+                "example": { "text": "If a vessel narrows to half its radius, resistance rises $1/(1/2)^4 = 16$ times. If it widens to twice its radius, resistance falls to $1/2^4 = 1/16$, and with the same pressure difference, flow rises 16 times [@openstax-ap2e, §20.2].", "check": "tests/equations/test_medicine.py::test_resistance_radius_examples" },
+                "validity": "A proportion, not a full formula: it holds when viscosity, vessel length and pressure difference stay the same. Real blood and real vessels are more complicated; the proportion shows the direction and size of the radius effect.",
+                "figure": "fig-resistance-radius"
+              },
+              { "kind": "figure", "id": "fig-resistance-radius", "src": "figures/resistance-radius.svg", "alt": "Plot of resistance relative to the original vessel on a logarithmic axis against vessel radius relative to the original, from 0.4 to 2.2; a steeply falling curve passes 16 at half the radius, 1 at the original radius and one sixteenth at twice the radius.", "caption": "Resistance scales as $1/r^4$: half the radius gives 16 times the resistance, twice the radius one sixteenth. The vertical axis is logarithmic so both ends fit.", "credit": "Drawn by examples/heart-and-vessels/figures.ts from Eq. (eq-resistance-radius).", "provenance": "code-drawn" }
+            ],
+            "limits": [
+              { "kind": "callout", "tone": "safety", "title": "Not for self-assessment", "text": "These relationships describe how the circulation works in general. Do not use them to interpret your own or anyone else's blood pressure or heart rate; a health professional considers far more than one equation." }
+            ],
+            "takeaways": [
+              "Pulse pressure is systolic minus diastolic: 40 mm Hg for 120/80.",
+              "$\\mathrm{MAP} \\approx \\mathrm{DBP} + (\\mathrm{SBP} - \\mathrm{DBP})/3$; 120/80 gives about 93 mm Hg.",
+              "Resistance scales as $1/r^4$, so radius dominates flow."
+            ]
+          }
+        }
+      ],
+      "summary": [
+        "Cardiac output is heart rate times stroke volume; a textbook resting example is 5.25 L/min.",
+        "Mean arterial pressure can be estimated from a blood pressure reading; for 120/80 it is about 93 mm Hg.",
+        "Vessel resistance scales as one over the radius to the fourth power, so small changes in radius have large effects on flow."
+      ],
+      "keyEquations": ["eq-cardiac-output", "eq-map", "eq-resistance-radius"],
+      "furtherReading": ["openstax-ap2e"]
+    }
+  ],
+  "glossary": [
+    { "term": "cardiac output", "definition": "The volume of blood pumped by each ventricle of the heart in one minute." },
+    { "term": "stroke volume", "definition": "The volume of blood pumped by one ventricle with each beat." },
+    { "term": "pulse pressure", "definition": "Systolic blood pressure minus diastolic blood pressure." },
+    { "term": "mean arterial pressure", "definition": "The average pressure in the arteries over one heartbeat; often estimated from the systolic and diastolic readings." }
+  ],
+  "bibliography": "references.json"
+}

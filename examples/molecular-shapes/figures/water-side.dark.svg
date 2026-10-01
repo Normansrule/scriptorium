@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" width="150" height="150" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Water (H2O), bent, side view</title>
+<desc id="d">3 atoms</desc>
+<rect width="150" height="150" fill="#0D1117"/>
+<circle cx="75.0" cy="108.1" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="71.2" cy="104.3" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<line x1="75.0" y1="75.0" x2="75.0" y2="108.1" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<g><circle cx="75.0" cy="108.1" r="7.4" fill="#FFFFFF"/><text x="75.0" y="112.4" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<circle cx="75.0" cy="75.0" r="16.2" fill="#FF0D0D" stroke="#0D1117" stroke-width="1.25"/><circle cx="69.8" cy="69.8" r="4.5" fill="#FFFFFF" fill-opacity="0.45"/>
+<line x1="75.0" y1="75.0" x2="75.0" y2="108.1" stroke="#8B949E" stroke-width="4.9" stroke-linecap="round"/>
+<g><circle cx="75.0" cy="75.0" r="10.0" fill="#FF0D0D"/><text x="75.0" y="79.3" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">O</text></g>
+<circle cx="75.0" cy="108.1" r="11.9" fill="#FFFFFF" stroke="#0D1117" stroke-width="1.25"/><circle cx="71.2" cy="104.3" r="3.3" fill="#FFFFFF" fill-opacity="0.45"/>
+<g><circle cx="75.0" cy="108.1" r="7.4" fill="#FFFFFF"/><text x="75.0" y="112.4" font-size="12" fill="#1F2328" text-anchor="middle" font-weight="700">H</text></g>
+<text x="144.0" y="144.0" font-size="12" fill="#8B949E" text-anchor="end">lengths not to scale</text>
+</svg>

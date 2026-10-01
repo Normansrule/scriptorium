@@ -14,6 +14,8 @@ import { AnthropicProvider } from '../../src/llm/provider.ts';
 import { numberBook } from '../../src/render/numbering.ts';
 import { formatBibliography } from '../../src/render/cite.ts';
 import { bookCss, renderHtml } from '../../src/render/html.ts';
+import { mountAll } from '../../src/render/viewer3d-client.ts';
+import { Model } from '../../src/core/molecule.ts';
 import { buildDisclosure } from '../../src/disclosure/ai-disclosure.ts';
 import { cssVariables } from '../../src/core/style.ts';
 import localeXml from '../../styles/locales-en-US.xml?raw';
@@ -28,12 +30,13 @@ const profileFiles = import.meta.glob('../../profiles/*.json', { eager: true, im
 const styleFiles = import.meta.glob('../../styles/*.csl', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
 const PROFILES = Object.values(profileFiles).map((p) => Profile.parse(p));
 const STYLES: Record<string, string> = Object.fromEntries(Object.entries(styleFiles).map(([path, xml]) => [path.split('/').pop()!.replace(/\.csl$/, ''), xml]));
-const STYLE_LABELS: Record<string, string> = { ieee: 'IEEE', 'american-chemical-society': 'ACS', 'american-medical-association': 'AMA' };
+const STYLE_LABELS: Record<string, string> = { ieee: 'IEEE', 'american-chemical-society': 'ACS', 'american-medical-association': 'AMA', nature: 'Nature' };
 
 // Sample books: every folder in examples/ with a book.json.
 const sampleBooks = import.meta.glob('../../examples/*/book.json', { eager: true, import: 'default' }) as Record<string, unknown>;
 const sampleRefs = import.meta.glob('../../examples/*/references.json', { eager: true, import: 'default' }) as Record<string, unknown>;
 const sampleFigures = import.meta.glob('../../examples/*/figures/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const sampleModels = import.meta.glob('../../examples/*/models/*.json', { import: 'default', eager: true }) as Record<string, unknown>;
 const SAMPLES = Object.keys(sampleBooks)
   .map((path) => {
     const dir = path.split('/').slice(-2, -1)[0]!;
@@ -72,7 +75,7 @@ type View = 'home' | 'outline' | 'progress' | 'proof' | 'settings';
 let view: View = 'home';
 let st: PipelineState | null = null;
 let budget: Budget | null = null;
-let sample: { dir: string; book: Book; refs: Reference[]; figures: Record<string, string> } | null = null;
+let sample: { dir: string; book: Book; refs: Reference[]; figures: Record<string, string>; models: Record<string, Model> } | null = null;
 const log: string[] = [];
 let busy = false;
 
@@ -309,22 +312,27 @@ function figureMap(): Record<string, string> {
   return out;
 }
 
+function modelMap(): Record<string, Model> {
+  return sample ? sample.models : (st?.models ?? {});
+}
+
 function proofDom(book: Book, refs: Reference[]): HTMLElement {
   const numbering = numberBook(book);
   const order = [...numbering.cite.keys()];
   const style = STYLES[book.meta.citationStyle] ?? STYLES.ieee!;
   const bib = formatBibliography(refs, order, { styleXml: style, localeXml }, 'html');
   const d = buildDisclosure(book, { figureScriptsByAi: true });
-  const html = renderHtml(book, { numbering, bibliography: bib, refs, figureBase: 'figures/', disclosure: { text: d.text.answer, images: d.images.answer, translations: d.translations.answer } });
+  const html = renderHtml(book, { numbering, bibliography: bib, refs, figureBase: 'figures/', models: modelMap(), disclosure: { text: d.text.answer, images: d.images.answer, translations: d.translations.answer } });
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const inner = doc.querySelector('main')!.innerHTML;
-  const clean = DOMPurify.sanitize(inner, { USE_PROFILES: { html: true, mathMl: true }, ADD_TAGS: ['picture', 'source', 'annotation', 'semantics'], ADD_ATTR: ['srcset', 'media', 'loading'], ADD_URI_SAFE_ATTR: ['media', 'aria-hidden', 'encoding'] });
+  const clean = DOMPurify.sanitize(inner, { USE_PROFILES: { html: true, mathMl: true }, ADD_TAGS: ['picture', 'source', 'annotation', 'semantics'], ADD_ATTR: ['srcset', 'media', 'loading', 'data-model'], ADD_URI_SAFE_ATTR: ['media', 'aria-hidden', 'encoding'] });
   const wrap = h('div', { class: 'proof' });
   wrap.innerHTML = clean; // sanitized above
   const figs = figureMap();
   const dataUrl = (file: string) => (figs[file] ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(figs[file])}` : '');
   wrap.querySelectorAll('img[src^="figures/"]').forEach((img) => img.setAttribute('src', dataUrl(img.getAttribute('src')!.slice(8))));
   wrap.querySelectorAll('source[srcset^="figures/"]').forEach((s) => s.setAttribute('srcset', dataUrl(s.getAttribute('srcset')!.slice(8))));
+  mountAll(wrap); // rotatable 3D models (the stills stay as the fallback)
   return wrap;
 }
 
@@ -341,7 +349,7 @@ function proofView(): Node {
   if (!book) return h('p', {}, 'Nothing to proof yet.');
   const waiting = !sample && st?.status.export === 'waiting-for-you';
   const d = buildDisclosure(book, { figureScriptsByAi: true });
-  const project = { book, references: refs, figures: figureMap() };
+  const project = { book, references: refs, figures: figureMap(), models: modelMap() };
   const picker = sample
     ? h('div', { class: 'sample-picker', role: 'tablist', 'aria-label': 'Sample books' },
         ...SAMPLES.map((s) => h('button', { role: 'tab', 'aria-selected': String(s.dir === sample!.dir), class: s.dir === sample!.dir ? 'tab active' : 'tab', onclick: () => openSample(s.dir) }, `${PROFILES.find((p) => p.id === s.book.meta.profile)?.name ?? s.book.meta.profile}: ${s.book.meta.title}`)))
@@ -369,7 +377,9 @@ function openSample(dir: string): void {
   const s = SAMPLES.find((x) => x.dir === dir) ?? SAMPLES[0]!;
   const figures: Record<string, string> = {};
   for (const [path, svg] of Object.entries(sampleFigures)) if (path.includes(`/examples/${s.dir}/`)) figures[path.split('/').pop()!] = svg;
-  sample = { ...s, figures };
+  const models: Record<string, Model> = {};
+  for (const [path, m] of Object.entries(sampleModels)) if (path.includes(`/examples/${s.dir}/`)) models[`models/${path.split('/').pop()!}`] = Model.parse(m);
+  sample = { ...s, figures, models };
   st = null;
   budget = null;
   go('proof');

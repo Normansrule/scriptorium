@@ -2,20 +2,28 @@
 /**
  * Scriptorium command line.
  *
- *   npm run build -- examples/rc-circuits/book.json            build web book + print PDF into dist/
+ *   npm run build -- examples/rc-circuits                      web book, print PDF, cover, EPUB, metadata sheet → dist/
+ *   npm run build:all                                           every book under examples/, with a summary
+ *     flags: --strict (exit 1 on any failed check) --allow-short (sample books may be under 24 pages) --epubcheck
+ *   npm run cli -- epubcheck dist/rc-circuits/book.epub         validate an EPUB with EPUBCheck (needs Java)
  *   npm run cli -- generate --topic "How lithium-ion batteries work"   write a new book (needs ANTHROPIC_API_KEY)
  *   npm run cli -- build-project scriptorium-project.json      build a project downloaded from the web app
  *   npm run cli -- verify-refs examples/rc-circuits/book.json  re-check every DOI against Crossref
  *   npm run cli -- spine --pages 212 --paper white --trim 6x9  cover geometry for KDP
  *   npm run cli -- preflight dist/rc-circuits/book.pdf --trim 6x9
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { basename, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { buildDisclosure } from '../disclosure/ai-disclosure.ts';
 import { coverGeometry, findTrim, type Paper } from '../kdp/specs.ts';
-import { preflightInterior } from '../kdp/preflight.ts';
+import { preflightInterior, type Check } from '../kdp/preflight.ts';
+import { preflightCover, preflightEbookCover } from '../kdp/cover-preflight.ts';
+import { checkMetadata, metadataSheet } from '../kdp/metadata.ts';
+import { exportCover, exportEbookCover } from '../node/export-cover.ts';
+import { exportEpub } from '../node/export-epub.ts';
 import { formatBibliography } from '../render/cite.ts';
 import { numberBook } from '../render/numbering.ts';
 import { verifyReference } from '../research/scholarly.ts';
@@ -26,6 +34,7 @@ import { approve, newState, runPipeline, Outline, STAGES } from '../core/pipelin
 import { AnthropicProvider } from '../llm/provider.ts';
 import { Budget } from '../llm/budget.ts';
 import { loadProfile } from '../node/profiles.ts';
+import { Model } from '../core/molecule.ts';
 
 const rel = (p: string) => relative(process.cwd(), p) || '.';
 
@@ -39,49 +48,142 @@ function parseTrim(s: string) {
   return findTrim(w!, h!);
 }
 
-async function build(args: string[]): Promise<void> {
+export interface BuildSummary {
+  name: string;
+  pages: number | null;
+  failed: string[];
+  warnings: string[];
+}
+
+async function build(args: string[]): Promise<BuildSummary> {
   const t0 = Date.now();
   const bookPath = args.find((a) => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.startsWith('--')) ?? 'examples/rc-circuits/book.json';
-  const { dir, book, refs } = loadBook(bookPath);
+  const { dir, book, refs, models } = loadBook(bookPath);
   const name = basename(dir);
   const out = resolve(flag(args, 'out', join(REPO_ROOT, 'dist', name))!);
   mkdirSync(out, { recursive: true });
+  const summary: BuildSummary = { name, pages: null, failed: [], warnings: [] };
+  const report = (label: string, checks: Check[]) => {
+    const bad = checks.filter((c) => !c.ok);
+    console.log(`${bad.length ? '✗' : '✓'} ${label}: ${checks.length - bad.length}/${checks.length} checks pass`);
+    for (const c of bad) console.log(`    ✗ ${c.rule}: ${c.detail}`);
+    // --allow-short: one-chapter gallery samples are below KDP's 24-page minimum on purpose.
+    const counted = args.includes('--allow-short') ? bad.filter((c) => c.rule !== 'Page count within KDP limits') : bad;
+    summary.failed.push(...counted.map((c) => `${label} — ${c.rule}`));
+    summary.warnings.push(...bad.filter((c) => !counted.includes(c)).map((c) => `${label} — ${c.rule} (allowed for a sample)`));
+  };
 
   const figScript = join(dir, 'figures.ts');
   if (existsSync(figScript)) {
     const mod = (await import(pathToFileURL(figScript).href)) as { drawAll?: () => string[] };
     const n = mod.drawAll?.().length ?? 0;
-    console.log(`✓ Drew ${n} figure files (light + dark)`);
+    console.log(`✓ Drew ${n} figure and model files (light + dark)`);
   }
 
+  const profile = loadProfile(join(REPO_ROOT, 'profiles'), book.meta.profile);
   const numbering = numberBook(book);
   const order = [...numbering.cite.keys()];
   const assets = cslAssets(book.meta.citationStyle);
   const disclosure = buildDisclosure(book, { figureScriptsByAi: /written with AI assistance/i.test(book.meta.colophon ?? '') });
   const d = { text: disclosure.text.answer, images: disclosure.images.answer, translations: disclosure.translations.answer };
+  const htmlBib = formatBibliography(refs, order, assets, 'html');
 
-  const htmlPath = exportWeb(book, dir, { numbering, bibliography: formatBibliography(refs, order, assets, 'html'), refs, disclosure: d }, join(out, 'web'));
+  const htmlPath = exportWeb(book, dir, { numbering, bibliography: htmlBib, refs, disclosure: d, models, webUrl: book.meta.webUrl }, join(out, 'web'));
   console.log(`✓ Web book  → ${rel(htmlPath)}`);
 
+  const preflightAll: Record<string, unknown> = {};
+  const trim = parseTrim(flag(args, 'trim', '6x9')!);
+  const paper = (flag(args, 'paper', 'white') as Paper) ?? 'white';
   if (!args.includes('--skip-pdf')) {
-    const trim = parseTrim(flag(args, 'trim', '6x9')!);
-    const res = await exportPdf(book, dir, { numbering, bibliography: formatBibliography(refs, order, assets, 'text'), refs, disclosure: d }, { trimWidthIn: trim.width, trimHeightIn: trim.height, insideIn: 0.75, outsideIn: 0.625, topIn: 0.75, bottomIn: 0.8, bleed: false });
+    const res = await exportPdf(book, dir, { numbering, bibliography: formatBibliography(refs, order, assets, 'text'), refs, disclosure: d, webUrl: book.meta.webUrl }, { trimWidthIn: trim.width, trimHeightIn: trim.height, insideIn: 0.75, outsideIn: 0.625, topIn: 0.75, bottomIn: 0.8, bleed: false });
     const pdfPath = join(out, 'book.pdf');
     writeFileSync(pdfPath, res.pdf);
     writeFileSync(join(out, 'book.typ'), res.typst);
     res.diagnostics.forEach((m) => console.log(`  ${m}`));
+    summary.pages = res.pages;
     console.log(`✓ Print PDF → ${rel(pdfPath)} (${res.pages} pages, ${trim.label})`);
+    const interior = await preflightInterior(res.pdf, { trim, paper, bleed: false, insideMarginIn: res.layout.insideIn });
+    report('KDP interior pre-flight', interior);
+    preflightAll.interior = interior;
 
-    const checks = await preflightInterior(res.pdf, { trim, paper: (flag(args, 'paper', 'white') as Paper) ?? 'white', bleed: false, insideMarginIn: res.layout.insideIn });
-    writeFileSync(join(out, 'preflight.json'), JSON.stringify(checks, null, 2));
-    const failed = checks.filter((c) => !c.ok);
-    console.log(`${failed.length ? '✗' : '✓'} KDP pre-flight: ${checks.length - failed.length}/${checks.length} checks pass`);
-    for (const c of failed) console.log(`    ✗ ${c.rule}: ${c.detail}`);
-    if (failed.length && args.includes('--strict')) process.exitCode = 1;
+    const cover = await exportCover(book, dir, { trim, pages: res.pages, paper });
+    writeFileSync(join(out, 'cover.pdf'), cover.pdf);
+    writeFileSync(join(out, 'cover.typ'), cover.typst);
+    const g = cover.layout.geom;
+    console.log(`✓ Cover PDF → ${rel(join(out, 'cover.pdf'))} (${g.width.toFixed(3)}" × ${g.height.toFixed(3)}", spine ${g.spine.toFixed(3)}"${g.spineTextAllowed ? ', spine text' : ', no spine text'})`);
+    const coverChecks = await preflightCover(cover.pdf, g, cover.layout, trim);
+    report('KDP cover pre-flight', coverChecks);
+    preflightAll.cover = coverChecks;
   }
+
+  const ebookCover = exportEbookCover(book, dir);
+  writeFileSync(join(out, 'ebook-cover.jpg'), ebookCover.jpeg);
+  console.log(`✓ Ebook cover → ${rel(join(out, 'ebook-cover.jpg'))} (${ebookCover.width} × ${ebookCover.height} px${ebookCover.border ? ', gray border for a light cover' : ''})`);
+  const ebc = preflightEbookCover(ebookCover.jpeg);
+  report('Ebook cover check', ebc);
+  preflightAll.ebookCover = ebc;
+
+  const epub = exportEpub(book, dir, { numbering, bibliography: htmlBib, refs, disclosure: d, webUrl: book.meta.webUrl }, { coverJpeg: ebookCover.jpeg });
+  writeFileSync(join(out, 'book.epub'), epub.epub);
+  console.log(`✓ EPUB 3    → ${rel(join(out, 'book.epub'))} (${(epub.epub.byteLength / 1024).toFixed(0)} KB)`);
+  if (args.includes('--epubcheck')) {
+    const r = runEpubcheck(join(out, 'book.epub'));
+    console.log(`${r.ok ? '✓' : '✗'} EPUBCheck: ${r.summary}`);
+    if (!r.ok) summary.failed.push(`EPUBCheck — ${r.summary}`);
+  }
+
+  const meta = checkMetadata(book.meta);
+  writeFileSync(join(out, 'kdp-metadata.txt'), metadataSheet(book.meta, meta));
+  const metaErr = meta.filter((c) => c.level === 'error');
+  const metaWarn = meta.filter((c) => c.level === 'warning');
+  console.log(`${metaErr.length ? '✗' : '✓'} KDP metadata → ${rel(join(out, 'kdp-metadata.txt'))} (${metaErr.length} errors, ${metaWarn.length} warnings)`);
+  for (const c of [...metaErr, ...metaWarn]) console.log(`    ${c.level === 'error' ? '✗' : '!'} ${c.rule}: ${c.detail}`);
+  summary.failed.push(...metaErr.map((c) => `KDP metadata — ${c.rule}`));
+  summary.warnings.push(...metaWarn.map((c) => `KDP metadata — ${c.rule}`));
+  preflightAll.metadata = meta;
+  writeFileSync(join(out, 'preflight.json'), JSON.stringify(preflightAll, null, 2));
+
   writeFileSync(join(out, 'ai-disclosure.json'), JSON.stringify(disclosure, null, 2));
   console.log(`✓ AI disclosure → ${rel(join(out, 'ai-disclosure.json'))} (text: ${d.text}, images: ${d.images}, translations: ${d.translations})`);
+  if (profile.requiresProfessionalReview) {
+    const msg = `The ${profile.name} profile requires review by a licensed professional before publishing.`;
+    console.log(`! Professional review: ${msg}`);
+    summary.warnings.push(msg);
+  }
+  if (summary.failed.length && args.includes('--strict')) process.exitCode = 1;
   console.log(`Done in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  return summary;
+}
+
+/** Build every book under examples/ (each into dist/<folder>), then print one line per book. */
+async function buildAll(args: string[]): Promise<void> {
+  const root = join(REPO_ROOT, 'examples');
+  const books = readdirSync(root).filter((d) => existsSync(join(root, d, 'book.json'))).sort();
+  const results: BuildSummary[] = [];
+  for (const b of books) {
+    console.log(`\n── ${b}`);
+    results.push(await build([join(root, b, 'book.json'), ...args.filter((a) => a !== '--strict')]));
+  }
+  console.log('\nSummary');
+  for (const r of results) console.log(`  ${r.failed.length ? '✗' : '✓'} ${r.name.padEnd(20)} ${String(r.pages ?? '–').padStart(4)} pages  ${r.failed.length ? r.failed.join('; ') : r.warnings.length ? `passes; ${r.warnings.length} warning(s)` : 'all checks pass'}`);
+  if (args.includes('--strict') && results.some((r) => r.failed.length)) process.exitCode = 1;
+}
+
+/** Validate an EPUB with the W3C EPUBCheck (bundled jar; needs Java). */
+export function runEpubcheck(file: string): { ok: boolean; summary: string } {
+  const jar = join(REPO_ROOT, 'node_modules', 'epubcheck-static', 'vendor', 'epubcheck.jar');
+  const r = spawnSync('java', ['-jar', jar, '--quiet', file], { encoding: 'utf8' });
+  if (r.error) return { ok: false, summary: 'Java is not installed, so EPUBCheck could not run.' };
+  const lines = `${r.stdout}\n${r.stderr}`.split('\n').filter((l) => /^(ERROR|FATAL|WARNING)/.test(l));
+  return { ok: r.status === 0, summary: r.status === 0 ? `no errors${lines.length ? ` (${lines.length} warnings)` : ''}` : lines.slice(0, 5).join(' | ') || `exit code ${r.status}` };
+}
+
+async function epubcheck(args: string[]): Promise<void> {
+  const file = args[0];
+  if (!file) throw new Error('Usage: epubcheck <book.epub>');
+  const r = runEpubcheck(file);
+  console.log(`${r.ok ? '✓' : '✗'} EPUBCheck: ${r.summary}`);
+  if (!r.ok) process.exitCode = 1;
 }
 
 async function verifyRefs(args: string[]): Promise<void> {
@@ -106,7 +208,7 @@ async function verifyRefs(args: string[]): Promise<void> {
 async function buildProject(args: string[]): Promise<void> {
   const file = args.find((a) => !a.startsWith('--'));
   if (!file) throw new Error('Usage: build-project <scriptorium-project.json>');
-  const project = JSON.parse(readFileSync(file, 'utf8')) as { book: { meta: { title: string } }; references: unknown[]; figures: Record<string, string> };
+  const project = JSON.parse(readFileSync(file, 'utf8')) as { book: { meta: { title: string } }; references: unknown[]; figures: Record<string, string>; models?: Record<string, unknown> };
   const slug = project.book.meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'book';
   const dir = join(REPO_ROOT, 'books', slug);
   mkdirSync(join(dir, 'figures'), { recursive: true });
@@ -116,6 +218,11 @@ async function buildProject(args: string[]): Promise<void> {
     if (!/^[a-z0-9-]+(\.dark)?\.svg$/.test(name)) throw new Error(`Refusing unexpected figure file name: ${name}`);
     if (/<script|\son\w+=|javascript:/i.test(svg)) throw new Error(`Figure ${name} contains script; refusing to write it.`);
     writeFileSync(join(dir, 'figures', name), svg);
+  }
+  for (const [path, model] of Object.entries(project.models ?? {})) {
+    if (!/^models\/[a-z0-9-]+\.json$/.test(path)) throw new Error(`Refusing unexpected model file name: ${path}`);
+    mkdirSync(join(dir, 'models'), { recursive: true });
+    writeFileSync(join(dir, path), JSON.stringify(Model.parse(model), null, 1) + '\n'); // schema-checked: numbers and short strings only
   }
   console.log(`✓ Unpacked project → ${rel(dir)}`);
   await build([join(dir, 'book.json'), ...args.filter((a) => a !== file)]);
@@ -155,7 +262,7 @@ async function generate(args: string[]): Promise<void> {
   await runPipeline(st, deps);
   writeFileSync(join(work, 'report.json'), JSON.stringify(st.report, null, 2));
   if (st.status.export !== 'waiting-for-you') throw new Error(`Stopped: ${st.report.at(-1)?.message}. Report: ${rel(join(work, 'report.json'))}`);
-  const project = { book: st.book, references: st.verified, figures: Object.fromEntries(Object.entries(st.figures).flatMap(([id, f]) => [[`${id.slice(4)}.svg`, f.light], [`${id.slice(4)}.dark.svg`, f.dark]])) };
+  const project = { book: st.book, references: st.verified, figures: Object.fromEntries(Object.entries(st.figures).flatMap(([id, f]) => [[`${id.slice(4)}.svg`, f.light], [`${id.slice(4)}.dark.svg`, f.dark]])), models: st.models };
   const projectPath = join(work, 'scriptorium-project.json');
   writeFileSync(projectPath, JSON.stringify(project, null, 2));
   const problems = st.report.filter((r) => r.level === 'problem').length;
@@ -185,7 +292,7 @@ async function preflight(args: string[]): Promise<void> {
 // Read .env if present (Node ≥ 20.12). Secrets stay in the process environment only.
 if (existsSync(join(REPO_ROOT, '.env'))) process.loadEnvFile(join(REPO_ROOT, '.env'));
 
-export const commands: Record<string, (a: string[]) => unknown> = { build, generate, 'build-project': buildProject, 'verify-refs': verifyRefs, spine, preflight };
+export const commands: Record<string, (a: string[]) => unknown> = { build, 'build-all': buildAll, epubcheck, generate, 'build-project': buildProject, 'verify-refs': verifyRefs, spine, preflight };
 
 const [cmd, ...rest] = process.argv.slice(2);
 if (!cmd || !commands[cmd]) {

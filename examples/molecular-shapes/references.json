@@ -1,0 +1,31 @@
+[
+  {
+    "id": "openstax-chem2e",
+    "type": "book",
+    "title": "Chemistry 2e",
+    "author": [
+      { "family": "Flowers", "given": "Paul" },
+      { "family": "Theopold", "given": "Klaus" },
+      { "family": "Langley", "given": "Richard" },
+      { "family": "Robinson", "given": "William R." }
+    ],
+    "publisher": "OpenStax",
+    "issued": { "date-parts": [[2019, 2, 14]] },
+    "URL": "https://openstax.org/details/books/chemistry-2e",
+    "accessed": { "date-parts": [[2026, 10, 1]] },
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-10-01",
+      "note": "Publisher pages read for each cited section: §7.6 gives the H–O–H angle in water as 104.5°, all angles in methane as 109.5°, CO₂ as linear (180°), and H–N–H in ammonia as slightly smaller than the 109.5° tetrahedral angle; §3.3 defines molarity as moles of solute per liter of solution and gives the dilution equation C₁V₁ = C₂V₂; §14.2 defines pH = −log[H₃O⁺] and gives [H₃O⁺] = 1.0 × 10⁻⁷ M and pH 7.00 for pure water at 25 °C.",
+      "supports": [
+        "water bent, 104.5° (§7.6)",
+        "methane tetrahedral, 109.5° (§7.6)",
+        "CO₂ linear, 180° (§7.6)",
+        "ammonia H–N–H slightly below 109.5° (§7.6)",
+        "molarity = mol solute / L solution; C₁V₁ = C₂V₂ (§3.3)",
+        "pH = −log[H₃O⁺]; pure water at 25 °C: 1.0 × 10⁻⁷ M, pH 7.00 (§14.2)"
+      ]
+    }
+  }
+]

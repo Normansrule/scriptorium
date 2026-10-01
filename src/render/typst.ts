@@ -3,7 +3,8 @@
  * in src/kdp/specs.ts. Every text string goes through `escMarkup`; math goes through the
  * LaTeX→Typst converter; nothing from the book is ever emitted as raw Typst code.
  */
-import type { Block, Book, Chapter, Equation, Reference, Section } from '../core/book.ts';
+import type { Block, Book, Chapter, Equation, Model3D, Reference, Section } from '../core/book.ts';
+import { qrSvg } from './qr.ts';
 import { fonts, roles, surface } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { latexToTypst } from './latex-typst.ts';
@@ -50,6 +51,8 @@ export interface TypstContext {
   bibliography: Map<string, string>; // id → formatted text
   refs: Reference[];
   disclosure?: { text: string; images: string; translations: string };
+  /** Address of the web edition (book.meta.webUrl); 3D figures link and QR-code to it. */
+  webUrl?: string;
 }
 
 function inline(tokens: InlineToken[], ctx: TypstContext): string {
@@ -111,7 +114,28 @@ function equation(b: Equation, ctx: TypstContext): string {
 `;
 }
 
-/** Extension point: extra block kinds (e.g. 3D models) register a Typst renderer here. */
+function model3d(b: Model3D, ctx: TypstContext): string {
+  const num = ctx.numbering.figure.get(b.id)!;
+  const n = b.views.length;
+  const views = b.views
+    .map((v) => `[#image("${escString(v.src)}", width: 100%, alt: "${escString(`${b.alt} View: ${v.label}.`)}") #v(-6pt) #align(center)[#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${escMarkup(v.label)}]]]`)
+    .join(', ');
+  const url = ctx.webUrl ? `${ctx.webUrl}#${b.id}` : '';
+  const caption = `#text(font: "${fonts.sans}", size: 8.5pt)[#strong[Figure ${num}] — ${md(b.caption, ctx)} #text(fill: ${C.muted})[${md(b.credit, ctx)}]${
+    url ? ` \\ #text(fill: ${C.muted})[Rotate it in 3D: ${escMarkup(url)}]` : ''
+  }]`;
+  const bottom = url
+    ? `#grid(columns: (1fr, 0.62in), gutter: 8pt, align: (left + horizon, right + horizon), [${caption}], [#image(bytes("${escString(qrSvg(url))}"), format: "svg", width: 0.62in, alt: "QR code linking to the interactive 3D model")])`
+    : caption;
+  return `#place(auto, float: true, clearance: 14pt)[#block(breakable: false, width: 100%)[
+  #align(center)[#box(width: ${Math.round(b.width * 100)}%)[#grid(columns: (1fr,) * ${n}, gutter: 6pt, ${views})]]
+  #v(4pt)
+  ${bottom}
+]]
+`;
+}
+
+/** Extension point: extra block kinds register a Typst renderer here. */
 export const extraTypstBlocks: Record<string, (b: Block, ctx: TypstContext) => string> = {};
 
 function block(b: Block, ctx: TypstContext): string {
@@ -140,6 +164,8 @@ function block(b: Block, ctx: TypstContext): string {
 ]]
 `;
     }
+    case 'model3d':
+      return model3d(b, ctx);
     default: {
       const r = extraTypstBlocks[(b as { kind: string }).kind];
       if (!r) throw new Error(`No print renderer for block kind "${(b as { kind: string }).kind}".`);

@@ -57,7 +57,13 @@ Block is one of:
  {"kind":"callout","tone":"simplification"|"consensus"|"debate"|"safety"|"example","title":string,"text":string}
  {"kind":"equation","id":"eq-<kebab>","intuition":string,"latex":string,"where":[{"symbol":latex,"meaning":string,"unit":string}],"example":{"text":string,"check":"pending"},"validity":string}
  {"kind":"plot","id":"fig-<kebab>","alt":string,"caption":string,"x":{"label":string,"from":number,"to":number,"log":bool},"y":{"label":string,"from":number,"to":number},"series":[{"label":string,"expr":string}]}
-Plot expressions use only: numbers, x, + - * / ^, parentheses, exp ln log10 sqrt sin cos tan atan abs, pi, e. At most 3 series.
+Plot expressions use only: numbers, x, + - * / ^, parentheses, exp ln log10 sqrt sin cos tan atan abs, pi, e. At most 3 series.${
+    p.figureTypes.some((f) => f.id === 'molecule-3d' || f.id === 'structure-3d')
+      ? `
+ {"kind":"structure","id":"fig-<kebab>","source":"pubchem"|"pdb","name":string,"alt":string,"caption":string}
+Use "structure" for a 3D model: "pubchem" with a compound's common name (small molecules), or "pdb" with a four-character Protein Data Bank ID you are sure of (proteins, nucleic acids). The coordinates are downloaded from that database; never invent coordinates.`
+      : ''
+  }
 Every equation must have an intuition sentence, every symbol defined with its unit, a worked numeric example, and the conditions where it stops being valid. Captions state the takeaway first.`;
 }
 

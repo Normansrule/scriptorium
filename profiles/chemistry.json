@@ -1,0 +1,35 @@
+{
+  "id": "chemistry",
+  "name": "Chemistry",
+  "description": "General, physical, organic and analytical chemistry: structure, bonding, reactions, solutions, thermodynamics.",
+  "citationStyle": "american-chemical-society",
+  "databases": ["crossref", "openalex", "pubchem"],
+  "figureTypes": [
+    { "id": "molecule-3d", "name": "3D molecule", "description": "Ball-and-stick model from PubChem 3D conformers or from cited geometry; interactive on the web, two or three views in print." },
+    { "id": "reaction-mechanism", "name": "Reaction mechanism", "description": "Code-drawn structures with curved arrows showing electron movement, step by step." },
+    { "id": "plot", "name": "Plot from equations or data", "description": "Titration curves, concentration over time, phase diagrams from cited data." },
+    { "id": "energy-diagram", "name": "Energy diagram", "description": "Reaction coordinate diagram with labeled activation energy and enthalpy change." }
+  ],
+  "units": {
+    "system": "SI",
+    "conventions": [
+      "Amount of substance in moles (mol); concentration in moles per liter (mol/L, written M), and say so at first use.",
+      "Write chemical formulas with true subscripts (H₂O) and charges as superscripts (H₃O⁺).",
+      "Give temperatures in kelvin for gas laws and thermodynamics; degrees Celsius are fine for lab conditions, with the conversion stated once.",
+      "Bond lengths in picometres (pm) or ångström (Å), never mixed within a book."
+    ]
+  },
+  "safetyNotes": [
+    "This book explains chemistry; it is not a laboratory manual. Do not try reactions described here without proper training, safety equipment and supervision, and always read the safety data sheet of every chemical first."
+  ],
+  "restrictedDetail": [
+    "Synthesis routes, precursors, quantities or conditions for explosives, chemical weapons, toxins or controlled drugs",
+    "Ways to obtain, concentrate or weaponize hazardous substances",
+    "Step-by-step procedures that release toxic gases"
+  ],
+  "requiresProfessionalReview": false,
+  "draftingNotes": [
+    "Name compounds by their IUPAC name with the common name in parentheses at first use.",
+    "When drawing a 3D structure, say whether the coordinates come from a database (cite it) or are a schematic shape model."
+  ]
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "openstax-ap2e",
+    "type": "book",
+    "title": "Anatomy and Physiology 2e",
+    "author": [
+      { "family": "Betts", "given": "J. Gordon" },
+      { "family": "Young", "given": "Kelly A." },
+      { "family": "Wise", "given": "James A." },
+      { "family": "Johnson", "given": "Eddie" },
+      { "family": "Poe", "given": "Brandon" },
+      { "family": "Kruse", "given": "Dean H." },
+      { "family": "Korol", "given": "Oksana" },
+      { "family": "Johnson", "given": "Jody E." },
+      { "family": "Womble", "given": "Mark" },
+      { "family": "DeSaix", "given": "Peter" }
+    ],
+    "publisher": "OpenStax",
+    "publisher-place": "Houston, TX, USA",
+    "issued": { "date-parts": [[2022, 4, 20]] },
+    "URL": "https://openstax.org/details/books/anatomy-and-physiology-2e",
+    "accessed": { "date-parts": [[2026, 10, 1]] },
+    "verification": {
+      "status": "verified",
+      "method": "publisher-page",
+      "checkedAt": "2026-10-01",
+      "note": "Publisher pages read for each cited section; authors, place and date taken from the attribution block on the §19.4 page. §19.4 defines cardiac output as the blood pumped by each ventricle in one minute, CO = HR × SV, with a mean resting SV of about 70 mL (range 55–100 mL), an average resting HR of about 75 bpm (60–100 in some individuals) and a mean CO of 5.25 L/min (range 4.0–8.0 L/min); as HR rises there is less time for the ventricles to fill, and above 160 bpm CO decreases as SV falls faster than HR increases. §20.2 gives MAP ≈ diastolic + (systolic − diastolic)/3 with the 120/80 example ≈ 93.33, a normal MAP range of 70–110 mm Hg, pulse pressure as systolic minus diastolic, 120/80 as a normal adult blood pressure, blood flow = ΔP / resistance, viscosity, length and diameter as factors of resistance, resistance inversely proportional to radius to the fourth power, and the half-radius (16× resistance) and double-radius (1/16 resistance, 16× flow) examples.",
+      "supports": [
+        "CO = HR × SV; SV ≈ 70 mL (55–100 mL); HR ≈ 75 bpm (60–100); CO 5.25 L/min (4.0–8.0) (§19.4)",
+        "less filling time at higher HR; CO falls above 160 bpm (§19.4)",
+        "MAP ≈ DBP + (SBP − DBP)/3; 120/80 → ≈ 93.33; normal MAP 70–110 mm Hg; pulse pressure = SBP − DBP (§20.2)",
+        "flow = ΔP / resistance; resistance depends on viscosity, length and radius; R ∝ 1/r⁴ with half/double radius examples (§20.2)"
+      ]
+    }
+  }
+]

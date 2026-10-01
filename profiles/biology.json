@@ -1,0 +1,34 @@
+{
+  "id": "biology",
+  "name": "Biology",
+  "description": "Cell and molecular biology, genetics, physiology, ecology and evolution.",
+  "citationStyle": "nature",
+  "databases": ["crossref", "openalex", "pubmed", "pdb"],
+  "figureTypes": [
+    { "id": "structure-3d", "name": "3D structure", "description": "Proteins and nucleic acids from Protein Data Bank (PDB) files, or schematic models built from cited dimensions." },
+    { "id": "cell-schematic", "name": "Cell schematic", "description": "Labeled schematic of a cell or organelle, with a scale bar or a 'not to scale' note." },
+    { "id": "pathway", "name": "Pathway diagram", "description": "Metabolic, signaling or gene-regulation pathways as labeled boxes and arrows." },
+    { "id": "plot", "name": "Plot from equations or data", "description": "Growth curves, scaling laws, population models from cited data." }
+  ],
+  "units": {
+    "system": "SI",
+    "conventions": [
+      "Use SI prefixes for size: nanometres (nm) for molecules, micrometres (µm) for cells; state which at first use.",
+      "Write gene names in italics and protein names in roman type.",
+      "Give DNA length in base pairs (bp), kilobases (kb) or megabases (Mb) and say which."
+    ]
+  },
+  "safetyNotes": [
+    "This book explains biology; it is not a laboratory protocol. Work with living organisms, tissues or DNA only under the biosafety rules of a supervised laboratory."
+  ],
+  "restrictedDetail": [
+    "Methods to culture, enhance, modify or spread pathogens or toxins",
+    "Gain-of-function or immune-evasion techniques",
+    "Step-by-step protocols for producing biological agents"
+  ],
+  "requiresProfessionalReview": false,
+  "draftingNotes": [
+    "Distinguish what is well established from what is current research, and say which.",
+    "When a 3D structure is schematic (built from average dimensions rather than a PDB entry), say so in the caption."
+  ]
+}

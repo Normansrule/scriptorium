@@ -50,7 +50,7 @@ export function formatBibliography(refs: Reference[], orderedIds: string[], asse
       // Drop citeproc's wrapper divs and the leading "[n]" label; we render our own label.
       entry = entry.replace(/^<div class="csl-entry">/, '').replace(/<\/div>$/, '').replace(/<div class="csl-left-margin">[^<]*<\/div>/, '').replace(/<div class="csl-right-inline">([\s\S]*)<\/div>/, '$1').trim();
     } else {
-      entry = stripTags(entry).replace(/^\[?\d+\]?\.?\s*/, '').trim();
+      entry = stripTags(entry).replace(/^[([]?\d+[)\]]?\.?\s*/, '').trim();
     }
     out.set(eids[0]!, entry);
   });

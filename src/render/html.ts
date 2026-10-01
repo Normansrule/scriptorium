@@ -5,7 +5,8 @@
  * here, and the finished page is sanitized again with DOMPurify before it is written.
  */
 import katex from 'katex';
-import type { Block, Book, Chapter, Equation, Reference, Section } from '../core/book.ts';
+import type { Block, Book, Chapter, Equation, Model3D, Reference, Section } from '../core/book.ts';
+import type { Model } from '../core/molecule.ts';
 import { cssVariables, fonts } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { resolveRefs, type Numbering } from './numbering.ts';
@@ -33,6 +34,10 @@ export interface HtmlContext {
   disclosure?: { text: string; images: string; translations: string };
   /** 'web' = KaTeX HTML + MathML; 'epub' = MathML only, XHTML-safe output. */
   target?: 'web' | 'epub';
+  /** Parsed 3D models by their `src` path (for the web viewer's data). */
+  models?: Record<string, Model>;
+  /** Address of the web edition (book.meta.webUrl), used for links from EPUB. */
+  webUrl?: string;
 }
 
 const math = (latex: string, display: boolean, ctx: HtmlContext) => (ctx.target === 'epub' ? renderMathMl(latex, display) : renderMath(latex, display));
@@ -88,7 +93,30 @@ ${b.where.map((w) => `    <tr><td>${math(w.symbol, false, ctx)}</td><td>${md(w.m
 </div>`;
 }
 
-/** Extension point: extra block kinds (e.g. 3D models) register an HTML renderer here. */
+function model3d(b: Model3D, ctx: HtmlContext): string {
+  const num = ctx.numbering.figure.get(b.id)!;
+  const epub = ctx.target === 'epub';
+  const viewImg = (src: string, label: string) => {
+    const path = `${ctx.figureBase}${src.replace(/^figures\//, '')}`;
+    const alt = `${b.alt} View: ${label}.`;
+    return epub
+      ? `<div class="view"><img src="${escHtml(path)}" alt="${escHtml(alt)}"/><p class="view-label">${escHtml(label)}</p></div>`
+      : `<div class="view"><picture><source srcset="${escHtml(path.replace(/\.svg$/, '.dark.svg'))}" media="(prefers-color-scheme: dark)"><img src="${escHtml(path)}" alt="${escHtml(alt)}" loading="lazy"></picture><p class="view-label">${escHtml(label)}</p></div>`;
+  };
+  const model = ctx.models?.[b.src];
+  const data =
+    !epub && model
+      ? ` data-model="${escHtml(JSON.stringify({ model, scale: b.scale, scaleNote: b.scaleNote, atomScale: b.atomScale, annotations: b.annotations, views: b.views.map((v) => ({ yaw: v.yaw, pitch: v.pitch, label: v.label })), alt: b.alt }))}"`
+      : '';
+  // EPUB readers cannot run the viewer, so the caption links to the web edition (figcaption must stay the last child).
+  const link = epub && ctx.webUrl ? `<br/><span class="interactive">Rotate this model in 3D in the web edition: <a href="${escHtml(`${ctx.webUrl}#${b.id}`)}">${escHtml(`${ctx.webUrl}#${b.id}`)}</a></span>` : '';
+  return `<figure id="${b.id}" class="model3d" style="--w:${Math.round(b.width * 100)}%"${data}>
+  <div class="views">${b.views.map((v) => viewImg(v.src, v.label)).join('')}</div>
+  <figcaption><strong>Figure ${num}</strong> — ${md(b.caption, ctx)} <span class="credit">${md(b.credit, ctx)}</span>${link}</figcaption>
+</figure>`;
+}
+
+/** Extension point: extra block kinds register an HTML renderer here. */
 export const extraHtmlBlocks: Record<string, (b: Block, ctx: HtmlContext) => string> = {};
 
 function block(b: Block, ctx: HtmlContext): string {
@@ -116,6 +144,8 @@ function block(b: Block, ctx: HtmlContext): string {
   <figcaption><strong>Figure ${num}</strong> — ${md(b.caption, ctx)} <span class="credit">${md(b.credit, ctx)}</span></figcaption>
 </figure>`;
     }
+    case 'model3d':
+      return model3d(b, ctx);
     default: {
       const r = extraHtmlBlocks[(b as { kind: string }).kind];
       if (!r) throw new Error(`No HTML renderer for block kind "${(b as { kind: string }).kind}".`);
@@ -125,6 +155,11 @@ function block(b: Block, ctx: HtmlContext): string {
 }
 
 export { block as htmlBlock };
+
+/** True when any block in the book needs the 3D viewer script. */
+export function hasModels(book: Book): boolean {
+  return book.chapters.some((c) => c.sections.some((s) => [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits].some((b) => b.kind === 'model3d')));
+}
 
 function layer(name: string, cls: string, blocks: Block[], ctx: HtmlContext): string {
   if (!blocks.length) return '';
@@ -197,6 +232,8 @@ ${order
 }
 
 export const CSP = "default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; base-uri 'none'; form-action 'none'";
+/** Books with 3D models load one script of our own (assets/viewer3d.js) and nothing else. */
+export const CSP_WITH_VIEWER = CSP.replace("default-src 'none';", "default-src 'none'; script-src 'self';");
 
 export function renderHtml(book: Book, ctx: HtmlContext): string {
   const m = book.meta;
@@ -208,11 +245,12 @@ export function renderHtml(book: Book, ctx: HtmlContext): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta http-equiv="Content-Security-Policy" content="${hasModels(book) ? CSP_WITH_VIEWER : CSP}">
 <meta name="referrer" content="no-referrer">
 <title>${escHtml(m.title)}</title>
 <link rel="stylesheet" href="assets/katex/katex.min.css">
 <link rel="stylesheet" href="assets/book.css">
+${hasModels(book) ? '<script defer src="assets/viewer3d.js"></script>' : ''}
 </head>
 <body>
 <a class="skip" href="#main">Skip to the book</a>
@@ -273,9 +311,17 @@ h2 { font-size: 1.9rem; margin: 3.5rem 0 1rem; font-weight: 600; } h3 { font-siz
 .check { font-size: .78rem; color: var(--sc-muted); margin: .3rem 0 0; overflow-wrap: anywhere; } .validity { font-size: .9rem; } .validity .label { font-size: .9rem; }
 figure { margin: 1.8rem auto; width: min(100%, var(--w, 100%)); } figure img { width: 100%; height: auto; display: block; border-radius: 6px; }
 figcaption { font-size: .88rem; line-height: 1.45; margin-top: .5rem; } .credit { color: var(--sc-muted); }
-.model3d .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: .5rem; }
-.model3d .views img { border: 1px solid var(--sc-rule); background: var(--sc-paper); }
-.model3d .interactive { font-family: "${fonts.sans}", sans-serif; font-size: .9rem; margin: .4rem 0 0; }
+.model3d .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .5rem; }
+.model3d .view img { border: 1px solid var(--sc-rule); border-radius: 6px; }
+.model3d .view-label { margin: .2rem 0 0; text-align: center; font: .8rem "${fonts.sans}", sans-serif; color: var(--sc-muted); }
+.model3d .interactive { font-family: "${fonts.sans}", sans-serif; font-size: .9rem; margin: .4rem 0 0; overflow-wrap: anywhere; }
+.viewer3d { border: 1px solid var(--sc-rule); border-radius: 8px; background: var(--sc-paper); max-width: 26rem; margin: 0 auto .5rem; }
+.viewer3d svg { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
+.viewer3d svg:active { cursor: grabbing; }
+.viewer3d svg:focus-visible { outline: 2px solid var(--sc-signal); outline-offset: 2px; }
+.viewer3d .controls { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; padding: .4rem .6rem; border-top: 1px solid var(--sc-rule); font: .85rem "${fonts.sans}", sans-serif; color: var(--sc-muted); }
+.viewer3d button { font: inherit; border: 1px solid var(--sc-rule); background: var(--sc-panel); color: var(--sc-ink); border-radius: 6px; padding: .15rem .6rem; cursor: pointer; }
+.model3d.js-3d .views { display: none; }
 table.key-eqs td { padding: .35rem .8rem .35rem 0; vertical-align: middle; }
 .refs { padding-left: 0; list-style: none; } .refs li { margin: .5rem 0; padding-left: 2.6rem; text-indent: -2.6rem; font-size: .95rem; } .refs .n { display: inline-block; width: 2.6rem; text-indent: 0; color: var(--sc-muted); }
 dt { font-weight: 600; font-family: "${fonts.sans}", sans-serif; margin-top: .8rem; } dd { margin-left: 0; }

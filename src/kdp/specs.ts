@@ -4,6 +4,12 @@
  * Every number here comes from Amazon's help pages, checked 2026-09-30:
  *   [PSG]   Paperback Submission Guidelines  https://kdp.amazon.com/en_US/help/topic/G201857950
  *   [COVER] Create a Paperback Cover          https://kdp.amazon.com/en_US/help/topic/G201953020
+ *   [BAR]   Barcodes                          https://kdp.amazon.com/en_US/help/topic/G5HDYGP4BXLX4RUW
+ *   [EBC]   Kindle eBook cover requirements   https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX
+ *   [META]  Metadata Guidelines for Books     https://kdp.amazon.com/en_US/help/topic/G201097560
+ *   [KW]    Make Your Book More Discoverable with Keywords  https://kdp.amazon.com/en_US/help/topic/G201298500
+ *   [DESC]  Book description                  https://kdp.amazon.com/en_US/help/topic/G201189630
+ * (cover, barcode, ebook-cover and metadata pages checked 2026-10-01)
  * If KDP changes a rule, change it here and nowhere else. tests/unit/kdp.test.ts pins the values.
  * All lengths are inches.
  */
@@ -162,3 +168,31 @@ export function checkPageCount(pages: number, trim: TrimSize, paper: Paper): Pag
   if (n > max) return { ok: false, message: `${n} pages is above KDP's maximum of ${max} for ${trim.label} on ${paper} paper.` };
   return { ok: true, message: `${n} pages is within ${minPages(paper)}–${max}.` };
 }
+
+// ---------------------------------------------------------------------------
+// Cover extras, ebook cover and metadata
+
+/** "Cover files larger than 650MB won't convert. We recommend a file size of 40MB or less." [COVER] */
+export const COVER_RECOMMENDED_MAX_MB = 40;
+
+/** Barcode area on the back cover: suggested 2" × 1.2" (minimum 1.4" × 0.8"), solid white, ≥ 0.25" from spine and trim. KDP adds one if you leave the area free. [BAR] */
+export const BARCODE = { width: 2, height: 1.2, minWidth: 1.4, minHeight: 0.8, clearance: 0.25 } as const;
+
+/** Ideal Kindle ebook cover: 2,560 px tall × 1,600 px wide, JPEG, RGB, ≤ 5 MB; shortest side ≥ 500 px to display. [EBC] */
+export const EBOOK_COVER = { heightPx: 2560, widthPx: 1600, maxMB: 5, minShortSidePx: 500, borderPx: 4, borderGray: '#808080' } as const;
+
+/** "Your title and subtitle together must be fewer than 200 characters." [META] */
+export const TITLE_SUBTITLE_MAX_CHARS = 199;
+/** "we have a limit of 4000 characters for the description" [DESC] */
+export const DESCRIPTION_MAX_CHARS = 4000;
+/** HTML tags KDP accepts in a description. [DESC] */
+export const DESCRIPTION_TAGS = ['br', 'p', 'b', 'em', 'i', 'u', 'h4', 'h5', 'h6', 'ol', 'ul', 'li'] as const;
+/** "Use up to seven keywords or short phrases." [KW] */
+export const MAX_KEYWORDS = 7;
+/** "You'll choose up to three categories" [META] */
+export const MAX_CATEGORIES = 3;
+/**
+ * KDP's keyword boxes have a character limit that its help pages do not state; third-party
+ * guides report 50. Treated as a warning, not an error.
+ */
+export const KEYWORD_SOFT_MAX_CHARS = 50;

@@ -1,0 +1,34 @@
+{
+  "id": "medicine",
+  "name": "Medicine",
+  "description": "Human physiology, anatomy, pathology and pharmacology explained for education — never individual medical advice.",
+  "citationStyle": "american-medical-association",
+  "databases": ["pubmed", "crossref", "openalex"],
+  "figureTypes": [
+    { "id": "physiology-plot", "name": "Physiology plot", "description": "Relationships such as pressure, flow or concentration over time, from cited equations or data." },
+    { "id": "pathway", "name": "Pathway diagram", "description": "Signaling, metabolic or feedback pathways as labeled boxes and arrows." },
+    { "id": "anatomy-schematic", "name": "Anatomical schematic", "description": "Simplified, clearly labeled schematic; must say it is not to scale and cite the anatomy it follows." }
+  ],
+  "units": {
+    "system": "SI",
+    "conventions": [
+      "Use the units clinicians use and state them every time: blood pressure in millimetres of mercury (mm Hg), heart rate in beats per minute (bpm), volumes in millilitres (mL) or litres (L).",
+      "Give normal ranges with their source and population; never present a single value as 'normal' for everyone.",
+      "Write drug names as international nonproprietary names (generic names), never brand names."
+    ]
+  },
+  "safetyNotes": [
+    "This book is for education only. It does not give medical advice, diagnosis or treatment, and it must not be used to make decisions about anyone's health. Ask a qualified health professional about any medical question."
+  ],
+  "restrictedDetail": [
+    "Individual treatment, dosing, titration or tapering instructions",
+    "Ways to obtain prescription drugs without a prescription",
+    "Methods of self-harm, overdose thresholds, or lethal doses",
+    "Instructions that would let someone culture, enhance or spread a pathogen"
+  ],
+  "requiresProfessionalReview": true,
+  "draftingNotes": [
+    "Every clinical statement needs a citation to a textbook, guideline or peer-reviewed source; mark simplifications explicitly.",
+    "Describe how physiology works in general; do not tell the reader what to do about their own body."
+  ]
+}
