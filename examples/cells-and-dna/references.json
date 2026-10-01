@@ -17,12 +17,12 @@
       "status": "verified",
       "method": "publisher-page",
       "checkedAt": "2026-10-01",
-      "note": "Publisher pages read for each cited section; authors, place and date taken from the citation block on the §14.2 page. §4.2 gives prokaryotic cells 0.1–5.0 µm in diameter and eukaryotic cells 10–100 µm, the sphere formulas 4πr² and 4πr³/3, and states that surface area-to-volume ratio decreases as a cell grows, limiting diffusion. §14.2 gives a uniform 2 nm diameter, 0.34 nm between base pairs, 3.4 nm per turn, 10 base pairs per turn, A–T and G–C pairing, and major and minor grooves.",
+      "note": "Publisher pages read for each cited section; authors, place and date taken from the citation block on the §14.2 page. §4.2 gives prokaryotic cells 0.1–5.0 µm in diameter and eukaryotic cells 10–100 µm, the sphere formulas 4πr² and 4πr³/3, states that surface area-to-volume ratio decreases as a cell grows, limiting diffusion, and that cells can instead increase surface area by folding the membrane or becoming flat or thin and elongated. §14.2 places the sugar–phosphate backbone outside with the bases stacked inside, and gives a uniform 2 nm diameter, 0.34 nm between base pairs, 3.4 nm per turn, 10 base pairs per turn, A–T and G–C pairing, and major and minor grooves.",
       "supports": [
         "prokaryote diameter 0.1–5.0 µm; eukaryote 10–100 µm (§4.2)",
-        "sphere surface area 4πr², volume 4πr³/3; SA/V falls as cells grow (§4.2)",
+        "sphere surface area 4πr², volume 4πr³/3; SA/V falls as cells grow; folded, flat or elongated cells gain surface (§4.2)",
         "DNA diameter 2 nm; 0.34 nm per base pair; 3.4 nm and 10 bp per turn (§14.2)",
-        "A pairs with T, G with C; major and minor grooves (§14.2)"
+        "backbone outside, bases inside; A pairs with T, G with C; major and minor grooves (§14.2)"
       ]
     }
   }

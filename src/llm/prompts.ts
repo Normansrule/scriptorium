@@ -72,7 +72,7 @@ export function reviewPrompt(p: Profile): string {
 ${WRITING_STANDARD}
 ${profileRules(p)}
 ${UNTRUSTED_RULES}
-Check: factual accuracy; equations (algebra, units, the worked example's arithmetic); whether each [@id] citation is actually supported by that source's abstract in the verified-references block; missing caveats; outdated claims; undefined jargon; oversimplifications that became wrong.
+Check: factual accuracy; equations (algebra, units, the worked example's arithmetic); whether each [@id] citation is actually supported by that source's abstract in the verified-references block; missing caveats; outdated claims; undefined jargon; oversimplifications that became wrong; any detail the domain rules say to keep at textbook level (report it as high severity).
 Return ONLY JSON: {"issues": [{"severity": "high"|"medium"|"low", "where": string, "problem": string, "fix": string}], "unsupported_citations": [{"id": string, "claim": string}]}
 Return an empty "issues" list if the section is correct. Do not rewrite the section.`;
 }

@@ -10,7 +10,7 @@
     "date": "2026-10-01",
     "license": "Text and figures: CC BY 4.0. Code that draws the figures: MIT.",
     "colophon": "This gallery sample was drafted with an AI assistant (Claude, by Anthropic) following the Scriptorium pipeline and checked by hand: the cited textbook sections were read for each claim (the bibliography's verification note lists what was checked), and every equation and worked example is re-derived by `tests/equations/test_medicine.py`. Figures were drawn by code (`examples/heart-and-vessels/figures.ts`) written with AI assistance. It has not been reviewed by a licensed health professional.",
-    "description": "How much blood does a resting heart pump each minute? What do the two numbers of a blood pressure reading mean, and why does narrowing a blood vessel by half make it sixteen times harder for blood to flow? This short illustrated sample explains the physiology with three short equations, worked examples checked by code, and clear limits. Educational only: not medical advice.",
+    "description": "How much blood does a resting heart pump each minute? What do the two numbers of a blood pressure reading mean, and why does halving a blood vessel's radius make it sixteen times harder for blood to flow? This short illustrated sample explains the physiology with three short equations, worked examples checked by code, and clear limits. Educational only: not medical advice.",
     "keywords": ["heart rate and stroke volume", "mean arterial pressure", "blood pressure explained", "vascular resistance", "cardiovascular physiology", "physiology for beginners", "illustrated physiology guide"],
     "categories": ["Medical Books > Basic Sciences > Physiology"]
   },
@@ -73,7 +73,7 @@
           "provenance": "ai-generated",
           "layers": {
             "summary": [
-              { "kind": "para", "text": "A blood pressure reading has two numbers: the highest pressure in the arteries during a heartbeat (systolic) and the lowest between beats (diastolic), in millimetres of mercury (mm Hg). Their difference is the [[pulse pressure]]. A single number, the [[mean arterial pressure]], summarizes the pressure that drives blood through the tissues [@openstax-ap2e, §20.2]." },
+              { "kind": "para", "text": "A blood pressure reading has two numbers, in millimetres of mercury (mm Hg): the arterial pressure while the ventricles contract and eject blood (systolic, the higher number) and while they relax (diastolic, the lower number). Their difference is the [[pulse pressure]]. A single number, the [[mean arterial pressure]], summarizes the pressure that drives blood through the tissues [@openstax-ap2e, §20.2]." },
               { "kind": "para", "text": "How much blood flows depends on that pressure difference and on the resistance of the vessels; resistance depends on the blood's viscosity and on each vessel's length and radius [@openstax-ap2e, §20.2]." }
             ],
             "intuition": [

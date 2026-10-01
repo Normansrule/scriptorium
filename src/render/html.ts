@@ -10,7 +10,7 @@ import type { Model } from '../core/molecule.ts';
 import { cssVariables, fonts } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { resolveRefs, type Numbering } from './numbering.ts';
-import { verificationSummary } from './typst.ts';
+import { verificationSummary, viewAlt } from './typst.ts';
 
 export function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -96,9 +96,9 @@ ${b.where.map((w) => `    <tr><td>${math(w.symbol, false, ctx)}</td><td>${md(w.m
 function model3d(b: Model3D, ctx: HtmlContext): string {
   const num = ctx.numbering.figure.get(b.id)!;
   const epub = ctx.target === 'epub';
-  const viewImg = (src: string, label: string) => {
+  const viewImg = (src: string, label: string, i: number) => {
     const path = `${ctx.figureBase}${src.replace(/^figures\//, '')}`;
-    const alt = `${b.alt} View: ${label}.`;
+    const alt = viewAlt(b, i);
     return epub
       ? `<div class="view"><img src="${escHtml(path)}" alt="${escHtml(alt)}"/><p class="view-label">${escHtml(label)}</p></div>`
       : `<div class="view"><picture><source srcset="${escHtml(path.replace(/\.svg$/, '.dark.svg'))}" media="(prefers-color-scheme: dark)"><img src="${escHtml(path)}" alt="${escHtml(alt)}" loading="lazy"></picture><p class="view-label">${escHtml(label)}</p></div>`;
@@ -111,7 +111,7 @@ function model3d(b: Model3D, ctx: HtmlContext): string {
   // EPUB readers cannot run the viewer, so the caption links to the web edition (figcaption must stay the last child).
   const link = epub && ctx.webUrl ? `<br/><span class="interactive">Rotate this model in 3D in the web edition: <a href="${escHtml(`${ctx.webUrl}#${b.id}`)}">${escHtml(`${ctx.webUrl}#${b.id}`)}</a></span>` : '';
   return `<figure id="${b.id}" class="model3d" style="--w:${Math.round(b.width * 100)}%"${data}>
-  <div class="views">${b.views.map((v) => viewImg(v.src, v.label)).join('')}</div>
+  <div class="views">${b.views.map((v, i) => viewImg(v.src, v.label, i)).join('')}</div>
   <figcaption><strong>Figure ${num}</strong> — ${md(b.caption, ctx)} <span class="credit">${md(b.credit, ctx)}</span>${link}</figcaption>
 </figure>`;
 }

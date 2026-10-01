@@ -111,7 +111,7 @@ export const Model3D = z.object({
   /** Atom drawing size multiplier for the interactive viewer (use < 1 for crowded structures; match the stills). */
   atomScale: z.number().min(0.2).max(1.5).optional(),
   /** Pre-rendered stills (light SVG path; the dark one is `.dark.svg`) with the rotation that made them. */
-  views: z.array(z.object({ src: z.string(), label: z.string(), yaw: z.number(), pitch: z.number() })).min(2).max(3),
+  views: z.array(z.object({ src: z.string(), label: z.string(), yaw: z.number(), pitch: z.number(), /** what this still shows, if it differs from the figure's alt */ alt: z.string().optional() })).min(2).max(3),
   annotations: z.array(z.object({ type: z.literal('angle'), atoms: z.tuple([z.number().int(), z.number().int(), z.number().int()]), label: z.string() })).default([]),
   width: z.number().min(0.2).max(1).default(1),
 });

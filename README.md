@@ -2,13 +2,13 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/hero.dark.svg">
-    <img src="assets/rendered/hero.svg" alt="Animation: a topic is typed in, an outline appears and is approved, a page fills with text, an equation and a drawn charging curve with verified sources, and the book is exported as a web book and a print PDF that passes Kindle Direct Publishing pre-flight." width="880">
+    <img src="assets/rendered/hero.svg" alt="Animation: a topic is typed in, an outline appears and is approved, a page fills with text, an equation and a drawn charging curve with verified sources, and the book is exported as a web book, a print PDF with cover, and an EPUB ebook." width="880">
   </picture>
 </p>
 
 <h1 align="center">Scriptorium</h1>
 
-<p align="center"><b>Turn a topic into an illustrated, fully referenced book — checked like a journal paper, written like a good teacher — and export it for the web and for Amazon Kindle Direct Publishing (KDP).</b></p>
+<p align="center"><b>Turn a topic into an illustrated, fully referenced book — checked like a journal paper, written like a good teacher — and export it for the web and for Amazon Kindle Direct Publishing (KDP): print PDF, cover and EPUB ebook.</b></p>
 
 <p align="center">
   <a href="https://github.com/Normansrule/scriptorium/actions/workflows/ci.yml"><img alt="Build" src="https://github.com/Normansrule/scriptorium/actions/workflows/ci.yml/badge.svg"></a>
@@ -31,29 +31,38 @@
 8. [References and further learning](#references-and-further-learning)
 9. [Contributing, license and credits](#contributing-license-and-credits)
 
-**Status:** milestone 1 of 4 is done — engineering profile, a three-chapter sample book, web export and print PDF with KDP pre-flight. See [Roadmap](#roadmap).
+**Status:** milestones 1–3 of 4 are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight. Milestone 4 (desktop app) is next. See [Roadmap](#roadmap).
 
 ---
 
 ## What you'll see
 
 <p align="center">
-  <img src="assets/rendered/screens/app-sample.png" alt="The Scriptorium app: on the left, the nine pipeline stages as a numbered list with the two human checkpoints marked 'you decide'; on the right, the sample book open at the section on the time constant, with its circuit diagram." width="880">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-sample.dark.png">
+    <img src="assets/rendered/screens/app-sample.png" alt="The Scriptorium app: on the left, the nine pipeline stages with the two human checkpoints marked 'you decide'; on the right, tabs for the four sample books, the KDP AI-disclosure answers, a Download project button, and the start of the engineering sample book." width="880">
+  </picture>
 </p>
 
-*Figure 2 — The app: the pipeline on the left (diamonds mark the two points where you decide), the book proof on the right.*
+*Figure 2 — The app: the pipeline on the left (diamonds mark the two points where you decide), the book proof on the right, with one sample book per domain.*
 
 <p align="center">
-  <img src="assets/rendered/screens/print-spread.png" alt="Two facing pages of the print PDF: an equation with its intuition sentence, a symbol table with units, a shaded worked example, and a charging-curve figure with a numbered caption." width="880">
+  <img src="assets/rendered/screens/gallery.png" alt="Four printed pages side by side: engineering, three charging curves for different resistors; chemistry, three views of a methane model with the 109.5 degree angle marked and a QR code; biology, three views of a DNA double helix with a scale bar and a QR code; medicine, a logarithmic plot of vessel resistance against radius." width="880">
 </p>
 
-*Figure 3 — A spread from the 6" × 9" print PDF. Each equation comes with an intuition sentence, a symbol table with units, a worked example that is re-checked by a test, and the conditions where it stops being valid.*
+*Figure 3 — One printed page from each domain's sample book. 3D models print as three fixed views plus a QR code that opens the rotatable version.*
+
+<p align="center">
+  <img src="assets/rendered/screens/kdp-outputs.png" alt="Left: the build output, every line ticked: web book, 27-page print PDF, interior pre-flight 9 of 9, cover PDF 12.313 by 9.250 inches, cover pre-flight 9 of 9, ebook cover 1600 by 2560 pixels, EPUB with no EPUBCheck errors, metadata with no errors. Middle: the full-wrap paperback cover with the description on the back and the title on the front. Right: the ebook cover." width="880">
+</p>
+
+*Figure 4 — One command builds everything KDP asks for and checks it: interior PDF, full-wrap cover, ebook cover, EPUB 3 and a metadata sheet.*
 
 ---
 
 ## Quick start
 
-You need **Node.js 20.19 or newer** (22 recommended; `.nvmrc` pins 22) and **Python 3.10+** for the equation checks. On Windows, use WSL 2 or Git Bash for these commands; `scripts/setup.ps1` does the same setup in PowerShell.
+You need **Node.js 20.19 or newer** (22 recommended; `.nvmrc` pins 22). For the optional checks: **Python 3.10+** (equation tests) and **Java 11+** (EPUBCheck). On Windows, use WSL 2 or Git Bash for these commands; `scripts/setup.ps1` does the same setup in PowerShell.
 
 ```bash
 git clone https://github.com/Normansrule/scriptorium.git
@@ -62,28 +71,35 @@ npm ci
 npm run demo
 ```
 
-Expected output of `npm run demo` (about 2 seconds):
+Expected output of `npm run demo` (a few seconds):
 
 ```text
-✓ Drew 18 figure files (light + dark)
+✓ Drew 18 figure and model files (light + dark)
 ✓ Web book  → dist/rc-circuits/web/index.html
 ✓ Print PDF → dist/rc-circuits/book.pdf (27 pages, 6" × 9")
-✓ KDP pre-flight: 9/9 checks pass
+✓ KDP interior pre-flight: 9/9 checks pass
+✓ Cover PDF → dist/rc-circuits/cover.pdf (12.313" × 9.250", spine 0.063", no spine text)
+✓ KDP cover pre-flight: 9/9 checks pass
+✓ Ebook cover → dist/rc-circuits/ebook-cover.jpg (1600 × 2560 px, gray border for a light cover)
+✓ Ebook cover check: 5/5 checks pass
+✓ EPUB 3    → dist/rc-circuits/book.epub (176 KB)
+✓ KDP metadata → dist/rc-circuits/kdp-metadata.txt (0 errors, 0 warnings)
 ✓ AI disclosure → dist/rc-circuits/ai-disclosure.json (text: yes, images: yes, translations: no)
-Done in 1.3 s
+Done in 3.2 s
 ```
 
-Open `dist/rc-circuits/web/index.html` in a browser and `dist/rc-circuits/book.pdf` in a PDF viewer.
+Open `dist/rc-circuits/web/index.html` in a browser, `book.pdf` and `cover.pdf` in a PDF viewer, and `book.epub` in an ebook reader.
 
-Run the checks:
+Build all four sample books, then run the checks:
 
 ```bash
-npm test                                   # 54 unit, export and pipeline tests
+npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
+npm test                                         # 99 unit, export and pipeline tests
 python -m pip install -r requirements.txt
-npm run test:equations                     # re-derives every equation in the sample book
+npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: `Tests  54 passed (54)` and `16 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  99 passed (99)` and `34 passed`.
 
 Open the app (the same one that runs on GitHub Pages):
 
@@ -104,7 +120,7 @@ One-step setup instead: `bash scripts/setup.sh` (Linux, macOS, WSL) or `pwsh scr
   </picture>
 </p>
 
-*Figure 4 — The nine stages. The two amber stages are human checkpoints: nothing is researched until you approve the outline, and nothing is published until you approve the proof.*
+*Figure 5 — The nine stages. The two amber stages are human checkpoints: nothing is researched until you approve the outline, and nothing is published until you approve the proof.*
 
 The architecture is one TypeScript core used by three front ends:
 
@@ -112,18 +128,21 @@ The architecture is one TypeScript core used by three front ends:
 flowchart LR
   subgraph core["src/ (shared TypeScript core)"]
     P["core/pipeline.ts<br/>9 stages"] --> M["llm/<br/>provider, budget,<br/>prompt-injection guards"]
-    P --> R["research/<br/>Crossref + OpenAlex"]
+    P --> R["research/<br/>Crossref, OpenAlex, PubMed,<br/>PubChem, Protein Data Bank"]
     P --> B["core/book.ts<br/>book model (JSON)"]
-    B --> H["render/html.ts<br/>KaTeX + MathML"]
-    B --> T["render/typst.ts<br/>LaTeX → Typst math"]
-    T --> K["kdp/<br/>specs + pre-flight"]
+    B --> H["render/html.ts<br/>web book, EPUB pages"]
+    B --> T["render/typst.ts<br/>print PDF"]
+    B --> V["render/molecule-svg.ts<br/>3D stills + viewer"]
+    B --> CV["render/cover.ts<br/>paperback + ebook cover"]
+    T --> K["kdp/<br/>specs, pre-flight,<br/>metadata"]
+    CV --> K
   end
   W["web/ app<br/>(GitHub Pages)"] --> P
   C["CLI<br/>npm run cli"] --> P
   D["desktop app<br/>(Tauri, milestone 4)"] -.-> W
 ```
 
-*Figure 5 — Architecture: the web app, the command line and (later) the desktop app share one core, so a book behaves the same everywhere.*
+*Figure 6 — Architecture: the web app, the command line and (later) the desktop app share one core, so a book behaves the same everywhere.*
 
 ### 1 · Topic + scope
 
@@ -137,9 +156,21 @@ $$ \text{spent} + \text{max\_tokens}(\text{next call}) \le \text{cap} \tag{1} $$
 
 Worked example: cap 400 000, spent 396 500, the next draft allows 6 000 → 402 500 > 400 000, so the run stops and asks you to raise the cap. Tested in `tests/unit/budget.test.ts`. The cap is in tokens rather than dollars because token counts come back exactly while prices change.
 
-<img src="assets/rendered/screens/app-start.png" alt="The start screen: a topic box, audience, depth, chapters, sections, domain and citation style fields, and buttons to plan the outline or open the sample book." width="640">
+The **domain profile** (`profiles/*.json`) sets the citation style, which databases to search, the figure types, unit conventions, safety text and topics that must stay at textbook level:
 
-*Figure 6 — Stage 1 in the app.*
+| Profile | Citation style | Databases | 3D figures | Extra care |
+|---|---|---|---|---|
+| Engineering | IEEE | Crossref, OpenAlex | — | Electrical safety notes |
+| Chemistry | American Chemical Society (ACS) | Crossref, OpenAlex, PubChem | Molecules | No synthesis routes for hazardous substances |
+| Biology | Nature | Crossref, OpenAlex, PubMed, Protein Data Bank | Proteins, DNA | No pathogen methods |
+| Medicine | American Medical Association (AMA) | PubMed, Crossref, OpenAlex | — | Educational disclaimer; flagged for licensed-professional review; no dosing |
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-start.dark.png">
+  <img src="assets/rendered/screens/app-start.png" alt="The start screen: a topic box, audience, depth, chapters, sections, domain and citation style fields, a spending limit, and buttons to plan the outline or open a sample book." width="640">
+</picture>
+
+*Figure 7 — Stage 1 in the app.*
 
 ### 2 · Outline — checkpoint
 
@@ -147,25 +178,28 @@ The model proposes chapters, sections, learning goals and search queries as JSON
 
 ### 3 · Research
 
-Search queries from the outline go to **Crossref** and **OpenAlex** (public scholarly databases). Only whitelisted fields are copied from their replies.
+Search queries from the outline go to **Crossref** and, depending on the profile, **OpenAlex** and **PubMed** (public scholarly databases). Only whitelisted fields are copied from their replies.
 
 ```mermaid
 sequenceDiagram
   participant S as Scriptorium
   participant C as Crossref
   participant O as OpenAlex
+  participant P as PubMed
   S->>C: works?query.bibliographic=RC time constant
   C-->>S: titles, authors, years, DOIs
   S->>O: works?search=RC time constant
   O-->>S: titles, authors, years, DOIs
-  Note over S: deduplicate by DOI → candidate list
+  S->>P: esearch + esummary (medicine, biology)
+  P-->>S: titles, authors, years, PubMed IDs
+  Note over S: deduplicate by DOI or PubMed ID → candidate list
 ```
 
-*Figure 7 — Research sends keywords only; no key, drafts or personal data.*
+*Figure 8 — Research sends keywords only; no key, drafts or personal data.*
 
 ### 4 · Verification
 
-A reference is kept only if its Digital Object Identifier (DOI) resolves in Crossref **and** the record matches. The title match uses the Jaccard similarity of the two titles' word sets:
+A reference is kept only if its Digital Object Identifier (DOI) resolves in Crossref — or its PubMed ID (PMID) in PubMed — **and** the record matches. The title match uses the Jaccard similarity of the two titles' word sets:
 
 $$ J(A,B) = \frac{\lvert A \cap B \rvert}{\lvert A \cup B \rvert} \ge 0.8 \tag{2} $$
 
@@ -184,15 +218,15 @@ Each section is written in five layers, so a reader can stop after any layer and
   <img src="assets/rendered/layers.svg" alt="Five stacked layers, each indented a little more: 1 In short, 2 Intuition, 3 The detail (highlighted, with equations), 4 Limits, 5 Key takeaways, each with an example line from the sample book." width="880">
 </picture>
 
-*Figure 8 — The five writing layers, with examples from the sample book.*
+*Figure 9 — The five writing layers, with examples from the sample book.*
 
 The model may cite **only** references that passed stage 4, as `[@id]`. A citation guard removes anything else and records it in the verification report, so a model cannot invent a source into the book.
 
-<img src="assets/rendered/screens/before-after.png" alt="Left: a drafted section as JSON, with a paragraph, an equation id, its LaTeX, a symbol list, a worked example and a check pointer. Right: the same section typeset in the print PDF." width="880">
+<img src="assets/rendered/screens/before-after.png" alt="Left: an equation block as JSON with its intuition sentence, LaTeX, symbol list with units, worked example with a test name, and validity note. Right: the same equation typeset on a page of the print PDF." width="880">
 
-*Figure 9 — Before and after: drafting returns structured data; layout turns it into a finished page.*
+*Figure 10 — Before and after: drafting returns structured data; layout turns it into a finished page.*
 
-### 6 · Figures + equations
+### 6 · Figures, equations and 3D models
 
 Technical figures are **drawn by code**, never by an image generator. The model may propose a plot as an expression such as `1 - exp(-x)`; a small parser (`src/core/expr.ts`) evaluates it without `eval`, so a hostile expression can only fail to parse. Every equation must render in KaTeX and convert to Typst, or it is dropped.
 
@@ -201,63 +235,83 @@ Technical figures are **drawn by code**, never by an image generator. The model 
   <img src="examples/rc-circuits/figures/tau.svg" alt="Three charging curves for a 100 microfarad capacitor with 10, 22 and 47 kilohm resistors; larger resistors charge more slowly." width="560">
 </picture>
 
-*Figure 10 — A code-drawn figure from the sample book: what changes when R changes. Drawn by `examples/rc-circuits/figures.ts`.*
+*Figure 11 — A code-drawn figure from the engineering sample: what changes when R changes. Drawn by `examples/rc-circuits/figures.ts`.*
 
-In the sample book every equation's worked example is re-derived by SymPy (algebra) and Pint (units) in `tests/equations/test_rc_book.py`; for new books, equations are marked **unverified** in the report until you add such a check.
+**3D structures.** In the chemistry and biology profiles a draft may ask for a molecule from **PubChem** or a protein from the **Protein Data Bank (PDB)**; the coordinates are downloaded, size-limited and parsed by strict file parsers, or a model is built by code from cited dimensions. Each model becomes:
+
+- on the web, a viewer you rotate by dragging or with the arrow keys (nothing moves on its own, so reduced-motion settings need no special case);
+- in print and EPUB, three fixed views drawn by the same renderer, with a scale bar (or "not to scale"), angle labels only in views where the angle is shown at true size, and a link — in print also a QR code — to the rotatable version.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-3d.dark.png">
+  <img src="assets/rendered/screens/app-3d.png" alt="The rotatable DNA model in the biology sample: orange backbone beads spiral around blue base beads labeled A, T, G and C, with a 1 nanometre scale bar and buttons for side, down the axis and angled views; below it the figure caption." width="560">
+</picture>
+
+*Figure 12 — The DNA model in the biology sample, built to scale from the textbook's dimensions (2 nm across, 0.34 nm per base pair, 10 base pairs per turn). `tests/equations/test_biology.py` re-measures the model file.*
+
+Every equation's worked example in the sample books is re-derived by SymPy (algebra) and Pint (units) in `tests/equations/`; for new books, equations are marked **unverified** in the report until you add such a check.
 
 ### 7 · Expert review
 
-A second model call, with a separate "skeptical referee" prompt that never sees the drafting instructions, checks accuracy, the algebra and units of worked examples, missing caveats, and whether each citation is supported by that source's abstract. Its findings go into the verification report; high-severity ones are marked as problems.
+A second model call, with a separate "skeptical referee" prompt that never sees the drafting instructions, checks accuracy, the algebra and units of worked examples, missing caveats, restricted detail for the domain, and whether each citation is supported by that source's abstract. Its findings go into the verification report; high-severity ones are marked as problems.
 
 ### 8 · Readability
 
-Body text targets reading grade 10–12, measured with the Flesch–Kincaid grade level [5]:
+Body text targets reading grade 10–12, measured with the Flesch–Kincaid grade level [9]:
 
 $$ G = 0.39\,\frac{\text{words}}{\text{sentences}} + 11.8\,\frac{\text{syllables}}{\text{words}} - 15.59 \tag{3} $$
 
 - *G*: approximate U.S. school grade (no unit); *words, sentences, syllables*: counts in the text (math, citations and code removed first).
 
-Worked example: "The cat sat on the mat." has 6 words, 1 sentence, 6 syllables → G = 0.39·6 + 11.8·1 − 15.59 = −1.45. Tested in `tests/unit/readability.test.ts`. **Limits:** syllables are counted with a vowel-group heuristic, so the grade is a guide for the readability pass, not a gate. The glossary is built from the `[[terms]]` marked in the text.
+Worked example: "The cat sat on the mat." has 6 words, 1 sentence, 6 syllables → G = 0.39·6 + 11.8·1 − 15.59 = −1.45. Tested in `tests/unit/readability.test.ts`. **Limits:** syllables are counted with a vowel-group heuristic, so the grade is a guide for the readability pass, not a gate. The glossary is built from the `[[terms]]` marked in the text, and a build fails if a marked term has no glossary entry.
 
 ### 9 · Layout + export — checkpoint
 
-The web book is one static page (KaTeX HTML + MathML, light and dark figures, a Content Security Policy, no JavaScript). The print book is typeset by **Typst** through its WebAssembly build, so no separate install is needed. Then:
+**Web book.** One static page: KaTeX HTML + MathML, light and dark figures, a Content Security Policy. Books without 3D models run no JavaScript; books with models load one script of our own.
+
+**Print interior.** Typeset by **Typst** through its WebAssembly build, so no separate install is needed. Then:
 
 - the **gutter** (inside margin) is recomputed from the final page count and raised if KDP requires more [2];
 - bookmarks, annotations and document metadata are **stripped**, because KDP rejects them in interior files [2];
 - **pre-flight** checks page size, page count, gutter, fonts, bookmarks, annotations, metadata, encryption and file size.
 
-The cover generator (milestone 3) uses KDP's cover formula [3]:
+**Paperback cover.** One PDF with back, spine and front, sized with KDP's formula [3]:
 
 $$ W_{\text{cover}} = b + w + n\,s_{\text{paper}} + w + b \tag{4} $$
 
 - *b*: bleed, 0.125 in; *w*: trim width (in); *n*: page count, rounded up to even; *s<sub>paper</sub>*: spine thickness per page (in/page), 0.002252 for white paper, 0.0025 for cream.
 
-Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252 = 0.4774 in, cover width = 0.125 + 6 + 0.4774 + 6 + 0.125 = **12.7274 in**; spine text is allowed because 212 > 79 pages. Tested in `tests/unit/kdp.test.ts`.
+Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252 = 0.4774 in, cover width = 0.125 + 6 + 0.4774 + 6 + 0.125 = **12.7274 in**; spine text is allowed because 212 > 79 pages. Tested in `tests/unit/kdp.test.ts`. The generator keeps all text and images at least 0.5 in inside the trim (KDP asks for at least 0.125 in for text and 0.25 in from the outside edge [2], [3]), prints spine text only above 79 pages with 0.0625 in clearance [3], and leaves a white 2″ × 1.2″ area at the lower right of the back, at least 0.25 in from spine and trim, where KDP places the barcode [4]. Cover pre-flight re-checks the size, the safe zones, fonts and metadata. `tests/unit/kdp-outputs.test.ts` proves the layout for every KDP trim size and paper.
 
-<img src="assets/rendered/screens/kdp-export.png" alt="Three panels: the npm run demo build output, the nine passing pre-flight checks with details, and the cover geometry command output showing spine 0.4774 inches and cover width 12.7274 inches." width="880">
+**Ebook.** An **EPUB 3** file [16]: reflowable XHTML pages, equations as MathML, figures as light-mode SVG, a table of contents and landmarks, accessibility metadata, and a link from each 3D figure to the web edition. Every page is sanitized and re-serialized as XHTML; the archive is reproducible (fixed timestamps, identifier derived from title and authors). `--epubcheck` validates it with the W3C's EPUBCheck [17]. The **ebook cover** is the same front design rendered as a 1600 × 2560 px RGB JPEG — KDP's ideal size — with a thin medium-gray border when much of the edge is white, as KDP suggests for light covers [5].
 
-*Figure 11 — KDP export: build, pre-flight report, cover geometry.*
+<img src="assets/rendered/screens/epub-phone.png" alt="The EPUB at phone width: a paragraph, the time-constant equation tau equals R C numbered 2.1, and its symbol table, all reflowed to the narrow screen." width="300">
 
-**AI disclosure.** KDP asks separately whether text, images and translations are AI-generated, and counts content created by an AI tool as AI-generated even after heavy human editing [4]. Every section and figure records its provenance, and each build writes `ai-disclosure.json` with the three answers and the parts that caused them.
+*Figure 13 — The EPUB reflows to a phone screen; equations stay real text (MathML).*
+
+**Metadata helper.** `kdp-metadata.txt` lists the title, subtitle, description, keywords and categories in the order KDP's form asks for them, with checks: title plus subtitle under 200 characters [6], description at most 4000 characters using only the HTML tags KDP supports [8], up to seven keywords without prohibited terms such as "free", "bestselling" or program names [7], [6], up to three categories [6], and a warning when you reach KDP's limit of two new titles per format per week [2].
+
+**AI disclosure.** KDP asks separately whether text, images and translations are AI-generated, and counts content created by an AI tool as AI-generated even after heavy human editing [1]. Every section and figure records its provenance, and each build writes `ai-disclosure.json` with the three answers and the parts that caused them.
 
 ---
 
 ## Walkthrough
 
-1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 27-page 6″ × 9″ book.
-2. **Check the pre-flight report.** Open `dist/rc-circuits/preflight.json` → nine entries, all `"ok": true`.
-3. **Re-derive the math.** `npm run test:equations` → `16 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm test`, and see which check names it.
-4. **Re-verify the references.** `npm run verify-refs` → one line per reference; the Sallen–Key paper is re-checked live against Crossref, the three web sources show when they were checked by hand.
-5. **Look at a figure in both themes.** Open `examples/rc-circuits/figures/bode.svg` and `bode.dark.svg`; change `R` in `examples/rc-circuits/figures.ts`, run `npm run figures`, and watch the cutoff move.
-6. **Write your own book.** Copy `.env.example` to `.env`, add your Anthropic API key, then run
+1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 27-page 6″ × 9″ book, `cover.pdf` as a 12.313″ × 9.25″ wrap-around cover.
+2. **Check the pre-flight report.** Open `dist/rc-circuits/preflight.json` → sections `interior`, `cover`, `ebookCover` and `metadata`, every check passing.
+3. **Re-derive the math.** `npm run test:equations` → `34 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm run test:equations`, and see which check names it.
+4. **Rotate a molecule.** `npm run build:all -- --allow-short`, open `dist/molecular-shapes/web/index.html`, drag the methane model, then press **front**: the 109.5° label appears only when the angle is face-on.
+5. **Re-verify the references.** `npm run verify-refs` → one line per reference; the Sallen–Key paper is re-checked live against Crossref, the three web sources show when they were checked by hand.
+6. **Validate the ebook.** `npm run cli -- epubcheck dist/rc-circuits/book.epub` → `✓ EPUBCheck: no errors` (needs Java).
+7. **Look at a figure in both themes.** Open `examples/rc-circuits/figures/bode.svg` and `bode.dark.svg`; change `R_OHMS` in `examples/rc-circuits/figures.ts`, run `npm run figures`, and watch the cutoff move.
+8. **Write your own book.** Copy `.env.example` to `.env`, add your Anthropic API key, then run
    `npm run generate -- --topic "How lithium-ion batteries store energy" --chapters 3`.
-   It pauses at the outline (edit `books/draft-*/outline.json`, press Enter) and before export, then builds the web book and PDF and prints how many tokens it used. Read `report.json` before publishing: every item marked `problem` needs a human decision.
-7. **Or use the app.** `npm run app` → Settings → paste your key → Plan the outline. At the end, **Download project** and build the PDF with `npm run cli -- build-project scriptorium-project.json`.
+   It pauses at the outline (edit `books/draft-*/outline.json`, press Enter) and before export, then builds the web book, PDF, cover and EPUB and prints how many tokens it used. Read `report.json` before publishing: every item marked `problem` needs a human decision.
+9. **Or use the app.** `npm run app` → Settings → paste your key → Plan the outline. At the end, **Download project** and build everything with `npm run cli -- build-project scriptorium-project.json`.
 
-<img src="assets/rendered/screens/gallery-engineering.png" alt="Four pages from the engineering sample book: a chapter opener with learning goals, an equation page with a worked example, a page with two Bode plots, and the verification report." width="880">
+<img src="assets/rendered/screens/print-spread.png" alt="Two facing pages of the print PDF: the charging circuit diagram on the left; on the right the time-constant equation with its intuition sentence, symbol table with units, a shaded worked example and a validity note." width="880">
 
-*Figure 12 — Sample pages from the engineering profile. Chemistry, medicine and biology profiles arrive in milestone 2.*
+*Figure 14 — A spread from the 6″ × 9″ print PDF. Each equation comes with an intuition sentence, a symbol table with units, a worked example re-checked by a test, and the conditions where it stops being valid.*
 
 ---
 
@@ -267,27 +321,36 @@ Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252
 scriptorium/
 ├── src/
 │   ├── core/          book model (book.ts), pipeline (9 stages), domain-profile schema,
-│   │                  style tokens (style.ts), safe plot expressions, readability
+│   │                  style tokens (style.ts), safe plot expressions, readability,
+│   │                  3D model parsing (molecule.ts: XYZ, PDB, SDF)
 │   ├── llm/           model provider (key handling), spending cap + rate limit,
 │   │                  prompts, prompt-injection guards
-│   ├── research/      Crossref + OpenAlex search, DOI verification
-│   ├── render/        HTML (KaTeX), Typst (print), SVG plots, schematics, CSL citations
-│   ├── kdp/           KDP numbers with sources (specs.ts) and interior pre-flight
+│   ├── research/      Crossref, OpenAlex, PubMed search and verification;
+│   │                  PubChem and Protein Data Bank structure downloads
+│   ├── render/        HTML (KaTeX), Typst (print), SVG plots, schematics, CSL citations,
+│   │                  3D stills + viewer, QR codes, covers
+│   ├── kdp/           KDP numbers with sources (specs.ts), interior + cover pre-flight,
+│   │                  metadata helper
 │   ├── disclosure/    KDP AI-disclosure checklist
-│   ├── node/          Node-only: load a book folder, PDF and web export
-│   └── cli/           `npm run cli` commands: generate, build, build-project, verify-refs, spine, preflight
-├── web/               the app (Vite): pipeline view, checkpoints, BYO key, proof
-├── profiles/          one JSON file per domain (engineering.json)
-├── styles/            CSL citation styles (IEEE, ACS, AMA) + en-US locale
-├── examples/
-│   └── rc-circuits/   sample book: book.json, references.json, figures.ts, figures/
+│   ├── node/          Node-only: load a book folder; web, PDF, cover and EPUB export
+│   └── cli/           `npm run cli`: build, build-all, generate, build-project,
+│                      verify-refs, epubcheck, spine, preflight
+├── web/               the app (Vite): pipeline view, checkpoints, bring-your-own key, proof
+├── profiles/          one JSON file per domain: engineering, chemistry, biology, medicine
+├── styles/            CSL citation styles (IEEE, ACS, AMA, Nature) + en-US locale
+├── examples/          one sample book per domain: book.json, references.json,
+│   ├── rc-circuits/       figures.ts (draws figures/ and models/)
+│   ├── molecular-shapes/
+│   ├── cells-and-dna/
+│   └── heart-and-vessels/
 ├── tests/
-│   ├── unit/          Vitest: KDP specs, palette contrast, security, exports, pipeline
-│   └── equations/     SymPy + Pint checks for every equation in the sample book
+│   ├── unit/          Vitest: KDP specs and outputs, palette contrast, security,
+│   │                  exports, pipeline, profiles, every sample book
+│   └── equations/     SymPy + Pint checks for every equation and 3D model in the samples
 ├── assets/
 │   ├── src/           sources for README art (hero, diagrams)
 │   └── rendered/      generated SVGs and screenshots (never edit by hand)
-├── scripts/           render_assets.ts, screenshots.py, setup.sh, setup.ps1
+├── scripts/           render_assets.ts, screenshots.py, pytest.mjs, setup.sh, setup.ps1
 └── docs/              PROJECT_BRIEF, BUILD_PROMPT, STYLE, SECURITY_MODEL, ADDING_A_DOMAIN
 ```
 
@@ -296,18 +359,19 @@ scriptorium/
 ## Security
 
 - **Your API key** lives in the browser tab's memory (or, only if you tick *Remember on this device*, in that browser's local storage), or in your shell environment for the command line. It is sent only to `api.anthropic.com` in a request header. It is never logged, exported, written into a project file, or included in error messages (tested).
-- **What leaves your machine:** prompts and drafts go to the model provider; search keywords and DOIs go to Crossref and OpenAlex. Nothing else. There is no telemetry.
+- **What leaves your machine:** prompts and drafts go to the model provider; search keywords, DOIs and PubMed IDs go to Crossref, OpenAlex and PubMed; compound names and PDB IDs go to PubChem and the Protein Data Bank. Nothing else. There is no telemetry.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/security.dark.svg">
-  <img src="assets/rendered/security.svg" alt="Left zone, stays on your machine: API key, book project, exports, checks. Top right, leaves to the model provider: key in the request header, topic, outline, reference titles and abstracts, drafts; returns schema-checked JSON only. Bottom right, leaves to Crossref and OpenAlex: keywords and DOIs, no key; returns metadata treated as untrusted data." width="880">
+  <img src="assets/rendered/security.svg" alt="Left zone, stays on your machine: API key, book project, exports, checks. Top right, leaves to the model provider: key in the request header, topic, outline, reference titles and abstracts, drafts; returns schema-checked JSON only. Bottom right, leaves to public databases (Crossref, OpenAlex, PubMed, PubChem, RCSB PDB): keywords, DOIs, PubMed IDs, compound names and PDB IDs, no key; replies treated as untrusted data." width="880">
 </picture>
 
-*Figure 13 — The security model.*
+*Figure 15 — The security model.*
 
-- **Untrusted content:** abstracts, search results and model replies are data, never instructions. They are wrapped and cleaned before reaching the model, model output must pass a schema, citations must point at verified sources, plot expressions go through a parser without `eval`, and every page is escaped and then sanitized with DOMPurify.
-- **Web pages** ship a strict Content Security Policy (`default-src 'none'`, no scripts in the book).
-- **Dependencies** are pinned in `package-lock.json` and `requirements.txt`; Dependabot and CodeQL run on the repository.
+- **Untrusted content:** abstracts, search results, structure files and model replies are data, never instructions. They are wrapped and cleaned before reaching the model, model output must pass a schema, citations must point at verified sources, plot expressions go through a parser without `eval`, structure files through strict parsers, and every page is escaped and then sanitized with DOMPurify (EPUB pages too).
+- **Web pages** ship a strict Content Security Policy: `default-src 'none'` blocks every script in books without 3D models; books with models allow only our own viewer script (`script-src 'self'`).
+- **Medicine** books carry an educational disclaimer, never give individual treatment or dosing, and are flagged for review by a licensed professional on every build.
+- **Dependencies** are pinned in `package-lock.json` and `requirements.txt`; Dependabot and CodeQL run on the repository; continuous integration (CI) jobs have read-only permissions.
 
 Threat model: [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md). Report a vulnerability: [SECURITY.md](SECURITY.md).
 
@@ -318,10 +382,13 @@ Threat model: [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md). Report a vulnera
 | Symptom | Cause | Fix |
 |---|---|---|
 | `process.loadEnvFile is not a function` or `SyntaxError` on start | Node.js older than 20.19 | `nvm install 22 && nvm use 22`, then `npm ci` again |
-| `ModuleNotFoundError: No module named 'sympy'` from `npm run test:equations` | Python packages not installed in the Python that runs the tests | `python -m pip install -r requirements.txt`; if another `pytest` shadows yours, the script already uses `python -m pytest` |
+| `error: externally-managed-environment` from `pip install` | Your system Python is protected (PEP 668) | `python3 -m venv .venv && . .venv/bin/activate`, then `python -m pip install -r requirements.txt` |
 | `Typst could not compile the book: … font` | Fonts come from npm packages that were not installed | `npm ci` (not `npm install --omit=dev`), then `npm run demo` |
+| `✗ EPUBCheck: Java is not installed` | EPUBCheck is a Java program | Install a Java runtime 11 or newer (for example Eclipse Temurin), or drop `--epubcheck` |
+| `KDP interior pre-flight … below KDP's minimum of 24` on a sample | The one-chapter gallery samples are deliberately short | Add `--allow-short` for samples; a real book needs at least 24 pages |
 | App says `Model provider returned 401` | Wrong or expired API key | Settings → paste a new key → Save key |
-| `Crossref lookup failed: 429` during `verify-refs` or research | Rate limited by Crossref | Set `CROSSREF_MAILTO` in `.env` (identifies you to Crossref) and retry a minute later |
+| `… is rate-limiting requests (429)` during research or `verify-refs` | Crossref, OpenAlex or PubMed limits request rates | Set `CROSSREF_MAILTO` in `.env` (Crossref's polite pool) and retry a minute later; PubMed allows about 3 requests per second without a key |
+| `Could not reach api.crossref.org` (or another host) | Offline, or a firewall or proxy blocks it | Check the connection; behind a proxy set `HTTPS_PROXY`. Building existing books needs no network |
 | `Stopped before "draft …": it could use up to … tokens` | The spending cap was reached | Raise *Token cap for this book* (app) or `--cap` (command line) |
 
 ---
@@ -334,23 +401,41 @@ Citation style: IEEE. All sources are in English.
 
 [2] Amazon Kindle Direct Publishing, "Paperback Submission Guidelines." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201857950 (accessed Sep. 30, 2026).
 
-[3] Amazon Kindle Direct Publishing, "Create a Paperback Cover." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201953020 (accessed Sep. 30, 2026).
+[3] Amazon Kindle Direct Publishing, "Create a Paperback Cover." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201953020 (accessed Oct. 1, 2026).
 
-[4] Amazon Kindle Direct Publishing, "Content Guidelines" (definitions of AI-generated and AI-assisted content), see [1].
+[4] Amazon Kindle Direct Publishing, "Barcodes." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G5HDYGP4BXLX4RUW (accessed Oct. 1, 2026).
 
-[5] J. P. Kincaid, R. P. Fishburne Jr., R. L. Rogers, and B. S. Chissom, "Derivation of new readability formulas (Automated Readability Index, Fog Count and Flesch Reading Ease Formula) for Navy enlisted personnel," Naval Technical Training Command, Research Branch Report 8-75, 1975. [Online]. Available: https://stars.library.ucf.edu/istlibrary/56/
+[5] Amazon Kindle Direct Publishing, "Cover Image Guidelines" (Kindle eBooks). [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX (accessed Oct. 1, 2026).
 
-[6] World Wide Web Consortium, "Web Content Accessibility Guidelines (WCAG) 2.2," W3C Recommendation. [Online]. Available: https://www.w3.org/TR/WCAG22/
+[6] Amazon Kindle Direct Publishing, "Metadata Guidelines for Books." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201097560 (accessed Oct. 1, 2026).
 
-[7] Crossref, "REST API" documentation. [Online]. Available: https://www.crossref.org/documentation/retrieve-metadata/rest-api/
+[7] Amazon Kindle Direct Publishing, "Make Your Book More Discoverable with Keywords." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201298500 (accessed Oct. 1, 2026).
 
-[8] OpenAlex, "Works" API reference. [Online]. Available: https://developers.openalex.org/api-reference/works/get-a-single-work
+[8] Amazon Kindle Direct Publishing, "Write a Book Description." [Online]. Available: https://kdp.amazon.com/en_US/help/topic/G201189630 (accessed Oct. 1, 2026).
 
-[9] Typst documentation. [Online]. Available: https://typst.app/docs/
+[9] J. P. Kincaid, R. P. Fishburne Jr., R. L. Rogers, and B. S. Chissom, "Derivation of new readability formulas (Automated Readability Index, Fog Count and Flesch Reading Ease Formula) for Navy enlisted personnel," Naval Technical Training Command, Millington, TN, USA, Research Branch Report 8-75, Feb. 1975. [Online]. Available: https://stars.library.ucf.edu/istlibrary/56/
 
-[10] Citation Style Language. [Online]. Available: https://citationstyles.org/
+[10] World Wide Web Consortium, "Web Content Accessibility Guidelines (WCAG) 2.2," W3C Recommendation. [Online]. Available: https://www.w3.org/TR/WCAG22/
 
-The sample book's own sources (OpenStax *University Physics Volume 2*, MIT OpenCourseWare 6.002, Analog Devices *Basic Linear Design*, Sallen & Key 1955) are listed with their verification records in `examples/rc-circuits/references.json`.
+[11] Crossref, "REST API" documentation. [Online]. Available: https://www.crossref.org/documentation/retrieve-metadata/rest-api/
+
+[12] OpenAlex, "Works" API reference. [Online]. Available: https://developers.openalex.org/api-reference/works/get-a-single-work
+
+[13] National Center for Biotechnology Information, "Entrez Programming Utilities Help." [Online]. Available: https://www.ncbi.nlm.nih.gov/books/NBK25501/
+
+[14] National Center for Biotechnology Information, "PUG REST" (PubChem programmatic access). [Online]. Available: https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest
+
+[15] RCSB Protein Data Bank, "File Download Services." [Online]. Available: https://www.rcsb.org/docs/programmatic-access/file-download-services
+
+[16] World Wide Web Consortium, "EPUB 3.3," W3C Recommendation. [Online]. Available: https://www.w3.org/TR/epub-33/
+
+[17] World Wide Web Consortium, "EPUBCheck." [Online]. Available: https://www.w3.org/publishing/epubcheck/
+
+[18] Typst documentation. [Online]. Available: https://typst.app/docs/
+
+[19] Citation Style Language. [Online]. Available: https://citationstyles.org/
+
+Each sample book lists its own sources, with a verification record for each, in its `references.json`: OpenStax *University Physics Volume 2*, MIT OpenCourseWare 6.002, Analog Devices *Basic Linear Design* and Sallen & Key 1955 (engineering); OpenStax *Chemistry 2e*; OpenStax *Biology 2e*; OpenStax *Anatomy and Physiology 2e*.
 
 ---
 
@@ -359,9 +444,9 @@ The sample book's own sources (OpenStax *University Physics Volume 2*, MIT OpenC
 | Milestone | Scope | Status |
 |---|---|---|
 | 1 | Engineering profile, 3-chapter sample book, web export + print PDF, interior pre-flight | **Done** |
-| 2 | Chemistry, medicine, biology profiles; 3D viewers (model-viewer, 3Dmol.js) with printed stills + QR links | Planned |
-| 3 | EPUB 3 export, cover generator (geometry already in `src/kdp/specs.ts`), cover pre-flight, metadata helper | Planned |
-| 4 | Tauri desktop builds with OS-keychain key storage, SHA-256 checksums + build-provenance attestations; in-browser PDF | Planned |
+| 2 | Chemistry, biology and medicine profiles with sample books; PubMed, PubChem and Protein Data Bank; rotatable 3D models with printed stills + QR links | **Done** |
+| 3 | EPUB 3 export with EPUBCheck, paperback cover generator, ebook cover, cover pre-flight, metadata helper | **Done** |
+| 4 | Tauri desktop builds with OS-keychain key storage, SHA-256 checksums + build-provenance attestations; in-browser PDF; arXiv search | Planned |
 
 ---
 
@@ -369,12 +454,13 @@ The sample book's own sources (OpenStax *University Physics Volume 2*, MIT OpenC
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/ADDING_A_DOMAIN.md](docs/ADDING_A_DOMAIN.md). Every visual follows [docs/STYLE.md](docs/STYLE.md).
 
-**License.** Code: MIT ([LICENSE](LICENSE)). Sample book text and figures (`examples/rc-circuits/`): Creative Commons Attribution 4.0 (CC BY 4.0).
+**License.** Code: MIT ([LICENSE](LICENSE)). Sample book text and figures (`examples/`): Creative Commons Attribution 4.0 (CC BY 4.0).
 
 **Credits.**
 
 - Fonts: Source Serif 4 and Source Sans 3 by Adobe, SIL Open Font License 1.1 (installed from npm, embedded in the PDF). Math: KaTeX fonts (MIT); New Computer Modern Math and DejaVu Sans Mono (bundled with Typst).
 - Citation styles and locale: Citation Style Language project, CC BY-SA 3.0 (`styles/`).
-- Colors: hues from the Okabe–Ito colorblind-safe palette (M. Okabe and K. Ito, *Color Universal Design*, 2008).
-- Libraries: Typst and typst.ts (Apache-2.0), KaTeX (MIT), citeproc-js (CPAL/AGPL dual), DOMPurify (Apache-2.0/MPL-2.0), pdf-lib (MIT), Zod (MIT), Vite (MIT).
-- The sample book and much of this repository were drafted with an AI assistant (Claude, by Anthropic) and checked as described in the verification report.
+- Colors: hues from the Okabe–Ito colorblind-safe palette (M. Okabe and K. Ito, *Color Universal Design*, 2008). Atom colors follow the common Corey–Pauling–Koltun (CPK) convention.
+- Libraries: Typst and typst.ts (Apache-2.0), KaTeX (MIT), citeproc-js (CPAL-1.0 or AGPL-1.0), DOMPurify (Apache-2.0 or MPL-2.0), jsdom (MIT), pdf-lib (MIT), Zod (MIT), Vite (MIT), esbuild (MIT), qrcode (MIT), resvg-js (MPL-2.0), jpeg-js (BSD-3-Clause), fflate (MIT), EPUBCheck (BSD-3-Clause, via epubcheck-static, ISC).
+- Sample-book sources: OpenStax textbooks (Rice University), cited, not copied.
+- The sample books and much of this repository were drafted with an AI assistant (Claude, by Anthropic) and checked as described in each book's verification report.

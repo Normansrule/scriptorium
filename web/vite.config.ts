@@ -8,7 +8,8 @@ export default defineConfig({
   root: resolve(here),
   base: './',
   publicDir: false,
-  // KaTeX + citeproc + Zod make one ~1 MB chunk (~275 kB gzipped); acceptable for a tool page.
-  build: { outDir: resolve(here, 'dist'), emptyOutDir: true, sourcemap: false, target: 'es2022', chunkSizeWarningLimit: 1200 },
+  // KaTeX, citeproc, Zod, four CSL styles and the four sample books make one ~1.3 MB chunk
+  // (~325 kB gzipped); acceptable for a tool page that works offline after loading.
+  build: { outDir: resolve(here, 'dist'), emptyOutDir: true, sourcemap: false, target: 'es2022', chunkSizeWarningLimit: 1500 },
   server: { fs: { allow: [resolve(here, '..')] } },
 });

@@ -1,0 +1,52 @@
+name: Publish web app and sample books
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: read the repo, write only to GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build the web app
+        run: npm run app:build
+      - name: Build every sample book (web, PDF, cover, EPUB)
+        run: npm run build:all -- --allow-short
+      - name: Put each book under books/<name>/ next to the app
+        run: |
+          for d in dist/*/; do
+            name=$(basename "$d")
+            mkdir -p "web/dist/books/$name/downloads"
+            cp -r "$d/web/." "web/dist/books/$name/"
+            cp "$d/book.pdf" "$d/book.epub" "$d/cover.pdf" "$d/ebook-cover.jpg" "$d/kdp-metadata.txt" "web/dist/books/$name/downloads/"
+          done
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

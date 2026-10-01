@@ -94,11 +94,11 @@ export function security(mode: Mode): string {
   ['Your key (request header, HTTPS)', 'Topic, outline, section plans', 'Verified reference titles + abstracts', 'Drafts sent for review'].forEach((t, i) => parts.push(text(538, 92 + i * 24, `• ${t}`, { fill: p.ink, size: 12.5 })));
   parts.push(text(538, 192, 'Capped by your per-book token limit', { fill: p.muted, size: 11.5 }));
 
-  parts.push(`<rect x="520" y="224" width="344" height="160" rx="12" fill="${p.tint('external')}" stroke="${p.role('external')}" stroke-width="1.5"/>`);
-  parts.push(text(538, 252, 'Leaves: scholarly databases', { fill: p.ink, size: 16, weight: 600 }));
-  parts.push(text(538, 272, 'Crossref, OpenAlex (public APIs)', { fill: p.muted, size: 12 }));
-  ['Search keywords and DOIs', 'No key, no drafts, no personal data'].forEach((t, i) => parts.push(text(538, 300 + i * 24, `• ${t}`, { fill: p.ink, size: 12.5 })));
-  parts.push(text(538, 364, 'Replies are untrusted data, never instructions', { fill: p.muted, size: 11.5 }));
+  parts.push(`<rect x="520" y="224" width="344" height="168" rx="12" fill="${p.tint('external')}" stroke="${p.role('external')}" stroke-width="1.5"/>`);
+  parts.push(text(538, 252, 'Leaves: public databases', { fill: p.ink, size: 16, weight: 600 }));
+  parts.push(text(538, 272, 'Crossref, OpenAlex, PubMed, PubChem, RCSB PDB', { fill: p.muted, size: 12 }));
+  ['Search keywords, DOIs, PubMed IDs', 'Compound names, PDB IDs (for 3D models)', 'No key, no drafts, no personal data'].forEach((t, i) => parts.push(text(538, 298 + i * 23, `• ${t}`, { fill: p.ink, size: 12.5 })));
+  parts.push(text(538, 376, 'Replies are untrusted data, never instructions', { fill: p.muted, size: 11.5 }));
 
   parts.push(arrow(420, 110, 514, 110, p.role('external')));
   parts.push(arrow(514, 150, 420, 150, p.muted));
@@ -108,7 +108,7 @@ export function security(mode: Mode): string {
   parts.push(arrow(514, 330, 420, 330, p.muted));
   parts.push(text(467, 282, 'queries', { anchor: 'middle', fill: p.ink, size: 11 }));
   parts.push(text(467, 348, 'metadata', { anchor: 'middle', fill: p.ink, size: 11 }));
-  return svgDoc(W, H, 'Security model', 'Left: what stays on your machine (API key, book project, exports, checks). Right, top: what goes to the model provider (key in the request header, topic, outline, reference titles and abstracts, drafts) and returns only schema-checked JSON. Right, bottom: what goes to Crossref and OpenAlex (search keywords and DOIs, no key) and returns metadata treated as untrusted data.', parts.join('\n'), p);
+  return svgDoc(W, H, 'Security model', 'Left: what stays on your machine (API key, book project, exports, checks). Right, top: what goes to the model provider (key in the request header, topic, outline, reference titles and abstracts, drafts) and returns only schema-checked JSON. Right, bottom: what goes to public databases — Crossref, OpenAlex, PubMed, PubChem and the Protein Data Bank (search keywords, DOIs, PubMed IDs, compound names and PDB IDs, no key) — and returns data treated as untrusted.', parts.join('\n'), p);
 }
 
 export function layers(mode: Mode): string {

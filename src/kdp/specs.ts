@@ -5,10 +5,10 @@
  *   [PSG]   Paperback Submission Guidelines  https://kdp.amazon.com/en_US/help/topic/G201857950
  *   [COVER] Create a Paperback Cover          https://kdp.amazon.com/en_US/help/topic/G201953020
  *   [BAR]   Barcodes                          https://kdp.amazon.com/en_US/help/topic/G5HDYGP4BXLX4RUW
- *   [EBC]   Kindle eBook cover requirements   https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX
+ *   [EBC]   Cover Image Guidelines (eBook)    https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX
  *   [META]  Metadata Guidelines for Books     https://kdp.amazon.com/en_US/help/topic/G201097560
  *   [KW]    Make Your Book More Discoverable with Keywords  https://kdp.amazon.com/en_US/help/topic/G201298500
- *   [DESC]  Book description                  https://kdp.amazon.com/en_US/help/topic/G201189630
+ *   [DESC]  Write a Book Description           https://kdp.amazon.com/en_US/help/topic/G201189630
  * (cover, barcode, ebook-cover and metadata pages checked 2026-10-01)
  * If KDP changes a rule, change it here and nowhere else. tests/unit/kdp.test.ts pins the values.
  * All lengths are inches.

@@ -67,7 +67,7 @@
                   { "symbol": "\\theta_{\\text{tet}}", "meaning": "angle between any two bonds in a perfect tetrahedron", "unit": "° (degree)" }
                 ],
                 "example": { "text": "$\\arccos(-1/3) = 109.47\\degree$, which rounds to the $109.5\\degree$ the textbook gives for every H–C–H angle in methane [@openstax-chem2e, §7.6].", "check": "tests/equations/test_chemistry.py::test_tetrahedral_angle" },
-                "validity": "Exact only for four identical groups and no lone pairs. Lone pairs take up more room than bonds and squeeze the bond angles below this value.",
+                "validity": "Exact only for four identical groups and no lone pairs. Lone pairs take up more room than bonds and squeeze the bond angles below this value [@openstax-chem2e, §7.6].",
                 "figure": "fig-methane"
               },
               { "kind": "para", "text": "Water also has four electron groups around its central atom, but two of them are lone pairs. The lone pairs push the two O–H bonds closer together, so the H–O–H angle is 104.5° and the molecule is **bent** [@openstax-chem2e, §7.6]. Ammonia, with one lone pair, ends up in between: its H–N–H angles are slightly smaller than 109.5° [@openstax-chem2e, §7.6]. Carbon dioxide has only two electron groups around carbon, so it is **linear**, with a 180° angle [@openstax-chem2e, §7.6]." },

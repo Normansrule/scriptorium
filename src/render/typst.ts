@@ -25,7 +25,8 @@ export const DEFAULT_LAYOUT: TypstLayout = { trimWidthIn: 6, trimHeightIn: 9, in
 
 /** Escape a plain string for Typst markup mode. */
 export function escMarkup(s: string): string {
-  return s.replace(/[\\#*_$@<>[\]`~=+\-/]/g, (c) => `\\${c}`);
+  // `;` is escaped too: right after an inline call such as #link(…)[…] Typst would read it as the end of the call.
+  return s.replace(/[\\#*_$@<>[\]`~=+\-/;]/g, (c) => `\\${c}`);
 }
 
 /** Escape for a Typst string literal. */
@@ -114,11 +115,18 @@ function equation(b: Equation, ctx: TypstContext): string {
 `;
 }
 
+/** Alt text for one still: its own `alt`, else the full description on the first view and a short one on the rest. */
+export function viewAlt(b: Model3D, i: number): string {
+  const v = b.views[i]!;
+  if (v.alt) return v.alt;
+  return i === 0 ? `${b.alt} (${v.label} view)` : `The same model, ${v.label} view.`;
+}
+
 function model3d(b: Model3D, ctx: TypstContext): string {
   const num = ctx.numbering.figure.get(b.id)!;
   const n = b.views.length;
   const views = b.views
-    .map((v) => `[#image("${escString(v.src)}", width: 100%, alt: "${escString(`${b.alt} View: ${v.label}.`)}") #v(-6pt) #align(center)[#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${escMarkup(v.label)}]]]`)
+    .map((v, i) => `[#image("${escString(v.src)}", width: 100%, alt: "${escString(viewAlt(b, i))}") #v(-6pt) #align(center)[#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${escMarkup(v.label)}]]]`)
     .join(', ');
   const url = ctx.webUrl ? `${ctx.webUrl}#${b.id}` : '';
   const caption = `#text(font: "${fonts.sans}", size: 8.5pt)[#strong[Figure ${num}] — ${md(b.caption, ctx)} #text(fill: ${C.muted})[${md(b.credit, ctx)}]${
@@ -253,7 +261,11 @@ export function verificationSummary(book: Book, refs: Reference[]): string {
   const eqs = allEquations(book);
   const unverifiedRefs = refs.filter((r) => r.verification.status !== 'verified').length;
   const uncheckedEqs = eqs.filter((e) => !e.example.check.includes('::')).length;
-  const a = unverifiedRefs ? `${unverifiedRefs} of ${refs.length} sources are not verified; they are marked below.` : `All ${refs.length} sources were verified; each row says how.`;
+  const a = unverifiedRefs
+    ? `${unverifiedRefs} of ${refs.length} sources ${unverifiedRefs === 1 ? 'is' : 'are'} not verified; ${unverifiedRefs === 1 ? 'it is' : 'they are'} marked below.`
+    : refs.length === 1
+      ? 'The one source was verified; the row below says how.'
+      : `All ${refs.length} sources were verified; each row says how.`;
   const b =
     eqs.length === 0
       ? ''
@@ -363,7 +375,7 @@ ${
   eqEntries.length
     ? `
 #text(font: "${fonts.sans}", weight: "semibold", size: 10.5pt)[Equations]
-#linebreak()Each check is a test function in ${checkFiles.map((f) => `#raw("${escString(f)}")`).join(', ')}; run them all with #raw("npm run test:equations").
+#linebreak()Each check is a test function in ${checkFiles.map((f) => `#raw("${escString(f)}")`).join(', ')}\\; run them all with #raw("npm run test:equations").
 #show raw: set text(size: 7.5pt)
 #table(columns: (auto, 1fr, auto, 1fr), stroke: 0.5pt + ${C.rule}, inset: 3pt,
   [*Eq.*], [*Automated check*], [*Eq.*], [*Automated check*],

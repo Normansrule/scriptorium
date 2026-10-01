@@ -133,7 +133,7 @@ async function build(args: string[]): Promise<BuildSummary> {
   }
 
   const meta = checkMetadata(book.meta);
-  writeFileSync(join(out, 'kdp-metadata.txt'), metadataSheet(book.meta, meta));
+  writeFileSync(join(out, 'kdp-metadata.txt'), metadataSheet(book.meta, meta) + (profile.requiresProfessionalReview ? `\n! Before publishing: the ${profile.name} profile requires review by a licensed professional.\n` : ''));
   const metaErr = meta.filter((c) => c.level === 'error');
   const metaWarn = meta.filter((c) => c.level === 'warning');
   console.log(`${metaErr.length ? '✗' : '✓'} KDP metadata → ${rel(join(out, 'kdp-metadata.txt'))} (${metaErr.length} errors, ${metaWarn.length} warnings)`);
@@ -141,6 +141,7 @@ async function build(args: string[]): Promise<BuildSummary> {
   summary.failed.push(...metaErr.map((c) => `KDP metadata — ${c.rule}`));
   summary.warnings.push(...metaWarn.map((c) => `KDP metadata — ${c.rule}`));
   preflightAll.metadata = meta;
+  if (profile.requiresProfessionalReview) preflightAll.professionalReview = { required: true, done: false, detail: `The ${profile.name} profile requires review by a licensed professional before publishing.` };
   writeFileSync(join(out, 'preflight.json'), JSON.stringify(preflightAll, null, 2));
 
   writeFileSync(join(out, 'ai-disclosure.json'), JSON.stringify(disclosure, null, 2));

@@ -32,7 +32,8 @@ export function dnaModel(): Model {
   SEQUENCE.split('').forEach((base, i) => {
     const th = (2 * Math.PI * i) / DNA.bpPerTurn;
     const zc = r4(i * DNA.risePerBp - ((SEQUENCE.length - 1) * DNA.risePerBp) / 2);
-    const c = Math.cos(th), s = Math.sin(th);
+    // x = R cos θ, z = −R sin θ (y up, z toward the viewer) makes a right-handed helix, as B-DNA is.
+    const c = Math.cos(th), s = -Math.sin(th);
     const k = atoms.length;
     atoms.push({ el: 'P', x: r4(R * c), y: zc, z: r4(R * s) }); // strand 1 backbone
     atoms.push({ el: 'N', x: r4(rb * c), y: zc, z: r4(rb * s), label: base }); // base on strand 1
@@ -57,11 +58,11 @@ const plots: Record<string, (mode: Mode) => string> = {
   'sa-volume': (mode) =>
     plot(
       {
-        title: 'Surface area to volume ratio of a spherical cell',
-        desc: 'SA/V = 3/r for radius 0.5 to 20 micrometres on log axes; marked points at r = 1 µm (3 per µm) and r = 10 µm (0.3 per µm).',
+        title: 'Surface area to volume ratio (A/V) of a spherical cell',
+        desc: 'A/V = 3/r for radius 0.5 to 20 micrometres, radius on a logarithmic axis; marked points at r = 1 µm (3 per µm) and r = 10 µm (0.3 per µm).',
         x: { label: 'Cell radius, r (µm, log scale)', from: 0.5, to: 20, log: true, ticks: [1, 10], tickFormat: (v) => `${v}` },
         y: { label: 'Surface area ÷ volume (per µm)', from: 0, to: 6.5, ticks: [0, 1, 2, 3, 4, 5, 6] },
-        series: [{ label: 'SA/V = 3/r', expr: '3 / x', role: 'signal', labelAt: 0.7, labelDy: -14 }],
+        series: [{ label: 'A/V = 3/r', expr: '3 / x', role: 'signal', labelAt: 0.7, labelDy: -14 }],
         points: [
           { x: 1, y: 3, label: 'r = 1 µm (prokaryote-sized): 3 per µm', dx: 10, dy: -6 },
           { x: 10, y: 0.3, label: 'r = 10 µm (eukaryote-sized): 0.3 per µm', dx: -10, dy: -60, anchor: 'end' },
@@ -84,7 +85,7 @@ export function drawAll(root = here): string[] {
   put('models/dna.json', JSON.stringify(dna, null, 1) + '\n');
   for (const v of VIEWS) {
     const slug = v.label.replace(/\s+/g, '-');
-    for (const mode of ['light', 'dark'] as const) put(`figures/dna-${slug}${mode === 'dark' ? '.dark' : ''}.svg`, renderMoleculeSvg(dna, v, { ...STILL, mode, scale: 'to-scale', atomScale: ATOM_SCALE, title: `DNA double helix, ${v.label} view` }));
+    for (const mode of ['light', 'dark'] as const) put(`figures/dna-${slug}${mode === 'dark' ? '.dark' : ''}.svg`, renderMoleculeSvg(dna, v, { ...STILL, mode, scale: 'to-scale', atomScale: ATOM_SCALE, title: `DNA double helix, ${v.label} view`, desc: `One right-handed turn of a DNA double helix, ${v.label} view: 20 orange backbone beads on a 2 nm circle and 20 blue base beads paired across the middle, 0.34 nm apart along the axis; 1 nm scale bar.` }));
   }
   for (const [name, draw] of Object.entries(plots)) for (const mode of ['light', 'dark'] as const) put(`figures/${name}${mode === 'dark' ? '.dark' : ''}.svg`, draw(mode));
   return written;

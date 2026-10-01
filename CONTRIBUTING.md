@@ -8,6 +8,7 @@ Thanks for helping. The bar for this repository is "the best-documented, most vi
 npm ci
 python -m pip install -r requirements.txt
 npm test && npm run test:equations && npm run demo
+npm run build:all -- --allow-short --epubcheck   # all four sample books; EPUBCheck needs Java 11+
 ```
 
 ## Before you open a pull request
@@ -22,7 +23,7 @@ npm test && npm run test:equations && npm run demo
 
 ## Adding a domain
 
-See [docs/ADDING_A_DOMAIN.md](docs/ADDING_A_DOMAIN.md): one JSON file in `profiles/` plus a CSL style.
+See [docs/ADDING_A_DOMAIN.md](docs/ADDING_A_DOMAIN.md): one JSON file in `profiles/`, a CSL style, and ideally a one-chapter sample book in `examples/`.
 
 ## Commit messages
 

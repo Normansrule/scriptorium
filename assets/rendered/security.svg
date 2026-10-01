@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="880" height="400" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
 <title id="t">Security model</title>
-<desc id="d">Left: what stays on your machine (API key, book project, exports, checks). Right, top: what goes to the model provider (key in the request header, topic, outline, reference titles and abstracts, drafts) and returns only schema-checked JSON. Right, bottom: what goes to Crossref and OpenAlex (search keywords and DOIs, no key) and returns metadata treated as untrusted data.</desc>
+<desc id="d">Left: what stays on your machine (API key, book project, exports, checks). Right, top: what goes to the model provider (key in the request header, topic, outline, reference titles and abstracts, drafts) and returns only schema-checked JSON. Right, bottom: what goes to public databases — Crossref, OpenAlex, PubMed, PubChem and the Protein Data Bank (search keywords, DOIs, PubMed IDs, compound names and PDB IDs, no key) — and returns data treated as untrusted.</desc>
 <rect width="880" height="400" fill="#FFFFFF"/>
 <rect x="16" y="16" width="400" height="368" rx="12" fill="rgba(0, 122, 90, 0.12)" stroke="#007A5A" stroke-width="1.5"/>
 <text x="34.0" y="44.0" font-size="16" fill="#1F2328" text-anchor="start" font-weight="600">Stays on your machine</text>
@@ -17,12 +17,13 @@
 <text x="538.0" y="140.0" font-size="12.5" fill="#1F2328" text-anchor="start">• Verified reference titles + abstracts</text>
 <text x="538.0" y="164.0" font-size="12.5" fill="#1F2328" text-anchor="start">• Drafts sent for review</text>
 <text x="538.0" y="192.0" font-size="11.5" fill="#57606A" text-anchor="start">Capped by your per-book token limit</text>
-<rect x="520" y="224" width="344" height="160" rx="12" fill="rgba(168, 83, 138, 0.12)" stroke="#A8538A" stroke-width="1.5"/>
-<text x="538.0" y="252.0" font-size="16" fill="#1F2328" text-anchor="start" font-weight="600">Leaves: scholarly databases</text>
-<text x="538.0" y="272.0" font-size="12" fill="#57606A" text-anchor="start">Crossref, OpenAlex (public APIs)</text>
-<text x="538.0" y="300.0" font-size="12.5" fill="#1F2328" text-anchor="start">• Search keywords and DOIs</text>
-<text x="538.0" y="324.0" font-size="12.5" fill="#1F2328" text-anchor="start">• No key, no drafts, no personal data</text>
-<text x="538.0" y="364.0" font-size="11.5" fill="#57606A" text-anchor="start">Replies are untrusted data, never instructions</text>
+<rect x="520" y="224" width="344" height="168" rx="12" fill="rgba(168, 83, 138, 0.12)" stroke="#A8538A" stroke-width="1.5"/>
+<text x="538.0" y="252.0" font-size="16" fill="#1F2328" text-anchor="start" font-weight="600">Leaves: public databases</text>
+<text x="538.0" y="272.0" font-size="12" fill="#57606A" text-anchor="start">Crossref, OpenAlex, PubMed, PubChem, RCSB PDB</text>
+<text x="538.0" y="298.0" font-size="12.5" fill="#1F2328" text-anchor="start">• Search keywords, DOIs, PubMed IDs</text>
+<text x="538.0" y="321.0" font-size="12.5" fill="#1F2328" text-anchor="start">• Compound names, PDB IDs (for 3D models)</text>
+<text x="538.0" y="344.0" font-size="12.5" fill="#1F2328" text-anchor="start">• No key, no drafts, no personal data</text>
+<text x="538.0" y="376.0" font-size="11.5" fill="#57606A" text-anchor="start">Replies are untrusted data, never instructions</text>
 <line x1="420.0" y1="110.0" x2="509.0" y2="110.0" stroke="#A8538A" stroke-width="1.5" stroke-linecap="round"/><path d="M514.0,110.0 L507.8,113.2 L507.8,106.8 Z" fill="#A8538A"/>
 <line x1="514.0" y1="150.0" x2="425.0" y2="150.0" stroke="#57606A" stroke-width="1.5" stroke-linecap="round"/><path d="M420.0,150.0 L426.2,146.8 L426.2,153.2 Z" fill="#57606A"/>
 <text x="467.0" y="102.0" font-size="11" fill="#1F2328" text-anchor="middle">prompts</text>

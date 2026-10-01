@@ -62,8 +62,12 @@ def test_dna_model_dimensions():
     assert all(a["el"] == "P" for a in s1)
     for p, q in zip(s1, s1[1:]):
         assert close(q["y"] - p["y"], 0.34, rel=1e-3)
-        turn = math.degrees(math.atan2(q["z"], q["x"]) - math.atan2(p["z"], p["x"])) % 360
-        assert close(turn, 36, rel=1e-3)
+        # angle between neighbouring backbone beads seen down the axis: 36° per base pair
+        cos_t = (p["x"] * q["x"] + p["z"] * q["z"]) / (math.hypot(p["x"], p["z"]) * math.hypot(q["x"], q["z"]))
+        assert close(math.degrees(math.acos(cos_t)), 36, rel=1e-3)
+        # right-handed: (P_i × P_i+1) points along +y, the direction the helix advances
+        # (x right, y up, z toward the viewer, as the renderer draws it)
+        assert p["z"] * q["x"] - p["x"] * q["z"] > 0
     # ten base pairs: one full turn, 3.4 nm of rise including the step to the next pair
     assert len(s1) == 10
     assert close((s1[-1]["y"] - s1[0]["y"]) + 0.34, 3.4)

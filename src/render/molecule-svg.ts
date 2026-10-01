@@ -63,7 +63,7 @@ export interface Projected {
   depth: number;
 }
 
-export function project(model: Model, view: MoleculeView, size: number, pad = 0.14): { pts: Projected[]; scale: number } {
+export function project(model: Model, view: MoleculeView, size: number, pad = 0.14): { pts: Projected[]; scale: number; rot: Array<{ x: number; y: number; z: number }> } {
   const y = (view.yaw * Math.PI) / 180;
   const p = (view.pitch * Math.PI) / 180;
   const cy = Math.cos(y), sy = Math.sin(y), cp = Math.cos(p), sp = Math.sin(p);
@@ -76,7 +76,7 @@ export function project(model: Model, view: MoleculeView, size: number, pad = 0.
   });
   const reach = Math.max(1e-9, ...model.atoms.map((a) => Math.hypot(a.x, a.y, a.z)));
   const scale = (size * (1 - 2 * pad)) / (2 * reach);
-  return { pts: rot.map((r) => ({ sx: size / 2 + r.x * scale, sy: size / 2 - r.y * scale, depth: r.z })), scale };
+  return { pts: rot.map((r) => ({ sx: size / 2 + r.x * scale, sy: size / 2 - r.y * scale, depth: r.z })), scale, rot };
 }
 
 /** Typical bond length in the model's units (median), used to size atoms consistently. */
@@ -95,11 +95,20 @@ function labelColor(fill: string): string {
   return contrast(fill, '#1F2328') >= contrast(fill, '#FFFFFF') ? '#1F2328' : '#FFFFFF';
 }
 
+/** True when the plane through a–b–c faces the viewer to within `maxDeg`. */
+export function faceOn(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }, c: { x: number; y: number; z: number }, maxDeg = 5): boolean {
+  const u = [a.x - b.x, a.y - b.y, a.z - b.z];
+  const v = [c.x - b.x, c.y - b.y, c.z - b.z];
+  const n = [u[1]! * v[2]! - u[2]! * v[1]!, u[2]! * v[0]! - u[0]! * v[2]!, u[0]! * v[1]! - u[1]! * v[0]!];
+  const len = Math.hypot(n[0]!, n[1]!, n[2]!);
+  return len > 0 && Math.abs(n[2]!) / len >= Math.cos((maxDeg * Math.PI) / 180);
+}
+
 export function renderMoleculeSvg(model: Model, view: MoleculeView, opts: RenderOptions = {}): string {
   const size = opts.size ?? 240;
   const mode = opts.mode ?? 'light';
   const pal = palette(mode);
-  const { pts, scale } = project(model, view, size);
+  const { pts, scale, rot } = project(model, view, size);
   const unit = bondUnit(model) * scale; // px per typical bond
   const atomScale = opts.atomScale ?? (model.atoms.length > 200 ? 0.5 : 1);
   type Item = { depth: number; svg: string };
@@ -155,9 +164,9 @@ export function renderMoleculeSvg(model: Model, view: MoleculeView, opts: Render
   for (const an of opts.annotations ?? []) {
     const [i, j, k] = an.atoms;
     const A = pts[i]!, B = pts[j]!, C = pts[k]!;
-    // Label an angle only in views that show it face-on; elsewhere the arc would lie.
-    const projected = (Math.acos(Math.max(-1, Math.min(1, ((A.sx - B.sx) * (C.sx - B.sx) + (A.sy - B.sy) * (C.sy - B.sy)) / (Math.hypot(A.sx - B.sx, A.sy - B.sy) * Math.hypot(C.sx - B.sx, C.sy - B.sy) || 1)))) * 180) / Math.PI;
-    if (Math.abs(projected - angleDeg(model.atoms[i]!, model.atoms[j]!, model.atoms[k]!)) > 3) continue;
+    // Label an angle only in views that show its plane face-on (normal within 5° of the line of
+    // sight); in any other view the arc would be foreshortened and the label would lie.
+    if (!faceOn(rot[i]!, rot[j]!, rot[k]!)) continue;
     const a1 = Math.atan2(A.sy - B.sy, A.sx - B.sx);
     let a2 = Math.atan2(C.sy - B.sy, C.sx - B.sx);
     let d = a2 - a1;

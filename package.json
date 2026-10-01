@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsx src/cli/main.ts build",
     "build:all": "tsx src/cli/main.ts build-all",
-    "demo": "tsx src/cli/main.ts build examples/rc-circuits/book.json",
+    "demo": "tsx src/cli/main.ts build examples/rc-circuits",
     "cli": "tsx src/cli/main.ts",
     "generate": "tsx src/cli/main.ts generate",
     "figures": "tsx examples/rc-circuits/figures.ts",

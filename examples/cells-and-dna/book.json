@@ -38,7 +38,7 @@
               { "kind": "para", "text": "Everything a cell takes in or gets rid of has to cross its outer membrane. As a cell grows, its volume grows faster than its surface, so each cubic micrometre (µm³) of cell is served by less membrane. Past a certain size, the membrane can no longer keep up — one reason most cells are microscopic [@openstax-bio2e, §4.2]." }
             ],
             "intuition": [
-              { "kind": "para", "text": "Think of a cell as a factory whose only doors are in its outside walls. Double the length of every wall and the floor space inside grows eightfold, but the wall area — and so the number of doors — grows only fourfold. The bigger the factory, the longer the queue at each door." }
+              { "kind": "para", "text": "Think of a cell as a factory whose only doors are in its outside walls. Double the length of every wall and the space inside grows eightfold, but the wall area — and so the number of doors — grows only fourfold. The bigger the factory, the longer the queue at each door." }
             ],
             "formal": [
               { "kind": "para", "text": "The textbook models a cell as a sphere, with surface area $4\\pi r^2$ and volume $4\\pi r^3/3$ [@openstax-bio2e, §4.2]. Dividing one by the other gives the [[surface area to volume ratio]]." },
@@ -53,7 +53,7 @@
                   { "symbol": "r", "meaning": "radius of the cell (half its diameter)", "unit": "µm" }
                 ],
                 "example": { "text": "A cell of radius 1 µm (diameter 2 µm, within the 0.1–5.0 µm the textbook gives for prokaryotes) has $A/V = 3/1 = 3$ per µm. A cell of radius 10 µm (diameter 20 µm, within the 10–100 µm range for eukaryotes) has $A/V = 3/10 = 0.3$ per µm [@openstax-bio2e, §4.2]. Ten times the radius leaves one tenth of the membrane per unit of volume.", "check": "tests/equations/test_biology.py::test_sa_volume_examples" },
-                "validity": "Exact for a sphere only. Real cells are rarely spheres; long, thin or folded shapes keep more surface per volume, which is one way large cells cope. The ratio has units of 1/length, so its value depends on the unit you measure $r$ in.",
+                "validity": "Exact for a sphere only. Real cells are rarely spheres; long, thin or folded shapes keep more surface per volume, which is one way large cells cope [@openstax-bio2e, §4.2]. The ratio has units of 1/length, so its value depends on the unit you measure $r$ in.",
                 "figure": "fig-sa-volume"
               },
               { "kind": "figure", "id": "fig-sa-volume", "src": "figures/sa-volume.svg", "alt": "Plot of surface area divided by volume, in units per micrometre, against cell radius from 0.5 to 20 micrometres on a logarithmic axis; a falling curve passes 3 per micrometre at a radius of 1 micrometre and 0.3 per micrometre at 10 micrometres.", "caption": "For a spherical cell the ratio $A/V = 3/r$ falls as the cell grows: a cell ten times wider has one tenth of the membrane per unit of volume.", "credit": "Drawn by examples/cells-and-dna/figures.ts from Eq. (eq-sa-volume).", "provenance": "code-drawn" }
@@ -85,7 +85,7 @@
                 "kind": "model3d",
                 "id": "fig-dna",
                 "src": "models/dna.json",
-                "alt": "Ball-and-stick model of one turn of a DNA double helix: orange beads for the two sugar–phosphate backbones spiral around the outside, blue beads for the paired bases meet in the middle; looking down the axis the backbones form a ring 2 nanometres across.",
+                "alt": "Ball-and-stick model of one right-handed turn of a DNA double helix: orange beads for the two sugar–phosphate backbones spiral around the outside, blue beads for the paired bases meet in the middle; looking down the axis the backbones form a ring 2 nanometres across.",
                 "caption": "One turn of the DNA double helix, 10 base pairs, drawn to scale from the textbook's dimensions: 2 nm diameter, 0.34 nm between base pairs, 3.4 nm per turn [@openstax-bio2e, §14.2]. Outer (orange) beads mark the backbones; inner (blue) beads stand for the bases. Simplified: each base is a single bead and the two backbones sit exactly opposite each other, so the major and minor grooves of real DNA are not shown.",
                 "credit": "Schematic model built by examples/cells-and-dna/figures.ts from the cited dimensions.",
                 "provenance": "code-drawn",
@@ -107,7 +107,7 @@
                   { "symbol": "N", "meaning": "number of base pairs", "unit": "bp" }
                 ],
                 "example": { "text": "A stretch of 1,500 base pairs is $1500 \\times 0.34 = 510$ nm long — about half a micrometre, already a quarter of the diameter of the 2 µm cell in the previous section.", "check": "tests/equations/test_biology.py::test_dna_length_example" },
-                "validity": "Uses the textbook's average rise of 0.34 nm per base pair for the common double-helix form [@openstax-bio2e, §14.2]. Inside cells DNA is wound around proteins and folded, so the space it occupies is far smaller than this stretched-out length.",
+                "validity": "Uses the textbook's spacing of 0.34 nm per base pair for the common double-helix form [@openstax-bio2e, §14.2]. Inside cells DNA is wound around proteins and folded, so the space it occupies is far smaller than this stretched-out length.",
                 "figure": "fig-dna"
               },
               {
@@ -120,7 +120,7 @@
                   { "symbol": "N", "meaning": "number of base pairs", "unit": "bp" }
                 ],
                 "example": { "text": "The same 1,500 base pairs make $1500 / 10 = 150$ turns, and $150 \\times 3.4$ nm $= 510$ nm, matching Eq. (eq-dna-length).", "check": "tests/equations/test_biology.py::test_dna_turns_example" },
-                "validity": "Ten base pairs per turn is the textbook's average for the double helix [@openstax-bio2e, §14.2]; the exact figure varies slightly with sequence and conditions."
+                "validity": "Uses the textbook's figure of 10 base pairs per turn of the double helix [@openstax-bio2e, §14.2]."
               }
             ],
             "limits": [
