@@ -1,0 +1,31 @@
+[package]
+name = "scriptorium"
+version = "0.4.0"
+description = "Scriptorium desktop app: illustrated, fully referenced books for the web and Amazon KDP"
+authors = ["Scriptorium contributors"]
+license = "MIT"
+repository = "https://github.com/Normansrule/scriptorium"
+edition = "2021"
+rust-version = "1.90"
+
+[lib]
+name = "scriptorium_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "=2.7.1", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.1", features = [] }
+tauri-plugin-opener = "=2.7.0"
+# OS keychain: Windows Credential Manager, macOS Keychain, Secret Service (GNOME Keyring / KWallet) on Linux.
+keyring = { version = "=3.6.3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+serde = { version = "1", features = ["derive"] }
+url = "2"
+dirs = "6"
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
+panic = "abort"

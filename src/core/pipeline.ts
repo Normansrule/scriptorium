@@ -28,7 +28,7 @@ import { renderMath } from '../render/html.ts';
 export const STAGES = [
   { id: 'scope', name: 'Topic + scope', checkpoint: false, what: 'Topic, depth, audience, length, domain profile, citation style.' },
   { id: 'outline', name: 'Outline', checkpoint: true, what: 'Chapters, sections and learning goals. You edit and approve it.' },
-  { id: 'research', name: 'Research', checkpoint: false, what: 'Search Crossref and OpenAlex; collect candidate sources with DOIs.' },
+  { id: 'research', name: 'Research', checkpoint: false, what: 'Search Crossref, OpenAlex and PubMed; collect candidate sources with DOIs or PubMed IDs.' },
   { id: 'verify', name: 'Verification', checkpoint: false, what: 'Resolve every DOI and match title, year and author; drop what fails.' },
   { id: 'draft', name: 'Drafting', checkpoint: false, what: 'Write each section in five layers, citing only verified sources.' },
   { id: 'figures', name: 'Figures + equations', checkpoint: false, what: 'Draw proposed plots from safe expressions; check every equation parses.' },

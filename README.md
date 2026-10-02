@@ -31,7 +31,7 @@
 8. [References and further learning](#references-and-further-learning)
 9. [Contributing, license and credits](#contributing-license-and-credits)
 
-**Status:** milestones 1–3 of 4 are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight. Milestone 4 (desktop app) is next. See [Roadmap](#roadmap).
+**Status:** milestones 1–3 are done and milestone 4 is under way — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, plus a desktop app for Linux, Windows and macOS that keeps your API key in the operating system's keychain. See [Roadmap](#roadmap).
 
 ---
 
@@ -101,10 +101,19 @@ npm run test:equations                           # re-derives every equation in 
 
 Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  99 passed (99)` and `34 passed`.
 
-Open the app (the same one that runs on GitHub Pages):
+Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
 ```bash
-npm run app            # then open the address it prints, usually http://localhost:5173
+npm run app            # browser: open the address it prints, usually http://localhost:5173
+npm run desktop        # desktop window (needs Rust and, on Linux, the WebKitGTK packages below)
+```
+
+Desktop installers (`.deb`, `.rpm`, `.AppImage`, `.msi`, `.dmg`) are attached to each [GitHub release](https://github.com/Normansrule/scriptorium/releases) with SHA-256 checksums and build-provenance attestations. To build them yourself on Ubuntu:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env"
+sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev build-essential
+npm run desktop:build  # installers land in src-tauri/target/release/bundle/
 ```
 
 One-step setup instead: `bash scripts/setup.sh` (Linux, macOS, WSL) or `pwsh scripts/setup.ps1` (Windows), or open the folder in a devcontainer (`.devcontainer/`).
@@ -139,10 +148,10 @@ flowchart LR
   end
   W["web/ app<br/>(GitHub Pages)"] --> P
   C["CLI<br/>npm run cli"] --> P
-  D["desktop app<br/>(Tauri, milestone 4)"] -.-> W
+  D["desktop app<br/>(Tauri: keychain, offline)"] --> W
 ```
 
-*Figure 6 — Architecture: the web app, the command line and (later) the desktop app share one core, so a book behaves the same everywhere.*
+*Figure 6 — Architecture: the web app, the command line and the desktop app share one core, so a book behaves the same everywhere. The desktop app is the web app in a native window (Tauri), plus three Rust commands that store the API key in the operating system's keychain.*
 
 ### 1 · Topic + scope
 
@@ -336,6 +345,8 @@ scriptorium/
 │   └── cli/           `npm run cli`: build, build-all, generate, build-project,
 │                      verify-refs, epubcheck, spine, preflight
 ├── web/               the app (Vite): pipeline view, checkpoints, bring-your-own key, proof
+├── src-tauri/         desktop shell (Rust, Tauri 2): keychain commands, link and download
+│                      handling, least-privilege capability, icons
 ├── profiles/          one JSON file per domain: engineering, chemistry, biology, medicine
 ├── styles/            CSL citation styles (IEEE, ACS, AMA, Nature) + en-US locale
 ├── examples/          one sample book per domain: book.json, references.json,
@@ -358,7 +369,7 @@ scriptorium/
 
 ## Security
 
-- **Your API key** lives in the browser tab's memory (or, only if you tick *Remember on this device*, in that browser's local storage), or in your shell environment for the command line. It is sent only to `api.anthropic.com` in a request header. It is never logged, exported, written into a project file, or included in error messages (tested).
+- **Your API key** lives in the browser tab's memory (or, only if you tick *Remember on this device*, in that browser's local storage); in the desktop app, in the operating system's keychain (Windows Credential Manager, macOS Keychain, or GNOME Keyring / KWallet through the Secret Service); or in your shell environment for the command line. It is sent only to `api.anthropic.com` in a request header. It is never logged, exported, written into a project file, or included in error messages (tested).
 - **What leaves your machine:** prompts and drafts go to the model provider; search keywords, DOIs and PubMed IDs go to Crossref, OpenAlex and PubMed; compound names and PDB IDs go to PubChem and the Protein Data Bank. Nothing else. There is no telemetry.
 
 <picture>
@@ -389,6 +400,9 @@ Threat model: [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md). Report a vulnera
 | App says `Model provider returned 401` | Wrong or expired API key | Settings → paste a new key → Save key |
 | `… is rate-limiting requests (429)` during research or `verify-refs` | Crossref, OpenAlex or PubMed limits request rates | Set `CROSSREF_MAILTO` in `.env` (Crossref's polite pool) and retry a minute later; PubMed allows about 3 requests per second without a key |
 | `Could not reach api.crossref.org` (or another host) | Offline, or a firewall or proxy blocks it | Check the connection; behind a proxy set `HTTPS_PROXY`. Building existing books needs no network |
+| Desktop app: `error while loading shared libraries: libwebkit2gtk-4.1.so.0` | The WebKitGTK runtime is missing (Linux) | `sudo apt-get install -y libwebkit2gtk-4.1-0`, or install the `.deb`, which pulls it in |
+| Desktop app: *The key is kept for this session only: … system keychain …* | No Secret Service is running (common on WSL and minimal Linux) | `sudo apt-get install -y gnome-keyring`, then start the app from a desktop session; the key still works for the current session |
+| `npm run desktop` fails with `cargo: not found` | Rust is not installed | Install it with rustup (see [Quick start](#quick-start)), then open a new terminal |
 | `Stopped before "draft …": it could use up to … tokens` | The spending cap was reached | Raise *Token cap for this book* (app) or `--cap` (command line) |
 
 ---
@@ -446,7 +460,8 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 1 | Engineering profile, 3-chapter sample book, web export + print PDF, interior pre-flight | **Done** |
 | 2 | Chemistry, biology and medicine profiles with sample books; PubMed, PubChem and Protein Data Bank; rotatable 3D models with printed stills + QR links | **Done** |
 | 3 | EPUB 3 export with EPUBCheck, paperback cover generator, ebook cover, cover pre-flight, metadata helper | **Done** |
-| 4 | Tauri desktop builds with OS-keychain key storage, SHA-256 checksums + build-provenance attestations; in-browser PDF; arXiv search | Planned |
+| 4 | Tauri desktop app with OS-keychain key storage; release installers with SHA-256 checksums + build-provenance attestations | **Done** |
+| 4b | Print PDF, cover and EPUB export inside the app (no command line); arXiv search; code-signed installers | Next |
 
 ---
 

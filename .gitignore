@@ -12,3 +12,6 @@ __pycache__/
 src-tauri/target/
 books/
 .venv/
+# Tauri build output
+src-tauri/target/
+src-tauri/gen/

@@ -15,6 +15,7 @@ import { numberBook } from '../../src/render/numbering.ts';
 import { formatBibliography } from '../../src/render/cite.ts';
 import { bookCss, renderHtml } from '../../src/render/html.ts';
 import { mountAll } from '../../src/render/viewer3d-client.ts';
+import { keyStore } from './keystore.ts';
 import { Model } from '../../src/core/molecule.ts';
 import { buildDisclosure } from '../../src/disclosure/ai-disclosure.ts';
 import { cssVariables } from '../../src/core/style.ts';
@@ -64,12 +65,17 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, 
 
 let apiKey = '';
 let model = 'claude-sonnet-5-5';
-const KEY_STORE = 'scriptorium.apiKey';
-try {
-  apiKey = localStorage.getItem(KEY_STORE) ?? '';
-} catch {
-  /* storage blocked */
-}
+const store = keyStore();
+let storeError = '';
+void store
+  .load()
+  .then((k) => {
+    apiKey = k;
+    if (k && view === 'home') render();
+  })
+  .catch((e: Error) => {
+    storeError = `Could not read the saved key: ${e.message ?? e}`;
+  });
 
 type View = 'home' | 'outline' | 'progress' | 'proof' | 'settings';
 let view: View = 'home';
@@ -144,6 +150,7 @@ function panel(): Node {
 
 function homeView(): Node {
   const profileSelect = select('profile', PROFILES.map((p) => p.id), PROFILES.map((p) => p.name));
+  profileSelect.value = PROFILES.some((p) => p.id === 'engineering') ? 'engineering' : PROFILES[0]!.id;
   const styleSelect = select('style', Object.keys(STYLES), Object.keys(STYLES).map((s) => STYLE_LABELS[s] ?? s));
   const syncStyle = () => {
     const p = PROFILES.find((x) => x.id === profileSelect.value);
@@ -390,34 +397,36 @@ function openSample(dir: string): void {
 
 function settingsView(): Node {
   const key = h('input', { type: 'password', autocomplete: 'off', spellcheck: 'false', value: apiKey, placeholder: 'sk-ant-…', 'aria-describedby': 'key-help' });
-  let remembered = false;
-  try {
-    remembered = !!localStorage.getItem(KEY_STORE);
-  } catch {
-    /* ignore */
-  }
-  const remember = h('input', { type: 'checkbox', checked: remembered });
+  const desktop = store.kind === 'keychain';
+  const remember = h('input', { type: 'checkbox', checked: desktop });
+  void store.hasStored().then((v) => (remember.checked = v || desktop)).catch(() => undefined);
   const modelInput = h('input', { value: model });
-  const save = () => {
+  const status = h('p', { class: 'hint', role: 'status' }, storeError);
+  const save = async () => {
     apiKey = key.value.trim();
     model = modelInput.value.trim() || model;
     try {
-      if (remember.checked && apiKey) localStorage.setItem(KEY_STORE, apiKey);
-      else localStorage.removeItem(KEY_STORE);
-    } catch {
-      /* storage blocked: the key stays in memory for this tab */
+      if (remember.checked && apiKey) await store.save(apiKey);
+      else await store.forget();
+      go('home');
+    } catch (e) {
+      // The message comes from our own Rust command and never contains the key.
+      status.textContent = `The key is kept for this session only: ${(e as Error).message ?? e}`;
     }
-    go('home');
   };
   return h('section', {},
     h('h1', {}, 'Your API key'),
-    h('p', { class: 'lede', id: 'key-help' }, 'The key stays in this browser tab and is sent only to api.anthropic.com with each model request. It is never logged, exported, or sent to the scholarly databases.'),
+    h('p', { class: 'lede', id: 'key-help' },
+      desktop
+        ? 'The key is sent only to api.anthropic.com with each model request. It is never logged, exported, or sent to the scholarly databases. If you remember it, it is stored in your operating system’s keychain, not in the app.'
+        : 'The key stays in this browser tab and is sent only to api.anthropic.com with each model request. It is never logged, exported, or sent to the scholarly databases.'),
     field('Anthropic API key', key),
     field('Model', modelInput),
-    h('label', { class: 'check' }, remember, h('span', {}, 'Remember on this device (stored unencrypted in this browser; leave off on shared computers)')),
+    h('label', { class: 'check' }, remember, h('span', {}, desktop ? 'Remember on this device (saved in the system keychain)' : 'Remember on this device (stored unencrypted in this browser; leave off on shared computers)')),
+    status,
     h('div', { class: 'actions' },
-      h('button', { class: 'primary', onclick: save }, 'Save key'),
-      h('button', { class: 'secondary', onclick: () => { key.value = ''; remember.checked = false; save(); } }, 'Forget key'),
+      h('button', { class: 'primary', onclick: () => void save() }, 'Save key'),
+      h('button', { class: 'secondary', onclick: () => { key.value = ''; remember.checked = false; void save(); } }, 'Forget key'),
     ),
   );
 }

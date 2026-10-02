@@ -8,6 +8,7 @@ Thanks for helping. The bar for this repository is "the best-documented, most vi
 npm ci
 python -m pip install -r requirements.txt
 npm test && npm run test:equations && npm run demo
+npm run desktop                                   # optional: the desktop app (needs Rust; see README Quick start)
 npm run build:all -- --allow-short --epubcheck   # all four sample books; EPUBCheck needs Java 11+
 ```
 

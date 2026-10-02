@@ -48,6 +48,23 @@ jobs:
           name: sample-books
           path: dist/
 
+  desktop:
+    # Compiles the Tauri shell, lints it and runs its unit tests (installers are built by release.yml).
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev
+      - name: Placeholder frontend (tauri::generate_context! needs web/dist to exist)
+        run: mkdir -p web/dist && echo '<!doctype html><title>Scriptorium</title>' > web/dist/index.html
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+
   references:
     # Re-checks every DOI against Crossref. Network-dependent, so it does not block merges.
     runs-on: ubuntu-latest
