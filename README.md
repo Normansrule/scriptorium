@@ -112,7 +112,7 @@ Desktop installers (`.deb`, `.rpm`, `.AppImage`, `.msi`, `.dmg`) are attached to
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env"
-sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev build-essential
+sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev build-essential
 npm run desktop:build  # installers land in src-tauri/target/release/bundle/
 ```
 
