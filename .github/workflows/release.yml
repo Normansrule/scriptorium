@@ -72,7 +72,7 @@ jobs:
       - name: SHA-256 checksums
         working-directory: out
         run: sha256sum * | tee SHA256SUMS.txt
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'out/*'
       - name: Create the GitHub release
