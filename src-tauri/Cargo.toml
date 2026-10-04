@@ -1,6 +1,6 @@
 [package]
 name = "scriptorium"
-version = "0.4.0"
+version = "0.5.0"
 description = "Scriptorium desktop app: illustrated, fully referenced books for the web and Amazon KDP"
 authors = ["Scriptorium contributors"]
 license = "MIT"
@@ -22,7 +22,7 @@ tauri-plugin-opener = "=2.7.0"
 keyring = { version = "=3.6.3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 serde = { version = "1", features = ["derive"] }
 url = "2"
-dirs = "6"
+dirs = "7"
 
 [profile.release]
 codegen-units = 1

@@ -172,10 +172,25 @@ export function renderCoverTypst(book: Book, geom: CoverGeometry, trimW: number,
 }
 
 /** The front cover alone at the ebook cover's 1600 × 2560 aspect, sized so 300 px = 1 in. */
-export function renderFrontTypst(book: Book): string {
-  // In points (1600 and 2560 px at 300 px per inch), so the rasterized size comes out exact.
-  const w = (1600 / 300) * 72;
-  const h = (2560 / 300) * 72;
+/** Page size of the ebook front (points: 1600 × 2560 px at 300 px per inch, so rasterizing comes out exact). */
+export const FRONT_PT = { w: (1600 / 300) * 72, h: (2560 / 300) * 72 };
+
+/** Where the cover figure sits on the ebook front, in points (the figure is scaled to fit, centred). */
+export function frontImageBox(): Box {
+  const { w, h } = FRONT_PT;
+  const s = w / 72 / 6;
+  const m = COVER_MARGIN_IN * s * 72;
+  const band = h * 0.36;
+  return { name: 'i', x: m, y: band + 0.3 * s * 72, w: w - 2 * m, h: h * 0.4 };
+}
+
+/**
+ * The front cover alone at the ebook cover's 1600 × 2560 aspect.
+ * With `image: false` the figure is left out so a browser can draw it separately (a canvas
+ * that draws an SVG containing embedded images can no longer be read back).
+ */
+export function renderFrontTypst(book: Book, opts: { image?: boolean } = {}): string {
+  const { w, h } = FRONT_PT;
   const s = w / 72 / 6; // scale type relative to a 6"-wide front
   const IN = 72;
   const m = COVER_MARGIN_IN * s * IN;
@@ -185,7 +200,7 @@ export function renderFrontTypst(book: Book): string {
     `#set page(width: ${w.toFixed(3)}pt, height: ${h.toFixed(3)}pt, margin: 0pt, fill: ${C.white})`,
     `#place(top + left, rect(width: 100%, height: ${(band / IN).toFixed(4)}in, fill: ${C.band}))`,
     place(inches({ name: 't', x: m, y: m, w: w - 2 * m, h: band - m - 0.15 * s * IN }), titleBlock(book, s), 'bottom + left'),
-    place(inches({ name: 'i', x: m, y: band + 0.3 * s * IN, w: w - 2 * m, h: h * 0.4 }), imageBody(coverImage(book)), 'center + horizon'),
+    opts.image === false ? '' : place(inches(frontImageBox()), imageBody(coverImage(book)), 'center + horizon'),
     place(inches({ name: 'a', x: m, y: h - m - 0.4 * s * IN, w: w - 2 * m, h: 0.4 * s * IN }), authorLine(book, s), 'bottom + left'),
   ].join('\n') + '\n';
 }

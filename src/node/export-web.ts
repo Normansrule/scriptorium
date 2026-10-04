@@ -10,15 +10,9 @@ import type { Book } from '../core/book.ts';
 import { buildSync } from 'esbuild';
 import { bookCss, hasModels, renderHtml, type HtmlContext } from '../render/html.ts';
 import { REPO_ROOT } from './load.ts';
+import { PURIFY_CONFIG } from '../export/sanitize.ts';
 
-export const PURIFY_CONFIG = {
-  USE_PROFILES: { html: true, mathMl: true, svg: false },
-  ADD_TAGS: ['picture', 'source', 'annotation', 'semantics'],
-  ADD_ATTR: ['srcset', 'media', 'loading', 'encoding', 'aria-hidden', 'data-model'],
-  // DOMPurify's default URI rule blocks javascript:, vbscript: and data: in links.
-  ADD_URI_SAFE_ATTR: ['media', 'aria-hidden', 'encoding'],
-  FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form'],
-};
+export { PURIFY_CONFIG };
 
 /** Sanitize the body with DOMPurify, keeping MathML and our figure markup; the head is ours. */
 export function sanitizePage(html: string): string {

@@ -116,7 +116,7 @@ async function build(args: string[]): Promise<BuildSummary> {
     preflightAll.cover = coverChecks;
   }
 
-  const ebookCover = exportEbookCover(book, dir);
+  const ebookCover = await exportEbookCover(book, dir);
   writeFileSync(join(out, 'ebook-cover.jpg'), ebookCover.jpeg);
   console.log(`✓ Ebook cover → ${rel(join(out, 'ebook-cover.jpg'))} (${ebookCover.width} × ${ebookCover.height} px${ebookCover.border ? ', gray border for a light cover' : ''})`);
   const ebc = preflightEbookCover(ebookCover.jpeg);

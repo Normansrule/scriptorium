@@ -15,3 +15,12 @@ Only the latest release and the `main` branch receive security fixes while the p
 In scope: the web app, the command line, the exporters, the release builds, and anything that could leak an API key, run untrusted content, or put untrusted content into a published book without it being flagged. The threat model is in [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md).
 
 Out of scope: vulnerabilities in the model provider or the scholarly databases themselves (report those to them), and the content of books you generate (you are responsible for reviewing the proof and the verification report before publishing).
+
+## Known advisories in dependencies
+
+Every high-severity alert is fixed or listed here; lower-severity ones are listed when they cannot be fixed yet.
+
+| Advisory | Package | Severity | Why it is not fixed | Exposure |
+|---|---|---|---|---|
+| RUSTSEC-2024-0429 (GitHub: Dependabot alert) | `glib` 0.18 (Rust, desktop app on Linux) | Moderate (unsoundness) | `glib` 0.18 is pinned by Tauri 2's GTK and WebKitGTK bindings; moving to `glib` ≥ 0.20 needs a Tauri release that upgrades the whole GTK stack. | The flaw is in `VariantStrIter`, which neither Scriptorium nor its webview code uses. Re-check when Tauri updates its GTK bindings. |
+| RUSTSEC-2024-0370 (warning, not a vulnerability) | `proc-macro-error` (build-time only) | Unmaintained | Pulled in by GTK build macros. | Runs only at compile time on the build machine. |

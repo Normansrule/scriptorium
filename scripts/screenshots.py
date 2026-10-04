@@ -1,6 +1,7 @@
 """Screenshots and page renders for the README (assets/rendered/screens/).
 
 Run after building:  npm run build:all -- --allow-short && npm run app:build
+(the Publish screenshot builds a practice package inside the app, so it takes a few seconds)
 Then:                python scripts/screenshots.py
 
 Needs Playwright for Python with Chromium, Pillow, and `pdftoppm` (poppler-utils).
@@ -116,25 +117,36 @@ def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
 
-        # 1–3. The app, light and dark: start screen, sample proof, 3D viewer in the biology sample.
+        # 1–4. The app, light and dark: Write, Edit, Publish (practice package from a sample), 3D viewer.
         for mode in ("light", "dark"):
             suffix = "" if mode == "light" else ".dark"
-            ctx = browser.new_context(viewport={"width": 1280, "height": 820}, device_scale_factor=1.5, color_scheme=mode, reduced_motion="reduce")
+            ctx = browser.new_context(viewport={"width": 1280, "height": 820}, device_scale_factor=1.5, color_scheme=mode, reduced_motion="reduce", accept_downloads=True)
             pg = ctx.new_page()
             pg.goto(url)
-            pg.wait_for_selector("form.scope")
-            pg.screenshot(path=str(OUT / f"app-start{suffix}.png"))
-            print(f"  wrote assets/rendered/screens/app-start{suffix}.png")
-            pg.get_by_role("button", name="Open a sample book").click()
-            pg.wait_for_selector(".proof")
+            pg.wait_for_selector("form.write")
+            pg.locator("textarea[name=topic]").fill("How lithium-ion batteries store and release energy")
+            pg.screenshot(path=str(OUT / f"app-write{suffix}.png"))
+            print(f"  wrote assets/rendered/screens/app-write{suffix}.png")
+            pg.goto(url + "#sample=rc-circuits")
+            pg.wait_for_selector(".editor")
+            pg.get_by_role("button", name="Dismiss").click()
+            pg.get_by_role("tab", name="Edit").click()
+            pg.locator(".nav-item.section").nth(2).click()
             pg.wait_for_timeout(300)
-            pg.screenshot(path=str(OUT / f"app-sample{suffix}.png"))
-            print(f"  wrote assets/rendered/screens/app-sample{suffix}.png")
-            pg.get_by_role("tab", name="Biology", exact=False).click()
+            pg.screenshot(path=str(OUT / f"app-edit{suffix}.png"))
+            print(f"  wrote assets/rendered/screens/app-edit{suffix}.png")
+            pg.locator(".step", has_text="Publish").click()
+            pg.get_by_role("button", name="Build and check the package").click()
+            pg.wait_for_selector(".results .check-group", timeout=180000)
+            pg.locator(".publish-steps > li").nth(1).scroll_into_view_if_needed()
+            pg.mouse.wheel(0, -120)
+            pg.wait_for_timeout(300)
+            pg.screenshot(path=str(OUT / f"app-publish{suffix}.png"))
+            print(f"  wrote assets/rendered/screens/app-publish{suffix}.png")
+            pg.goto(url + "#sample=cells-and-dna")
             pg.wait_for_selector(".viewer3d")
             fig = pg.locator("figure.model3d").first
             fig.scroll_into_view_if_needed()
-            pg.evaluate("window.scrollBy(0, -40)")
             stage = pg.locator(".viewer3d [role=img]").first
             box = stage.bounding_box()
             # rotate a little by dragging, the way a reader would
@@ -180,7 +192,7 @@ def main() -> None:
         page.set_viewport_size({"width": 390, "height": 760})
         page.goto((tmp / "OEBPS" / "chapter-2.xhtml").as_uri())
         page.locator("#eq-tau").scroll_into_view_if_needed()
-        page.evaluate("window.scrollBy(0, -60)")
+        page.mouse.wheel(0, -60)
         page.screenshot(path=str(OUT / "epub-phone.png"))
         print("  wrote assets/rendered/screens/epub-phone.png")
         browser.close()

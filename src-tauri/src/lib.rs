@@ -66,6 +66,30 @@ fn is_app_url(url: &Url) -> bool {
     }
 }
 
+/** The user's Downloads folder (XDG / Known Folder / ~/Downloads), created if missing. */
+fn downloads_dir() -> std::path::PathBuf {
+    let dir = dirs::download_dir()
+        .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
+        .unwrap_or_else(std::env::temp_dir);
+    let _ = std::fs::create_dir_all(&dir);
+    dir
+}
+
+/** `dir/name`, or `dir/name (1).ext`, `(2)`… if that file already exists. Only the file name of `name` is used. */
+fn unique_path(dir: &std::path::Path, name: &std::path::Path) -> std::path::PathBuf {
+    let file = name.file_name().map(std::path::Path::new).unwrap_or(std::path::Path::new("scriptorium-download"));
+    let first = dir.join(file);
+    if !first.exists() {
+        return first;
+    }
+    let stem = file.file_stem().and_then(|s| s.to_str()).unwrap_or("scriptorium-download");
+    let ext = file.extension().and_then(|s| s.to_str()).map(|e| format!(".{e}")).unwrap_or_default();
+    (1..1000)
+        .map(|i| dir.join(format!("{stem} ({i}){ext}")))
+        .find(|p| !p.exists())
+        .unwrap_or(first)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -85,16 +109,14 @@ pub fn run() {
                     }
                     false
                 })
-                // "Download project" saves into the Downloads folder.
+                // Saved files (projects, KDP packages) go to the Downloads folder, never overwriting.
                 .on_download(|_webview, event| {
                     if let DownloadEvent::Requested { destination, .. } = event {
-                        if let Some(dir) = dirs::download_dir() {
-                            let name = destination
-                                .file_name()
-                                .map(|n| n.to_owned())
-                                .unwrap_or_else(|| "scriptorium-project.json".into());
-                            *destination = dir.join(name);
-                        }
+                        let name = destination
+                            .file_name()
+                            .map(|n| n.to_owned())
+                            .unwrap_or_else(|| "scriptorium-download".into());
+                        *destination = unique_path(&downloads_dir(), std::path::Path::new(&name));
                     }
                     true
                 })
@@ -128,6 +150,18 @@ mod tests {
         assert!(key_set("bad key".into()).unwrap_err().contains("does not look like"));
         key_delete().unwrap();
         assert_eq!(key_get().unwrap(), None);
+    }
+
+    #[test]
+    fn downloads_never_overwrite_or_escape_the_folder() {
+        let dir = std::env::temp_dir().join(format!("scriptorium-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let p1 = unique_path(&dir, std::path::Path::new("book-kdp.zip"));
+        assert_eq!(p1, dir.join("book-kdp.zip"));
+        std::fs::write(&p1, b"x").unwrap();
+        assert_eq!(unique_path(&dir, std::path::Path::new("book-kdp.zip")), dir.join("book-kdp (1).zip"));
+        assert_eq!(unique_path(&dir, std::path::Path::new("../../etc/evil.zip")), dir.join("evil.zip"));
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

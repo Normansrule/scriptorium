@@ -31,7 +31,7 @@
 8. [References and further learning](#references-and-further-learning)
 9. [Contributing, license and credits](#contributing-license-and-credits)
 
-**Status:** milestones 1–3 are done and milestone 4 is under way — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, plus a desktop app for Linux, Windows and macOS that keeps your API key in the operating system's keychain. See [Roadmap](#roadmap).
+**Status:** milestones 1–4 are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, and an app (web and desktop) with three steps — **Write, Edit, Publish** — that builds and checks the whole KDP package itself, with guards against publishing too much. See [Roadmap](#roadmap).
 
 ---
 
@@ -39,12 +39,12 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-sample.dark.png">
-    <img src="assets/rendered/screens/app-sample.png" alt="The Scriptorium app: on the left, the nine pipeline stages with the two human checkpoints marked 'you decide'; on the right, tabs for the four sample books, the KDP AI-disclosure answers, a Download project button, and the start of the engineering sample book." width="880">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-edit.dark.png">
+    <img src="assets/rendered/screens/app-edit.png" alt="The Scriptorium app on its Edit step: three step buttons at the top (Write, Edit, Publish); a contents list on the left; on the right, the section on the time constant with each paragraph in its own text box, a Remove link on each, an Add a paragraph button, and a green line saying the book builds." width="880">
   </picture>
 </p>
 
-*Figure 2 — The app: the pipeline on the left (diamonds mark the two points where you decide), the book proof on the right, with one sample book per domain.*
+*Figure 2 — The app has three steps, one button each: Write (type a topic, press Generate), Edit (type into any paragraph; Preview shows the finished book), Publish (build, check and save the KDP package).*
 
 <p align="center">
   <img src="assets/rendered/screens/gallery.png" alt="Four printed pages side by side: engineering, three charging curves for different resistors; chemistry, three views of a methane model with the 109.5 degree angle marked and a QR code; biology, three views of a DNA double helix with a scale bar and a QR code; medicine, a logarithmic plot of vessel resistance against radius." width="880">
@@ -94,12 +94,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 99 unit, export and pipeline tests
+npm test                                         # 121 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  99 passed (99)` and `34 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  121 passed (121)` and `34 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -175,11 +175,11 @@ The **domain profile** (`profiles/*.json`) sets the citation style, which databa
 | Medicine | American Medical Association (AMA) | PubMed, Crossref, OpenAlex | — | Educational disclaimer; flagged for licensed-professional review; no dosing |
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-start.dark.png">
-  <img src="assets/rendered/screens/app-start.png" alt="The start screen: a topic box, audience, depth, chapters, sections, domain and citation style fields, a spending limit, and buttons to plan the outline or open a sample book." width="640">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-write.dark.png">
+  <img src="assets/rendered/screens/app-write.png" alt="The Write step: one large topic box, four domain buttons (Engineering, Biology, Chemistry, Medicine), a collapsed More options section, and a large Generate button next to Try a sample book." width="640">
 </picture>
 
-*Figure 7 — Stage 1 in the app.*
+*Figure 7 — Stage 1 in the app: a topic, a domain, one button. Audience, depth, length, citation style and the token cap sit under More options.*
 
 ### 2 · Outline — checkpoint
 
@@ -298,6 +298,23 @@ Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252
 
 *Figure 13 — The EPUB reflows to a phone screen; equations stay real text (MathML).*
 
+**Publishing from the app.** The app's Publish step builds the same files inside the browser or desktop window — Typst runs as WebAssembly, loaded only the first time you publish — and runs the same pre-flight. A test (`tests/unit/package.test.ts`) builds the engineering sample through this path and checks it matches the command line: 27 pages, every check passing. KDP has no upload API, so the app never uploads anything; it saves one package (`book.pdf`, `cover.pdf`, `book.epub`, `ebook-cover.jpg`, `kdp-metadata.txt`, `ai-disclosure.json`, `preflight.json`, `UPLOAD-CHECKLIST.txt`) for you to upload on kdp.amazon.com. Before the **Save** button unlocks, five guards must pass:
+
+1. **Automated checks:** the book builds (no unknown citations, missing glossary terms or broken equations) and every interior, cover, ebook-cover and listing check passes.
+2. **Your confirmations:** you read the proof, checked the references, will match the cover text and answer the AI-content questions as listed — plus licensed-professional review for medicine.
+3. **Weekly limit:** KDP allows 2 new titles per format per week [2]. The app keeps a log of the packages it made on this device and blocks a third new title in a format within 7 days, saying when the next slot opens. A new edition of a title you already packaged is an update, not a new title, so it is allowed.
+4. **Repeats:** making the exact same package again (same content, trim, paper and format), or the same title twice within a day, needs a deliberate tick. If this device cannot keep the log (for example a private window), the app says so and asks you to count your titles yourself.
+5. **Typed title:** the button stays disabled until you type the book's title exactly; after one save it locks until the book, the print settings or the formats change. A build that finishes after the book changed is thrown away, and only one build runs at a time.
+
+The rules are pure functions tested in `tests/unit/publish-guard.test.ts`. Sample books make a clearly labelled practice package that never counts toward the limit.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/rendered/screens/app-publish.dark.png">
+  <img src="assets/rendered/screens/app-publish.png" alt="The Publish step: numbered steps Choose formats (Paperback and Kindle eBook ticked, trim size 6 by 9 inches, white paper) and Build and check, with four green results: print interior 9 of 9, paperback cover 9 of 9, ebook cover 5 of 5, listing 5 of 5." width="880">
+</picture>
+
+*Figure 14 — The Publish step: build and check inside the app; the Save button below stays locked until every guard passes.*
+
 **Metadata helper.** `kdp-metadata.txt` lists the title, subtitle, description, keywords and categories in the order KDP's form asks for them, with checks: title plus subtitle under 200 characters [6], description at most 4000 characters using only the HTML tags KDP supports [8], up to seven keywords without prohibited terms such as "free", "bestselling" or program names [7], [6], up to three categories [6], and a warning when you reach KDP's limit of two new titles per format per week [2].
 
 **AI disclosure.** KDP asks separately whether text, images and translations are AI-generated, and counts content created by an AI tool as AI-generated even after heavy human editing [1]. Every section and figure records its provenance, and each build writes `ai-disclosure.json` with the three answers and the parts that caused them.
@@ -316,11 +333,11 @@ Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252
 8. **Write your own book.** Copy `.env.example` to `.env`, add your Anthropic API key, then run
    `npm run generate -- --topic "How lithium-ion batteries store energy" --chapters 3`.
    It pauses at the outline (edit `books/draft-*/outline.json`, press Enter) and before export, then builds the web book, PDF, cover and EPUB and prints how many tokens it used. Read `report.json` before publishing: every item marked `problem` needs a human decision.
-9. **Or use the app.** `npm run app` → Settings → paste your key → Plan the outline. At the end, **Download project** and build everything with `npm run cli -- build-project scriptorium-project.json`.
+9. **Or use the app.** `npm run app` (or `npm run desktop`) → Settings → paste your key → **Write**: type a topic, press Generate, approve the plan → **Edit**: type changes, check Preview → **Publish**: Build and check, tick the confirmations, type the title, Save. Try the whole flow without a key on a sample book (Samples → any book → Publish makes a practice package).
 
 <img src="assets/rendered/screens/print-spread.png" alt="Two facing pages of the print PDF: the charging circuit diagram on the left; on the right the time-constant equation with its intuition sentence, symbol table with units, a shaded worked example and a validity note." width="880">
 
-*Figure 14 — A spread from the 6″ × 9″ print PDF. Each equation comes with an intuition sentence, a symbol table with units, a worked example re-checked by a test, and the conditions where it stops being valid.*
+*Figure 15 — A spread from the 6″ × 9″ print PDF. Each equation comes with an intuition sentence, a symbol table with units, a worked example re-checked by a test, and the conditions where it stops being valid.*
 
 ---
 
@@ -341,10 +358,13 @@ scriptorium/
 │   ├── kdp/           KDP numbers with sources (specs.ts), interior + cover pre-flight,
 │   │                  metadata helper
 │   ├── disclosure/    KDP AI-disclosure checklist
-│   ├── node/          Node-only: load a book folder; web, PDF, cover and EPUB export
+│   ├── export/        PDF, covers, EPUB, the KDP package and publishing guards — shared by
+│   │                  the command line and the app (Typst native or WebAssembly)
+│   ├── node/          Node-only: load a book folder; native Typst; web export
 │   └── cli/           `npm run cli`: build, build-all, generate, build-project,
 │                      verify-refs, epubcheck, spine, preflight
-├── web/               the app (Vite): pipeline view, checkpoints, bring-your-own key, proof
+├── web/               the app (Vite): Write, Edit and Publish steps, project files, autosave,
+│                      bring-your-own key, in-app typesetter loader
 ├── src-tauri/         desktop shell (Rust, Tauri 2): keychain commands, link and download
 │                      handling, least-privilege capability, icons
 ├── profiles/          one JSON file per domain: engineering, chemistry, biology, medicine
@@ -377,10 +397,11 @@ scriptorium/
   <img src="assets/rendered/security.svg" alt="Left zone, stays on your machine: API key, book project, exports, checks. Top right, leaves to the model provider: key in the request header, topic, outline, reference titles and abstracts, drafts; returns schema-checked JSON only. Bottom right, leaves to public databases (Crossref, OpenAlex, PubMed, PubChem, RCSB PDB): keywords, DOIs, PubMed IDs, compound names and PDB IDs, no key; replies treated as untrusted data." width="880">
 </picture>
 
-*Figure 15 — The security model.*
+*Figure 16 — The security model.*
 
 - **Untrusted content:** abstracts, search results, structure files and model replies are data, never instructions. They are wrapped and cleaned before reaching the model, model output must pass a schema, citations must point at verified sources, plot expressions go through a parser without `eval`, structure files through strict parsers, and every page is escaped and then sanitized with DOMPurify (EPUB pages too).
-- **Web pages** ship a strict Content Security Policy: `default-src 'none'` blocks every script in books without 3D models; books with models allow only our own viewer script (`script-src 'self'`).
+- **Web pages** ship a strict Content Security Policy: `default-src 'none'` blocks every script in books without 3D models; books with models allow only our own viewer script (`script-src 'self'`). The app allows its own scripts plus WebAssembly (`'wasm-unsafe-eval'`) for the in-app typesetter, never `eval`: the few placeholder functions Typst's WebAssembly glue would build with `new Function` are supplied without eval (`src/export/typst-wasm.ts`).
+- **Publishing** is guarded: nothing is uploaded, and saving a KDP package needs passing checks, your confirmations, KDP's weekly title limit, and the typed title (see stage 9).
 - **Medicine** books carry an educational disclaimer, never give individual treatment or dosing, and are flagged for review by a licensed professional on every build.
 - **Dependencies** are pinned in `package-lock.json` and `requirements.txt`; Dependabot and CodeQL run on the repository; continuous integration (CI) jobs have read-only permissions.
 
@@ -403,6 +424,8 @@ Threat model: [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md). Report a vulnera
 | Desktop app: `error while loading shared libraries: libwebkit2gtk-4.1.so.0` | The WebKitGTK runtime is missing (Linux) | `sudo apt-get install -y libwebkit2gtk-4.1-0`, or install the `.deb`, which pulls it in |
 | Desktop app: *The key is kept for this session only: … system keychain …* | No Secret Service is running (common on WSL and minimal Linux) | `sudo apt-get install -y gnome-keyring`, then start the app from a desktop session; the key still works for the current session |
 | `npm run desktop` fails with `cargo: not found` | Rust is not installed | Install it with rustup (see [Quick start](#quick-start)), then open a new terminal |
+| App: *Could not build the package: Could not load …* | The first Publish downloads the typesetter (about 30 MB) and the connection dropped | Press **Run the checks again**; after one successful load it works offline |
+| App: the Save button stays grey | A guard is not satisfied | Read the list under the button: it names each missing check, confirmation or limit |
 | `Stopped before "draft …": it could use up to … tokens` | The spending cap was reached | Raise *Token cap for this book* (app) or `--cap` (command line) |
 
 ---
@@ -461,7 +484,8 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 2 | Chemistry, biology and medicine profiles with sample books; PubMed, PubChem and Protein Data Bank; rotatable 3D models with printed stills + QR links | **Done** |
 | 3 | EPUB 3 export with EPUBCheck, paperback cover generator, ebook cover, cover pre-flight, metadata helper | **Done** |
 | 4 | Tauri desktop app with OS-keychain key storage; release installers with SHA-256 checksums + build-provenance attestations | **Done** |
-| 4b | Print PDF, cover and EPUB export inside the app (no command line); arXiv search; code-signed installers | Next |
+| 4b | Three-step app (Write, Edit, Publish); print PDF, covers and EPUB built inside the app; publishing guards | **Done** |
+| 5 | arXiv search; code-signed installers; web book export from the app | Next |
 
 ---
 

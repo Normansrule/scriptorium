@@ -62,19 +62,23 @@ describe('cover files', () => {
     expect(checks.filter((c) => !c.ok)).toEqual([]);
   }, 60_000);
 
-  it('ebook cover is a 1600 × 2560 RGB JPEG under 5 MB', () => {
-    const res = exportEbookCover(book, dir);
+  it('ebook cover is a 1600 × 2560 RGB JPEG under 5 MB', async () => {
+    const res = await exportEbookCover(book, dir);
     expect([res.width, res.height]).toEqual([1600, 2560]);
     expect(jpegComponents(res.jpeg)).toBe(3);
     expect(preflightEbookCover(res.jpeg).filter((c) => !c.ok)).toEqual([]);
   }, 60_000);
 });
 
+const epubSample = loadBook(join(REPO_ROOT, 'examples/molecular-shapes'));
+const epubCoverJpeg = (await exportEbookCover(epubSample.book, epubSample.dir)).jpeg;
+
 describe('EPUB 3', () => {
-  const { dir, book, refs } = loadBook(join(REPO_ROOT, 'examples/molecular-shapes'));
+  const { dir, book, refs } = epubSample;
   const numbering = numberBook(book);
   const bib = formatBibliography(refs, [...numbering.cite.keys()], cslAssets(book.meta.citationStyle), 'html');
-  const { epub } = exportEpub(book, dir, { numbering, bibliography: bib, refs, webUrl: book.meta.webUrl }, { coverJpeg: exportEbookCover(book, dir).jpeg });
+  const coverJpeg = epubCoverJpeg;
+  const { epub } = exportEpub(book, dir, { numbering, bibliography: bib, refs, webUrl: book.meta.webUrl }, { coverJpeg });
   const files = unzipSync(epub);
 
   it('starts with an uncompressed mimetype entry', () => {
@@ -98,7 +102,7 @@ describe('EPUB 3', () => {
   });
 
   it('is reproducible', () => {
-    const again = exportEpub(book, dir, { numbering, bibliography: bib, refs, webUrl: book.meta.webUrl }, { coverJpeg: exportEbookCover(book, dir).jpeg }).epub;
+    const again = exportEpub(book, dir, { numbering, bibliography: bib, refs, webUrl: book.meta.webUrl }, { coverJpeg }).epub;
     expect(Buffer.from(again).equals(Buffer.from(epub))).toBe(true);
   }, 60_000);
 

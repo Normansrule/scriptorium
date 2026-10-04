@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -36,7 +36,7 @@ jobs:
             cp -r "$d/web/." "web/dist/books/$name/"
             cp "$d/book.pdf" "$d/book.epub" "$d/cover.pdf" "$d/ebook-cover.jpg" "$d/kdp-metadata.txt" "web/dist/books/$name/downloads/"
           done
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

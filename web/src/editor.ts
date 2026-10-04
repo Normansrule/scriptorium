@@ -1,0 +1,283 @@
+/**
+ * Step 2, Edit: change any words in the book by typing, then check them in the preview.
+ *
+ * Every keystroke edits the project's book directly and the problems list is re-checked
+ * (citations, glossary links, equations), so nothing that would break the build can reach
+ * Publish unnoticed. Structure (sections, figures, equations' symbols) stays fixed; words,
+ * titles, captions and the store listing are all editable.
+ */
+import katex from 'katex';
+import type { Block, Book, Section } from '../../src/core/book.ts';
+import { clone, problems, type Project } from './project.ts';
+import { field, h, prose } from './ui.ts';
+
+export interface EditorHost {
+  project: Project;
+  /** called after every change (autosave, problem count in the stepper) */
+  changed(): void;
+  /** the rendered, sanitized book for the Preview tab */
+  preview(): HTMLElement;
+}
+
+type Target = { kind: 'details' } | { kind: 'section'; ch: number; s: number } | { kind: 'chapter'; ch: number };
+
+let target: Target = { kind: 'details' };
+let mode: 'edit' | 'preview' = 'edit';
+let targetFor: Project | null = null;
+
+/** The selection belongs to one book; a section index from another book must never be reused. */
+function validTarget(book: Book, t: Target): Target {
+  if (t.kind === 'chapter' && book.chapters[t.ch]) return t;
+  if (t.kind === 'section' && book.chapters[t.ch]?.sections[t.s]) return t;
+  return { kind: 'details' };
+}
+
+const LAYERS: Array<[keyof Section['layers'] & ('summary' | 'intuition' | 'formal' | 'limits'), string, string]> = [
+  ['summary', 'In short', 'One or two paragraphs a reader can stop after.'],
+  ['intuition', 'Intuition', 'An analogy or picture before any math.'],
+  ['formal', 'The detail', 'Equations, figures and the full explanation.'],
+  ['limits', 'Limits', 'Where the idea stops being true.'],
+];
+
+const MARKUP_HELP = 'Formatting: **bold**, *italic*, $math$, [@source-id] cites a verified source, [[term]] links the glossary.';
+
+export function editorView(host: EditorHost, opts: { startInPreview?: boolean } = {}): HTMLElement {
+  const p = host.project;
+  if (targetFor !== p) {
+    targetFor = p;
+    target = { kind: 'details' };
+    mode = opts.startInPreview ? 'preview' : 'edit';
+  }
+  target = validTarget(p.book, target);
+  const status = h('div', { class: 'edit-status' });
+  const announce = h('p', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
+  let lastCount = -1;
+  const refresh = () => {
+    const list = problems(p);
+    // announce only when the number of problems changes, not on every keystroke
+    if (list.length !== lastCount) announce.textContent = list.length ? `${list.length} ${list.length === 1 ? 'problem' : 'problems'} to fix.` : 'The book builds.';
+    lastCount = list.length;
+    status.replaceChildren(
+      list.length
+        ? h('details', { class: 'problems', open: true }, h('summary', {}, `${list.length} ${list.length === 1 ? 'thing' : 'things'} to fix before publishing`), h('ul', {}, ...list.map((x) => h('li', {}, x))))
+        : h('p', { class: 'ok-line' }, p.origin === 'sample' ? '✓ The book builds. (This is a sample: edits are not kept.)' : '✓ The book builds. Edits are saved on this device as you type.'),
+    );
+  };
+  const onChange = () => {
+    host.changed();
+    refresh();
+  };
+  refresh();
+
+  const body = h('div', { class: 'edit-body', id: 'edit-panel', role: 'tabpanel' });
+  const nav = h('nav', { class: 'edit-nav', 'aria-label': 'Book contents' });
+  const drawNav = () => {
+    const item = (t: Target, label: string, cls = '') =>
+      h('button', { class: `nav-item ${cls}${same(t, target) ? ' active' : ''}`, 'aria-current': same(t, target) ? 'true' : undefined, onclick: () => { target = t; mode = 'edit'; draw(); } }, label);
+    nav.replaceChildren(
+      item({ kind: 'details' }, 'Title, cover text and listing', 'details'),
+      ...p.book.chapters.flatMap((ch, ci) => [
+        item({ kind: 'chapter', ch: ci }, `${ci + 1}. ${ch.title}`, 'chapter'),
+        ...ch.sections.map((s, si) => item({ kind: 'section', ch: ci, s: si }, `${ci + 1}.${si + 1} ${s.title}`, 'section')),
+      ]),
+    );
+  };
+  const draw = () => {
+    drawNav();
+    tabs.querySelectorAll('button').forEach((b) => {
+      b.setAttribute('aria-selected', String(b.dataset.mode === mode));
+      b.tabIndex = b.dataset.mode === mode ? 0 : -1;
+    });
+    body.setAttribute('aria-labelledby', `tab-${mode}`);
+    if (mode === 'preview') {
+      body.replaceChildren(host.preview());
+      return;
+    }
+    body.replaceChildren(
+      target.kind === 'details' ? detailsEditor(p.book, onChange) : target.kind === 'chapter' ? chapterEditor(p.book, target.ch, onChange) : sectionEditor(p.book, target.ch, target.s, onChange),
+    );
+  };
+  const tab = (m: typeof mode, label: string) =>
+    h('button', { role: 'tab', class: 'tab', id: `tab-${m}`, 'aria-controls': 'edit-panel', 'data-mode': m, onclick: () => { mode = m; draw(); } }, label);
+  const tabs = h('div', { class: 'mode-tabs', role: 'tablist', 'aria-label': 'Edit or preview' }, tab('edit', 'Edit'), tab('preview', 'Preview'));
+  tabs.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    mode = mode === 'edit' ? 'preview' : 'edit';
+    draw();
+    (tabs.querySelector(`[data-mode="${mode}"]`) as HTMLButtonElement | null)?.focus();
+  });
+  const undo = p.original
+    ? h('button', { class: 'secondary small', onclick: (e: Event) => {
+        if (!confirmInline(e.currentTarget as HTMLButtonElement, 'Undo every edit?')) return;
+        p.book = clone(p.original!);
+        onChange();
+        draw();
+      } }, 'Undo all edits')
+    : null;
+  draw();
+  return h('section', { class: 'editor' },
+    h('div', { class: 'edit-head' }, h('div', {}, h('h1', {}, 'Edit the book'), h('p', { class: 'hint' }, 'Type straight into any paragraph. ', MARKUP_HELP)), h('div', { class: 'edit-tools' }, tabs, undo)),
+    status,
+    announce,
+    h('div', { class: 'edit-grid' }, nav, body),
+  );
+}
+
+/** Two-click confirmation without a browser dialog: the first click arms the button. */
+function confirmInline(btn: HTMLButtonElement, question: string): boolean {
+  if (btn.dataset.armed === '1') {
+    btn.dataset.armed = '';
+    btn.textContent = btn.dataset.label ?? btn.textContent;
+    if (btn.dataset.aria) btn.setAttribute('aria-label', btn.dataset.aria);
+    else btn.removeAttribute('aria-label');
+    return true;
+  }
+  btn.dataset.label = btn.textContent ?? '';
+  btn.dataset.aria = btn.getAttribute('aria-label') ?? '';
+  btn.dataset.armed = '1';
+  btn.textContent = `${question} Click again`;
+  btn.setAttribute('aria-label', `${question} Activate again to confirm.`);
+  setTimeout(() => {
+    if (btn.dataset.armed === '1') {
+      btn.dataset.armed = '';
+      btn.textContent = btn.dataset.label ?? '';
+      if (btn.dataset.aria) btn.setAttribute('aria-label', btn.dataset.aria);
+      else btn.removeAttribute('aria-label');
+    }
+  }, 4000);
+  return false;
+}
+
+const same = (a: Target, b: Target) => JSON.stringify(a) === JSON.stringify(b);
+
+function detailsEditor(book: Book, changed: () => void): HTMLElement {
+  const m = book.meta;
+  const text = (label: string, get: () => string, set: (v: string) => void, hint?: string) => {
+    const i = h('input', { 'aria-label': label });
+    i.value = get();
+    i.addEventListener('input', () => {
+      set(i.value);
+      changed();
+    });
+    return field(label, i, hint);
+  };
+  const lines = (label: string, get: () => string[], set: (v: string[]) => void, hint: string) =>
+    field(label, prose(get().join('\n'), label, (v) => { set(v.split('\n').map((x) => x.trim()).filter(Boolean)); changed(); }, 3), hint);
+  return h('div', { class: 'edit-card' },
+    h('h2', {}, 'Title, cover text and listing'),
+    h('p', { class: 'hint' }, 'These words appear on the cover, the title page and the KDP listing, so they must match what you type into KDP.'),
+    text('Title', () => m.title, (v) => (m.title = v)),
+    text('Subtitle', () => m.subtitle ?? '', (v) => (m.subtitle = v || undefined)),
+    text('Author(s), separated by commas', () => m.authors.join(', '), (v) => (m.authors = v.split(',').map((x) => x.trim()).filter(Boolean))),
+    field('Description (back cover and store page)', prose(m.description ?? '', 'Description', (v) => { m.description = v || undefined; changed(); }, 5), 'Up to 4000 characters.'),
+    lines('Keywords (one per line)', () => m.keywords ?? [], (v) => (m.keywords = v), 'Up to seven short phrases. Avoid "free", "bestselling", and words already in the title.'),
+    lines('Categories (one per line)', () => m.categories ?? [], (v) => (m.categories = v), 'Up to three.'),
+    field('Colophon (how the book was made)', prose(m.colophon ?? '', 'Colophon', (v) => { m.colophon = v || undefined; changed(); }, 3)),
+  );
+}
+
+function chapterEditor(book: Book, ci: number, changed: () => void): HTMLElement {
+  const ch = book.chapters[ci]!;
+  const title = h('input', { 'aria-label': 'Chapter title' });
+  title.value = ch.title;
+  title.addEventListener('input', () => {
+    ch.title = title.value;
+    changed();
+  });
+  const list = (label: string, arr: string[]) => field(label, prose(arr.join('\n'), label, (v) => { arr.splice(0, arr.length, ...v.split('\n').map((x) => x.trim()).filter(Boolean)); changed(); }, 3), 'One per line.');
+  return h('div', { class: 'edit-card' },
+    h('h2', {}, `Chapter ${ci + 1}`),
+    field('Chapter title', title),
+    list('Learning goals', ch.goals),
+    list('Chapter summary', ch.summary),
+  );
+}
+
+function sectionEditor(book: Book, ci: number, si: number, changed: () => void): HTMLElement {
+  const s = book.chapters[ci]!.sections[si]!;
+  const title = h('input', { 'aria-label': 'Section title' });
+  title.value = s.title;
+  title.addEventListener('input', () => {
+    s.title = title.value;
+    changed();
+  });
+  const layers = LAYERS.map(([key, label, hint]) => {
+    const blocks = s.layers[key];
+    const wrap = h('div', { class: 'layer-edit' });
+    const draw = () => {
+      wrap.replaceChildren(
+        h('h3', {}, label, h('small', { class: 'hint' }, ` — ${hint}`)),
+        ...blocks.map((b, i) => blockEditor(b, changed, blocks, i, draw)),
+        h('button', { class: 'add', onclick: () => { blocks.push({ kind: 'para', text: '' }); changed(); draw(); (wrap.querySelector('.block:last-of-type textarea') as HTMLTextAreaElement | null)?.focus(); } }, '+ Add a paragraph'),
+      );
+    };
+    draw();
+    return wrap;
+  });
+  const takeaways = field('Key takeaways', prose(s.layers.takeaways.join('\n'), 'Key takeaways', (v) => { s.layers.takeaways = v.split('\n').map((x) => x.trim()).filter(Boolean); changed(); }, 3), 'One per line.');
+  return h('div', { class: 'edit-card' },
+    h('h2', {}, `Section ${ci + 1}.${si + 1}`),
+    field('Section title', title),
+    h('p', { class: 'hint' }, 'Edited text still counts as AI-generated for KDP when the first draft came from the model; the AI disclosure stays “yes”.'),
+    ...layers,
+    takeaways,
+  );
+}
+
+function blockEditor(b: Block, changed: () => void, siblings: Block[], index: number, redraw: () => void): HTMLElement {
+  const removable = b.kind === 'para' || b.kind === 'callout' || b.kind === 'list';
+  const remove = removable
+    ? h('button', { class: 'remove', 'aria-label': 'Remove this paragraph', onclick: (e: Event) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        if (!confirmInline(btn, 'Remove?')) return;
+        siblings.splice(index, 1);
+        changed();
+        redraw();
+      } }, 'Remove')
+    : null;
+  const box = (label: string, ...kids: Array<Node | null>) => h('div', { class: `block ${b.kind}` }, h('div', { class: 'block-label' }, label, remove), ...kids);
+  switch (b.kind) {
+    case 'para':
+      return box('Paragraph', prose(b.text, 'Paragraph', (v) => { b.text = v; changed(); }));
+    case 'callout': {
+      const t = h('input', { 'aria-label': 'Box title', placeholder: 'Box title' });
+      t.value = b.title ?? '';
+      t.addEventListener('input', () => { b.title = t.value || undefined; changed(); });
+      return box(`Box (${b.tone})`, t, prose(b.text, 'Box text', (v) => { b.text = v; changed(); }));
+    }
+    case 'list':
+      return box('List (one item per line)', prose(b.items.join('\n'), 'List items', (v) => { b.items = v.split('\n').map((x) => x.trim()).filter(Boolean); changed(); }));
+    case 'equation': {
+      const latex = h('input', { 'aria-label': 'Equation (LaTeX)', class: 'mono' });
+      latex.value = b.latex;
+      const render = h('div', { class: 'eq-preview', 'aria-live': 'polite' });
+      const show = () => {
+        try {
+          render.replaceChildren();
+          katex.render(b.latex, render, { displayMode: true, throwOnError: true, trust: false, strict: 'error', output: 'mathml' });
+          render.classList.remove('bad');
+        } catch (e) {
+          render.textContent = `Cannot read this equation: ${(e as Error).message}`;
+          render.classList.add('bad');
+        }
+      };
+      latex.addEventListener('input', () => { b.latex = latex.value; show(); changed(); });
+      show();
+      return box('Equation',
+        field('One-sentence intuition', prose(b.intuition, 'Intuition', (v) => { b.intuition = v; changed(); }, 2)),
+        field('Equation (LaTeX)', latex),
+        render,
+        field('Worked example', prose(b.example.text, 'Worked example', (v) => { b.example.text = v; changed(); }, 3), `Checked by ${b.example.check}. If you change the numbers, update that test too.`),
+        field('Valid when', prose(b.validity, 'Valid when', (v) => { b.validity = v; changed(); }, 2)),
+      );
+    }
+    case 'figure':
+    case 'model3d':
+      return box(b.kind === 'figure' ? 'Figure' : '3D model',
+        field('Caption', prose(b.caption, 'Caption', (v) => { b.caption = v; changed(); }, 2)),
+        field('Description for screen readers (alt text)', prose(b.alt, 'Alt text', (v) => { b.alt = v; changed(); }, 2)),
+      );
+    default:
+      return box('Block');
+  }
+}
