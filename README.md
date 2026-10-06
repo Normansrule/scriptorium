@@ -31,7 +31,7 @@
 8. [References and further learning](#references-and-further-learning)
 9. [Contributing, license and credits](#contributing-license-and-credits)
 
-**Status:** milestones 1–4 are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, and an app (web and desktop) with three steps — **Write, Edit, Publish** — that builds and checks the whole KDP package itself, with guards against publishing too much. See [Roadmap](#roadmap).
+**Status:** milestones 1–4 and 5a are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, and an app (web and desktop) with three steps — **Write, Edit, Publish** — that builds and checks the whole KDP package itself, with guards against publishing too much, and saves the web edition for GitHub Pages. See [Roadmap](#roadmap).
 
 ---
 
@@ -94,12 +94,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 121 unit, export, app and pipeline tests
+npm test                                         # 125 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  121 passed (121)` and `34 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  125 passed (125)` and `34 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -278,6 +278,8 @@ Worked example: "The cat sat on the mat." has 6 words, 1 sentence, 6 syllables �
 
 **Web book.** One static page: KaTeX HTML + MathML, light and dark figures, a Content Security Policy. Books without 3D models run no JavaScript; books with models load one script of our own.
 
+In the app, **Publish → Web edition → Save web edition (.zip)** saves the same folder the command line writes, plus a `README.txt`. To put it online with GitHub Pages: create a repository, upload the folder's contents (with `index.html` at the top), then **Settings → Pages → Deploy from a branch → main, / (root)**. The book appears at `https://<you>.github.io/<repository>/` after about a minute. Put that address in **Edit → Title, cover text and listing → Web address** and build the KDP package again, so the printed QR codes and the ebook's links point to it. The address must start with `https://`.
+
 **Print interior.** Typeset by **Typst** through its WebAssembly build, so no separate install is needed. Then:
 
 - the **gutter** (inside margin) is recomputed from the final page count and raised if KDP requires more [2];
@@ -422,7 +424,8 @@ Threat model: [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md). Report a vulnera
 | `… is rate-limiting requests (429)` during research or `verify-refs` | Crossref, OpenAlex or PubMed limits request rates | Set `CROSSREF_MAILTO` in `.env` (Crossref's polite pool) and retry a minute later; PubMed allows about 3 requests per second without a key |
 | `Could not reach api.crossref.org` (or another host) | Offline, or a firewall or proxy blocks it | Check the connection; behind a proxy set `HTTPS_PROXY`. Building existing books needs no network |
 | Desktop app: `error while loading shared libraries: libwebkit2gtk-4.1.so.0` | The WebKitGTK runtime is missing (Linux) | `sudo apt-get install -y libwebkit2gtk-4.1-0`, or install the `.deb`, which pulls it in |
-| Desktop app: *The key is kept for this session only: … system keychain …* | No Secret Service is running (common on WSL and minimal Linux) | `sudo apt-get install -y gnome-keyring`, then start the app from a desktop session; the key still works for the current session |
+| Desktop app: `libEGL warning: failed to get driver name`, `ZINK: failed to choose pdev`, or a blank or missing window | WebKitGTK's GPU path fails with some drivers and under WSL | Update to 0.5.1 or newer, which switches those paths off itself. On older versions start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 scriptorium`. If your GPU path works and you want it, start with `SCRIPTORIUM_GPU=1 scriptorium` |
+| Desktop app: *The key is kept for this session only: … system keychain …* | No keychain service (GNOME Keyring or KWallet) is running with an unlocked default keyring — common on WSL and minimal Linux | The key still works until you close the app; paste it again next time. On a Linux desktop, install and unlock one: `sudo apt-get install -y gnome-keyring`, then log out and back in |
 | `npm run desktop` fails with `cargo: not found` | Rust is not installed | Install it with rustup (see [Quick start](#quick-start)), then open a new terminal |
 | App: *Could not build the package: Could not load …* | The first Publish downloads the typesetter (about 30 MB) and the connection dropped | Press **Run the checks again**; after one successful load it works offline |
 | App: the Save button stays grey | A guard is not satisfied | Read the list under the button: it names each missing check, confirmation or limit |
@@ -485,7 +488,8 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 3 | EPUB 3 export with EPUBCheck, paperback cover generator, ebook cover, cover pre-flight, metadata helper | **Done** |
 | 4 | Tauri desktop app with OS-keychain key storage; release installers with SHA-256 checksums + build-provenance attestations | **Done** |
 | 4b | Three-step app (Write, Edit, Publish); print PDF, covers and EPUB built inside the app; publishing guards | **Done** |
-| 5 | arXiv search; code-signed installers; web book export from the app | Next |
+| 5a | Web edition saved from the app (same files as the command line) with GitHub Pages steps; desktop app fixes for WSL graphics and missing keychains | **Done** |
+| 5 | arXiv search; code-signed installers | Next |
 
 ---
 

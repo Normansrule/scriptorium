@@ -1,49 +1,28 @@
 /**
- * Web-book export: writes index.html, CSS, KaTeX assets, fonts and figures to a folder
- * that can be opened locally or published on GitHub Pages.
+ * Web-book export for the command line: builds the files with src/export/web.ts (shared with
+ * the app) and writes them to a folder that can be opened locally or published on GitHub Pages.
  */
-import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
-import type { Book } from '../core/book.ts';
 import { buildSync } from 'esbuild';
-import { bookCss, hasModels, renderHtml, type HtmlContext } from '../render/html.ts';
-import { REPO_ROOT } from './load.ts';
 import { PURIFY_CONFIG } from '../export/sanitize.ts';
+import { hasModels } from '../render/html.ts';
+import { buildWebBook, sanitizeBody, WEB_FONTS, type WebAssets, type WebInput } from '../export/web.ts';
+import { REPO_ROOT } from './load.ts';
 
 export { PURIFY_CONFIG };
 
 /** Sanitize the body with DOMPurify, keeping MathML and our figure markup; the head is ours. */
 export function sanitizePage(html: string): string {
+  return sanitizeBody(html, nodeSanitizer());
+}
+
+export function nodeSanitizer(): (body: string) => string {
   const { window } = new JSDOM('');
   const purify = createDOMPurify(window as unknown as Window & typeof globalThis);
-  const [head, body] = html.split(/<body>/);
-  const [inner, tail] = body!.split(/<\/body>/);
-  const clean = purify.sanitize(inner!, PURIFY_CONFIG);
-  return `${head}<body>${clean}</body>${tail}`;
-}
-
-export function copyWebAssets(outDir: string): void {
-  mkdirSync(join(outDir, 'assets', 'fonts'), { recursive: true });
-  writeFileSync(join(outDir, 'assets', 'book.css'), bookCss());
-  const katexDist = join(REPO_ROOT, 'node_modules', 'katex', 'dist');
-  mkdirSync(join(outDir, 'assets', 'katex'), { recursive: true });
-  cpSync(join(katexDist, 'katex.min.css'), join(outDir, 'assets', 'katex', 'katex.min.css'));
-  cpSync(join(katexDist, 'fonts'), join(outDir, 'assets', 'katex', 'fonts'), { recursive: true });
-  for (const [pkg, files] of [
-    ['source-serif', ['SourceSerif4-Regular.ttf', 'SourceSerif4-It.ttf', 'SourceSerif4-Semibold.ttf']],
-    ['source-sans', ['SourceSans3-Regular.ttf', 'SourceSans3-Semibold.ttf']],
-  ] as const) {
-    for (const f of files) cpSync(join(REPO_ROOT, 'node_modules', pkg, 'TTF', f), join(outDir, 'assets', 'fonts', f));
-  }
-}
-
-export function copyFigures(bookDir: string, outDir: string): void {
-  mkdirSync(join(outDir, 'figures'), { recursive: true });
-  const src = join(bookDir, 'figures');
-  if (!existsSync(src)) return;
-  for (const f of readdirSync(src)) if (/\.(svg|png)$/.test(f)) cpSync(join(src, f), join(outDir, 'figures', f));
+  return (body) => purify.sanitize(body, PURIFY_CONFIG);
 }
 
 /** Bundle the 3D viewer (src/render/viewer3d-client.ts) into one classic script. */
@@ -61,12 +40,37 @@ export function bundleViewer(): string {
   return res.outputFiles[0]!.text;
 }
 
-export function exportWeb(book: Book, bookDir: string, ctx: Omit<HtmlContext, 'figureBase'>, outDir: string): string {
+/** KaTeX and font files from node_modules; the viewer is bundled only when asked for. */
+export function nodeWebAssets(withViewer: boolean): WebAssets {
+  const katex = join(REPO_ROOT, 'node_modules', 'katex', 'dist');
+  const katexFonts: Record<string, Uint8Array> = {};
+  for (const f of readdirSync(join(katex, 'fonts'))) katexFonts[f] = readFileSync(join(katex, 'fonts', f));
+  const fonts: Record<string, Uint8Array> = {};
+  for (const f of WEB_FONTS) fonts[f] = readFileSync(join(REPO_ROOT, 'node_modules', f.startsWith('SourceSerif') ? 'source-serif' : 'source-sans', 'TTF', f));
+  return { katexCss: readFileSync(join(katex, 'katex.min.css'), 'utf8'), katexFonts, fonts, viewerJs: withViewer ? bundleViewer() : undefined };
+}
+
+/** Figures (svg/png) of a book folder, keyed `figures/<name>`. */
+export function figureFiles(bookDir: string): Record<string, Uint8Array> {
+  const out: Record<string, Uint8Array> = {};
+  const src = join(bookDir, 'figures');
+  if (!existsSync(src)) return out;
+  for (const f of readdirSync(src)) if (/\.(svg|png)$/.test(f)) out[`figures/${f}`] = readFileSync(join(src, f));
+  return out;
+}
+
+export function writeFiles(outDir: string, files: Record<string, Uint8Array>): void {
+  for (const [path, data] of Object.entries(files)) {
+    const target = join(outDir, path);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, data);
+  }
+}
+
+/** Write the web edition of the book in `bookDir` to `outDir`; returns the path of index.html. */
+export function exportWeb(input: Omit<WebInput, 'files'>, bookDir: string, outDir: string): string {
+  const files = buildWebBook({ ...input, files: figureFiles(bookDir) }, nodeWebAssets(hasModels(input.book)), nodeSanitizer());
   mkdirSync(outDir, { recursive: true });
-  const html = sanitizePage(renderHtml(book, { ...ctx, figureBase: 'figures/' }));
-  writeFileSync(join(outDir, 'index.html'), html);
-  copyWebAssets(outDir);
-  copyFigures(bookDir, outDir);
-  if (hasModels(book)) writeFileSync(join(outDir, 'assets', 'viewer3d.js'), bundleViewer());
+  writeFiles(outDir, files);
   return join(outDir, 'index.html');
 }

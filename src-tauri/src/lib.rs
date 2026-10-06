@@ -5,7 +5,8 @@
 //!
 //! * keep the API key in the operating system's keychain (three commands below);
 //! * open external links in the system browser instead of navigating the app window away;
-//! * save downloads (the project file) into the user's Downloads folder.
+//! * save downloads (the project file) into the user's Downloads folder;
+//! * on Linux, switch off WebKitGTK graphics paths that fail on some drivers and under WSL.
 //!
 //! Nothing else is exposed to the webview: no file-system, shell or HTTP plugins.
 
@@ -90,8 +91,44 @@ fn unique_path(dir: &std::path::Path, name: &std::path::Path) -> std::path::Path
         .unwrap_or(first)
 }
 
+/// WebKitGTK settings that keep the window from staying blank or failing to open.
+///
+/// * Every Linux system: turn off the DMA-BUF renderer, which fails with some GPU drivers
+///   (the workaround Tauri documents for blank windows).
+/// * Windows Subsystem for Linux (WSL): also turn off accelerated compositing and use
+///   software OpenGL, because WSLg's GPU path makes WebKitGTK fail with "ZINK: failed to choose
+///   pdev" / "failed to create dri2 screen".
+///
+/// A variable the user has already set is never overridden, and `SCRIPTORIUM_GPU=1` skips all
+/// of this for people whose GPU path works.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+fn graphics_env(is_wsl: bool, is_set: impl Fn(&str) -> bool) -> Vec<(&'static str, &'static str)> {
+    if is_set("SCRIPTORIUM_GPU") {
+        return Vec::new();
+    }
+    let mut vars = vec![("WEBKIT_DISABLE_DMABUF_RENDERER", "1")];
+    if is_wsl {
+        vars.push(("WEBKIT_DISABLE_COMPOSITING_MODE", "1"));
+        vars.push(("LIBGL_ALWAYS_SOFTWARE", "1"));
+    }
+    vars.into_iter().filter(|(k, _)| !is_set(k)).collect()
+}
+
+/// True inside WSL 1 or 2 (both set these variables; the kernel name says "microsoft").
+#[cfg(target_os = "linux")]
+fn running_in_wsl() -> bool {
+    std::env::var_os("WSL_DISTRO_NAME").is_some()
+        || std::env::var_os("WSL_INTEROP").is_some()
+        || std::fs::read_to_string("/proc/sys/kernel/osrelease").is_ok_and(|r| r.to_ascii_lowercase().contains("microsoft"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Must happen before GTK or WebKit start (no other threads exist yet).
+    #[cfg(target_os = "linux")]
+    for (k, v) in graphics_env(running_in_wsl(), |k| std::env::var_os(k).is_some()) {
+        std::env::set_var(k, v);
+    }
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![key_get, key_set, key_delete])
         .setup(|app| {
@@ -130,6 +167,18 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn graphics_env_respects_the_user() {
+        let none = |_: &str| false;
+        assert_eq!(graphics_env(false, none), vec![("WEBKIT_DISABLE_DMABUF_RENDERER", "1")]);
+        assert_eq!(graphics_env(true, none).len(), 3);
+        // a variable the user set is left alone
+        let set = |k: &str| k == "LIBGL_ALWAYS_SOFTWARE";
+        assert!(!graphics_env(true, set).iter().any(|(k, _)| *k == "LIBGL_ALWAYS_SOFTWARE"));
+        // SCRIPTORIUM_GPU=1 turns every workaround off
+        assert!(graphics_env(true, |k| k == "SCRIPTORIUM_GPU").is_empty());
+    }
 
     #[test]
     fn keys_are_checked_without_echoing() {

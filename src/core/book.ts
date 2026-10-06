@@ -167,7 +167,7 @@ export const BookMeta = z.object({
   /** Short statement printed on the copyright page, e.g. how AI was used. */
   colophon: Inline.optional(),
   /** Where the web edition will live; print and EPUB link 3D models here. */
-  webUrl: z.string().url().optional(),
+  webUrl: z.string().url().regex(/^https:\/\/[^\s"'<>]+$/, 'must be an https:// address').optional(),
   /** Figure id to show on the front cover (default: the first figure or 3D model). */
   coverFigure: z.string().regex(/^fig-[a-z0-9-]+$/).optional(),
   /** Back-cover and store description (≤ 4000 characters for KDP; checked by src/kdp/metadata.ts). */

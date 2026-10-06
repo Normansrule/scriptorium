@@ -1,6 +1,6 @@
 [package]
 name = "scriptorium"
-version = "0.5.0"
+version = "0.5.1"
 description = "Scriptorium desktop app: illustrated, fully referenced books for the web and Amazon KDP"
 authors = ["Scriptorium contributors"]
 license = "MIT"

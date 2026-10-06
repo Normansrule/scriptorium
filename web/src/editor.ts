@@ -173,6 +173,8 @@ function detailsEditor(book: Book, changed: () => void): HTMLElement {
     lines('Keywords (one per line)', () => m.keywords ?? [], (v) => (m.keywords = v), 'Up to seven short phrases. Avoid "free", "bestselling", and words already in the title.'),
     lines('Categories (one per line)', () => m.categories ?? [], (v) => (m.categories = v), 'Up to three.'),
     field('Colophon (how the book was made)', prose(m.colophon ?? '', 'Colophon', (v) => { m.colophon = v || undefined; changed(); }, 3)),
+    text('Web address of the web edition (optional)', () => m.webUrl ?? '', (v) => (m.webUrl = v.trim() || undefined),
+      'Where you will publish the web edition, e.g. https://you.github.io/my-book/. The print book and the ebook link and QR-code 3D models to it. Publish → Web edition saves the site.'),
   );
 }
 

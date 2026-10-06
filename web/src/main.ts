@@ -459,7 +459,10 @@ function settingsView(): Node {
       go('write');
     } catch (e) {
       // The message comes from our own Rust command and never contains the key.
-      status.textContent = `The key is kept for this session only: ${(e as Error).message ?? e}`;
+      status.replaceChildren(
+        `The key is kept for this session only: ${(e as Error).message ?? e}. It works until you close the app; you will paste it again next time. `,
+        h('button', { class: 'secondary small', onclick: () => go('write') }, 'Continue with this key'),
+      );
     }
   };
   const entries = readLog();

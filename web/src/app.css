@@ -111,6 +111,8 @@ h2 { font-size: 1.2rem; margin: 1.6rem 0 .6rem; }
 .publish-steps { list-style: none; counter-reset: pub; padding: 0; margin: 0; }
 .publish-steps > li { counter-increment: pub; position: relative; padding: .2rem 0 1rem 2.6rem; border-left: 2px solid var(--sc-rule); margin-left: .9rem; }
 .publish-steps > li::before { content: counter(pub); position: absolute; left: -15px; top: 1.15rem; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: .85rem; background: var(--sc-paper); border: 2px solid var(--sc-signal); color: var(--sc-signal); }
+.web-edition { margin-top: 2rem; padding: 1rem 1.2rem; border: 1px solid var(--sc-rule); border-radius: 10px; }
+.web-edition h2 { margin-top: 0; }
 .publish-steps > li:last-child { border-left-color: transparent; }
 .chips { border: 0; padding: 0; margin: 0 1rem 1rem 0; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .chips legend { font-weight: 600; font-size: .92rem; margin-bottom: .3rem; float: left; width: 100%; }

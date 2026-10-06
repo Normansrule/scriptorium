@@ -88,7 +88,7 @@ async function build(args: string[]): Promise<BuildSummary> {
   const d = { text: disclosure.text.answer, images: disclosure.images.answer, translations: disclosure.translations.answer };
   const htmlBib = formatBibliography(refs, order, assets, 'html');
 
-  const htmlPath = exportWeb(book, dir, { numbering, bibliography: htmlBib, refs, disclosure: d, models, webUrl: book.meta.webUrl }, join(out, 'web'));
+  const htmlPath = exportWeb({ book, refs, csl: assets, models, figureScriptsByAi: /written with AI assistance/i.test(book.meta.colophon ?? '') }, dir, join(out, 'web'));
   console.log(`✓ Web book  → ${rel(htmlPath)}`);
 
   const preflightAll: Record<string, unknown> = {};

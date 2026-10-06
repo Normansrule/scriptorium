@@ -287,6 +287,27 @@ export function publishView(host: PublishHost): HTMLElement {
     update();
   }
 
+  // ---- separate from KDP: the web edition (not counted toward any limit)
+  const webStatus = h('p', { class: 'hint', role: 'status', 'aria-live': 'polite' });
+  const webBtn = h('button', { class: 'secondary', disabled: buildProblems.length > 0 }, 'Save web edition (.zip)');
+  webBtn.addEventListener('click', () => void saveWeb());
+  async function saveWeb(): Promise<void> {
+    webBtn.disabled = true;
+    webStatus.textContent = 'Building the web edition…';
+    try {
+      const folder = `${slugify(p.book.meta.title)}-web`;
+      const { webBookZipFiles } = await import('./webbook.ts');
+      const files = await webBookZipFiles(p, host.csl, folder);
+      saveFile(`${folder}.zip`, zipSync(files, { level: 6 }), 'application/zip');
+      webStatus.textContent = `Saved ${folder}.zip. Open index.html inside it to read the book; README.txt explains how to put it on GitHub Pages.`;
+    } catch (e) {
+      console.error(e);
+      webStatus.textContent = `Could not build the web edition: ${(e as Error).message ?? e}`;
+    } finally {
+      webBtn.disabled = buildProblems.length > 0;
+    }
+  }
+
   root.append(
     h('h1', {}, practice ? 'Publish (practice)' : 'Publish'),
     h('p', { class: 'lede' }, practice
@@ -305,6 +326,12 @@ export function publishView(host: PublishHost): HTMLElement {
         saveBtn,
         why,
       ),
+    ),
+    h('section', { class: 'web-edition' },
+      h('h2', {}, 'Web edition (optional)'),
+      h('p', { class: 'hint' }, 'The interactive book as a website folder — rotatable 3D models, dark mode, linked sources — to put on GitHub Pages or any web host. It has nothing to do with KDP and does not count toward its limits.'),
+      webBtn,
+      webStatus,
     ),
   );
   liveView = { progress, update };
