@@ -53,6 +53,10 @@ export function nodeEngine(bookDir: string): TypstEngine {
       if (!res.result || res.hasError()) throw new Error('Typst could not compile the document.');
       return c.svg(res.result);
     },
+    async query(source, label) {
+      const found = c.query({ mainFileContent: source }, { selector: `<${label}>` }) as Array<{ value?: unknown }>;
+      return (found ?? []).map((m) => m.value);
+    },
   };
 }
 

@@ -30,7 +30,7 @@ import serifItalic from 'source-serif/TTF/SourceSerif4-It.ttf?url';
 import serifSemibold from 'source-serif/TTF/SourceSerif4-Semibold.ttf?url';
 import sansRegular from 'source-sans/TTF/SourceSans3-Regular.ttf?url';
 import sansSemibold from 'source-sans/TTF/SourceSans3-Semibold.ttf?url';
-import { keyStore } from './keystore.ts';
+import { isDesktop, keyStore } from './keystore.ts';
 import { autosave, clone, fromFile, fromPipeline, problems, restore, toFile, type Project } from './project.ts';
 import { editorView } from './editor.ts';
 import { publishView, readLog } from './publish.ts';
@@ -376,6 +376,15 @@ function samplesView(): Node {
         ),
       ),
     ),
+    // The 3D Editions are built by the Pages workflow next to the app, so they exist on the web only.
+    isDesktop()
+      ? null
+      : h('div', { class: 'edition3d-links' },
+          h('h2', {}, 'Read a sample in 3D'),
+          h('p', { class: 'hint' }, 'The same pages in a book you can turn; figures lift off the page and models rotate. Preview of the 3D Edition.'),
+          h('ul', {}, ...SAMPLES.map((s) => h('li', {}, h('a', { href: `3d.html?book=books/${s.dir}/3d/` }, s.book.meta.title)))),
+          h('p', { class: 'hint' }, h('a', { href: '3d.html?kit=mosfet' }, 'Scene kit preview: a transistor you can cut open, explode and switch on')),
+        ),
   );
 }
 

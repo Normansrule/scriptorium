@@ -13,6 +13,8 @@ export interface TypstEngine {
   pdf(source: string): Promise<{ pdf: Uint8Array; pages: number }>;
   /** Compile to SVG (glyphs as outlines, so no fonts are needed to rasterize it). */
   svg(source: string): Promise<string>;
+  /** Values of every `metadata` element with this label (e.g. `<scriptorium-anchor>`), in document order. */
+  query?(source: string, label: string): Promise<unknown[]>;
 }
 
 /** An SVG drawn on top of the page, scaled to fit inside the box (pixels) and centred. */

@@ -11,12 +11,12 @@ import { esc, palette, svgDoc, text } from './svg.ts';
 import type { Mode } from '../core/style.ts';
 
 /** CPK colors as used by Jmol, adjusted only where a color would vanish against the page. */
-const CPK: Record<string, string> = {
+export const CPK: Record<string, string> = {
   H: '#FFFFFF', C: '#909090', N: '#3050F8', O: '#FF0D0D', F: '#90E050', Na: '#AB5CF2', Mg: '#8AFF00', P: '#FF8000',
   S: '#FFFF30', Cl: '#1FF01F', K: '#8F40D4', Ca: '#3DFF00', Fe: '#E06633', Zn: '#7D80B0', Br: '#A62929', I: '#940094',
 };
 /** Drawing radius per element as a fraction of the bond-scale unit (not physical radii). */
-const DRAW_R: Record<string, number> = { H: 0.22, C: 0.32, N: 0.31, O: 0.3, P: 0.38, S: 0.38 };
+export const DRAW_R: Record<string, number> = { H: 0.22, C: 0.32, N: 0.31, O: 0.3, P: 0.38, S: 0.38 };
 const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
 export interface Annotation {

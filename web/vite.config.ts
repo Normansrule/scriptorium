@@ -31,6 +31,14 @@ export default defineConfig({
   plugins: [viewer3d()],
   // KaTeX, citeproc, Zod, four CSL styles and the four sample books make one ~1.3 MB chunk
   // (~325 kB gzipped); acceptable for a tool page that works offline after loading.
-  build: { outDir: resolve(here, 'dist'), emptyOutDir: true, sourcemap: false, target: 'es2022', chunkSizeWarningLimit: 1500 },
+  build: {
+    outDir: resolve(here, 'dist'),
+    emptyOutDir: true,
+    sourcemap: false,
+    target: 'es2022',
+    chunkSizeWarningLimit: 1500,
+    // The app, and the 3D Edition viewer (three.js; loaded only on its own page).
+    rolldownOptions: { input: { main: resolve(here, 'index.html'), edition3d: resolve(here, '3d.html') } },
+  },
   server: { fs: { allow: [resolve(here, '..')] } },
 });

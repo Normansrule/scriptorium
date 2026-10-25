@@ -11,6 +11,8 @@
  *   npm run cli -- verify-refs examples/rc-circuits/book.json  re-check every DOI against Crossref
  *   npm run cli -- spine --pages 212 --paper white --trim 6x9  cover geometry for KDP
  *   npm run cli -- preflight dist/rc-circuits/book.pdf --trim 6x9
+ *   npm run cli -- plan3d examples/rc-circuits [--approve fig-a,fig-b] [--reject fig-c]   2D → 3D proposals
+ *   npm run cli -- edition3d examples/rc-circuits                 3D Edition (pages, figures, models) → dist/<book>/edition3d
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -29,6 +31,8 @@ import { numberBook } from '../render/numbering.ts';
 import { verifyReference } from '../research/scholarly.ts';
 import { exportPdf } from '../node/export-pdf.ts';
 import { exportWeb } from '../node/export-web.ts';
+import { exportEdition3D, PLAN_FILE, updatePlan } from '../node/export-edition3d.ts';
+import { effective } from '../edition3d/convert.ts';
 import { cslAssets, loadBook, REPO_ROOT } from '../node/load.ts';
 import { approve, newState, runPipeline, Outline, STAGES } from '../core/pipeline.ts';
 import { AnthropicProvider } from '../llm/provider.ts';
@@ -290,10 +294,39 @@ async function preflight(args: string[]): Promise<void> {
   if (checks.some((c) => !c.ok)) process.exitCode = 1;
 }
 
+function ids(args: string[], name: string): string[] {
+  return (flag(args, name) ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+}
+
+/** Show (and save) the converter's proposal for every figure; --approve / --reject record decisions. */
+async function plan3d(args: string[]): Promise<void> {
+  const { dir, book } = loadBook(args.find((a) => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.startsWith('--')) ?? 'examples/rc-circuits/book.json');
+  const plan = updatePlan(book, dir, { approve: ids(args, 'approve'), reject: ids(args, 'reject') });
+  for (const e of plan.entries) {
+    const t = effective(e);
+    const proposed = e.proposed.mode === 'scene' ? `scene:${e.proposed.kit}` : e.proposed.mode;
+    const applied = t.mode === 'scene' ? `scene:${t.kit}` : t.mode;
+    console.log(`${e.approved ? '✓' : '?'} ${e.id.padEnd(28)} proposed ${proposed.padEnd(14)} → ${applied.padEnd(14)} ${e.reason}`);
+  }
+  console.log(`Saved ${relative(process.cwd(), join(dir, PLAN_FILE))}. Scenes apply only after --approve.`);
+}
+
+/** Build the 3D Edition of one book into dist/<book>/edition3d. */
+async function edition3d(args: string[]): Promise<void> {
+  const t0 = Date.now();
+  const { dir, book, refs, models } = loadBook(args.find((a) => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.startsWith('--')) ?? 'examples/rc-circuits/book.json');
+  const out = resolve(flag(args, 'out', join(REPO_ROOT, 'dist', basename(dir), 'edition3d'))!);
+  const r = await exportEdition3D({ book, refs, models, csl: cslAssets(book.meta.citationStyle), webEdition: flag(args, 'web-edition', '../web/index.html') }, dir, out, (m) => process.stdout.write(`\r${m.padEnd(60)}`));
+  process.stdout.write('\r'.padEnd(62) + '\r');
+  const by = (mode: string) => r.manifest.figures.filter((f) => f.treatment.mode === mode).length;
+  console.log(`✓ 3D Edition → ${relative(process.cwd(), out)}: ${r.manifest.pages.length} pages, ${r.manifest.figures.length} figures (${by('model')} models, ${by('scene')} scenes, ${by('lift')} lift, ${by('flat')} flat) in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  for (const w of r.warnings) console.log(`  ! ${w}`);
+}
+
 // Read .env if present (Node ≥ 20.12). Secrets stay in the process environment only.
 if (existsSync(join(REPO_ROOT, '.env'))) process.loadEnvFile(join(REPO_ROOT, '.env'));
 
-export const commands: Record<string, (a: string[]) => unknown> = { build, 'build-all': buildAll, epubcheck, generate, 'build-project': buildProject, 'verify-refs': verifyRefs, spine, preflight };
+export const commands: Record<string, (a: string[]) => unknown> = { build, 'build-all': buildAll, epubcheck, generate, 'build-project': buildProject, 'verify-refs': verifyRefs, spine, preflight, plan3d, edition3d };
 
 const [cmd, ...rest] = process.argv.slice(2);
 if (!cmd || !commands[cmd]) {

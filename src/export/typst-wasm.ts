@@ -130,5 +130,12 @@ export async function createWasmEngine(assets: WasmAssets): Promise<WasmEngine> 
       const rr = renderer;
       return withoutEval(() => rr.renderSvg({ artifactContent: vector } as never));
     },
+    async query(source, label) {
+      return serial(async () => {
+        compiler.addSource(MAIN, source);
+        const found = (await withoutEval(() => compiler.query({ mainFilePath: MAIN, selector: `<${label}>` } as never))) as Array<{ value?: unknown }>;
+        return (found ?? []).map((m) => m.value);
+      });
+    },
   };
 }

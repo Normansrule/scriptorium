@@ -56,7 +56,8 @@ export function cleanTypstSvg(svg: string): string {
   return svg
     .replace(/<style[\s\S]*?<\/style>/g, '')
     .replace(/<script[\s\S]*?<\/script>/g, '')
-    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/g, ''); // text-selection layer; locks a canvas
+    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/g, '') // text-selection layer; locks a canvas
+    .replace(/<rect\b[^>]*class="pseudo-link"[^>]*?(?:\/>|><\/rect>)/g, ''); // link hit areas: transparent only via the stripped <style>
 }
 
 /**

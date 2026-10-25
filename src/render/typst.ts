@@ -54,6 +54,21 @@ export interface TypstContext {
   disclosure?: { text: string; images: string; translations: string };
   /** Address of the web edition (book.meta.webUrl); 3D figures link and QR-code to it. */
   webUrl?: string;
+  /**
+   * Mark where each figure lands (page and position) with invisible `<scriptorium-anchor>`
+   * metadata, for the 3D Edition. Off for the print interior. The anchors take no space, so the
+   * pages come out the same either way (tested in tests/unit/edition3d.test.ts).
+   */
+  anchors?: boolean;
+}
+
+/** Selector the 3D Edition queries for figure positions. */
+export const ANCHOR_LABEL = 'scriptorium-anchor';
+
+/** Invisible marker: `edge` is "start" (top-left of the image area) or "end" (its bottom). */
+function anchor(id: string, edge: 'start' | 'end', ctx: TypstContext): string {
+  if (!ctx.anchors) return '';
+  return `#context [#metadata((id: "${escString(id)}", edge: "${edge}", page: here().page(), x: here().position().x.pt(), y: here().position().y.pt())) <${ANCHOR_LABEL}>]`;
 }
 
 function inline(tokens: InlineToken[], ctx: TypstContext): string {
@@ -136,7 +151,7 @@ function model3d(b: Model3D, ctx: TypstContext): string {
     ? `#grid(columns: (1fr, 0.62in), gutter: 8pt, align: (left + horizon, right + horizon), [${caption}], [#image(bytes("${escString(qrSvg(url))}"), format: "svg", width: 0.62in, alt: "QR code linking to the interactive 3D model")])`
     : caption;
   return `#place(auto, float: true, clearance: 14pt)[#block(breakable: false, width: 100%)[
-  #align(center)[#box(width: ${Math.round(b.width * 100)}%)[#grid(columns: (1fr,) * ${n}, gutter: 6pt, ${views})]]
+  #align(center)[#box(width: ${Math.round(b.width * 100)}%)[${anchor(b.id, 'start', ctx)}#grid(columns: (1fr,) * ${n}, gutter: 6pt, ${views})${anchor(b.id, 'end', ctx)}]]
   #v(4pt)
   ${bottom}
 ]]
@@ -166,7 +181,7 @@ function block(b: Block, ctx: TypstContext): string {
       const num = ctx.numbering.figure.get(b.id)!;
       // Figures float to the top or bottom of a page (book convention) so text fills the page.
       return `#place(auto, float: true, clearance: 14pt)[#block(breakable: false, width: 100%)[
-  #align(center)[#image("${escString(b.src)}", width: ${Math.round(b.width * 100)}%, alt: "${escString(b.alt)}")]
+  #align(center)[#box(width: ${Math.round(b.width * 100)}%)[${anchor(b.id, 'start', ctx)}#image("${escString(b.src)}", width: 100%, alt: "${escString(b.alt)}")${anchor(b.id, 'end', ctx)}]]
   #v(4pt)
   #text(font: "${fonts.sans}", size: 8.5pt)[#strong[Figure ${num}] — ${md(b.caption, ctx)} #text(fill: ${C.muted})[${md(b.credit, ctx)}]]
 ]]

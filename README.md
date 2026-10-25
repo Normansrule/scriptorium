@@ -33,6 +33,12 @@
 
 **Status:** milestones 1–4 and 5a are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, and an app (web and desktop) with three steps — **Write, Edit, Publish** — that builds and checks the whole KDP package itself, with guards against publishing too much, and saves the web edition for GitHub Pages. See [Roadmap](#roadmap).
 
+**New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits (first: a transistor) can be cut away, exploded, X-rayed and played. A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
+
+<p align="center"><img src="docs/phase-0/bookcloth-3d-popped.png" alt="The 3D Edition: an open book on a dark blue desk; the DNA model from Figure 1.2 has risen off the left page and floats above the book, with the figure's caption in a panel and controls to cut away, X-ray, reset or put it back." width="880"></p>
+
+*3D Edition preview — Figure 1.2 of the biology sample has lifted off its page; its dashed outline stays on the page.*
+
 ---
 
 ## What you'll see
@@ -94,12 +100,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 125 unit, export, app and pipeline tests
+npm test                                         # 132 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  125 passed (125)` and `34 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  132 passed (132)` and `34 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -362,11 +368,14 @@ scriptorium/
 │   ├── disclosure/    KDP AI-disclosure checklist
 │   ├── export/        PDF, covers, EPUB, the KDP package and publishing guards — shared by
 │   │                  the command line and the app (Typst native or WebAssembly)
-│   ├── node/          Node-only: load a book folder; native Typst; web export
+│   ├── edition3d/     3D Edition: page splitting, figure anchors, the 2D → 3D converter
+│   │                  (plan3d.json), scene-kit catalog, book3d.json builder
+│   ├── node/          Node-only: load a book folder; native Typst; web and 3D export
 │   └── cli/           `npm run cli`: build, build-all, generate, build-project,
-│                      verify-refs, epubcheck, spine, preflight
+│                      verify-refs, epubcheck, spine, preflight, plan3d, edition3d
 ├── web/               the app (Vite): Write, Edit and Publish steps, project files, autosave,
-│                      bring-your-own key, in-app typesetter loader
+│                      bring-your-own key, in-app typesetter loader; 3d.html, the 3D Edition
+│                      viewer (three.js: page turns, pop-off figures, scene kits)
 ├── src-tauri/         desktop shell (Rust, Tauri 2): keychain commands, link and download
 │                      handling, least-privilege capability, icons
 ├── profiles/          one JSON file per domain: engineering, chemistry, biology, medicine
@@ -489,6 +498,8 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 4 | Tauri desktop app with OS-keychain key storage; release installers with SHA-256 checksums + build-provenance attestations | **Done** |
 | 4b | Three-step app (Write, Edit, Publish); print PDF, covers and EPUB built inside the app; publishing guards | **Done** |
 | 5a | Web edition saved from the app (same files as the command line) with GitHub Pages steps; desktop app fixes for WSL graphics and missing keychains | **Done** |
+| 0 (Living Textbook Forge) | Audit, research, architecture, three visual concepts; 3D Edition prototype (page turns, pop-off figures, transistor kit, converter v0) | **Gate: waiting for review** ([docs/PHASE-0.md](docs/PHASE-0.md)) |
+| 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |
 
 ---

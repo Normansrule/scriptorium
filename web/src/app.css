@@ -176,3 +176,6 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .run-grid, .edit-grid { grid-template-columns: 1fr; }
   .edit-nav { position: static; max-height: 14rem; border: 1px solid var(--sc-rule); border-radius: 8px; padding: .4rem; }
 }
+.edition3d-links { margin-top: 2rem; }
+.edition3d-links ul { padding-left: 1.2rem; }
+.edition3d-links li { margin: .3rem 0; }

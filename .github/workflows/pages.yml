@@ -28,6 +28,11 @@ jobs:
         run: npm run app:build
       - name: Build every sample book (web, PDF, cover, EPUB)
         run: npm run build:all -- --allow-short
+      - name: Build every sample's 3D Edition (pages, figures, models)
+        run: |
+          for d in examples/*/; do
+            [ -f "$d/book.json" ] && npm run cli -- edition3d "$d" --web-edition ../index.html
+          done
       - name: Put each book under books/<name>/ next to the app
         run: |
           for d in dist/*/; do
@@ -35,6 +40,7 @@ jobs:
             mkdir -p "web/dist/books/$name/downloads"
             cp -r "$d/web/." "web/dist/books/$name/"
             cp "$d/book.pdf" "$d/book.epub" "$d/cover.pdf" "$d/ebook-cover.jpg" "$d/kdp-metadata.txt" "web/dist/books/$name/downloads/"
+            if [ -d "$d/edition3d" ]; then mkdir -p "web/dist/books/$name/3d" && cp -r "$d/edition3d/." "web/dist/books/$name/3d/"; fi
           done
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
