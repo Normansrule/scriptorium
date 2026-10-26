@@ -16,7 +16,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "=2.7.1", features = [] }
 
 [dependencies]
-tauri = { version = "=2.12.1", features = [] }
+tauri = { version = "=2.12.2", features = [] }
 tauri-plugin-opener = "=2.7.0"
 # OS keychain: Windows Credential Manager, macOS Keychain, Secret Service (GNOME Keyring / KWallet) on Linux.
 keyring = { version = "=3.6.3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
