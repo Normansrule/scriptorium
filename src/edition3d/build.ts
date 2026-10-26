@@ -10,7 +10,7 @@
  * invisible anchors added so each figure's place on its page is known. The anchors take no space;
  * the page count is checked against the interior to prove it.
  */
-import { allBlocks, type Book, type Explore, type Reference } from '../core/book.ts';
+import { allBlocks, type Book, type Reference } from '../core/book.ts';
 import type { Model } from '../core/molecule.ts';
 import { roles } from '../core/style.ts';
 import { parseInline, type InlineToken } from '../render/inline.ts';
@@ -23,8 +23,12 @@ import { cleanTypstSvg } from '../export/cover.ts';
 import type { EncodeJpeg, Rasterize, TypstEngine } from '../export/engine.ts';
 import { buildInterior } from '../export/pdf.ts';
 import { effective, figuresOf, planBook } from './convert.ts';
-import { Book3D, type Explorable3D, type Figure3D, type Plan3D, type Rect } from './manifest.ts';
+import { Book3D, type Chapter3D, type Check3D, type Equation3D, type Explorable3D, type Figure3D, type Plan3D, type Rect } from './manifest.ts';
 import { splitPages } from './pages.ts';
+
+/** A chapter opener's box: the chip's outset above it, and a small gap before what follows the title. */
+const CHAPTER_ABOVE = 6;
+const CHAPTER_GAP = 3;
 
 export interface Edition3DInput {
   book: Book;
@@ -151,8 +155,6 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
   const lay = interior.layout;
   const textWidth = (lay.trimWidthIn - lay.insideIn - lay.outsideIn) * PT_PER_IN;
   const figs = figuresOf(book);
-  const exploreBlocks = new Map<string, Explore>();
-  for (const { block } of allBlocks(book)) if (block.kind === 'explore') exploreBlocks.set(block.id, block);
   const rects = figureRects(anchors, new Map(figs.map((f) => [f.id, f.width])), textWidth);
   const plan = planBook(book, input.plan);
   const figures: Figure3D[] = [];
@@ -206,19 +208,60 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
     });
   }
 
-  // explorables: their anchors sit inside the printed box (9 pt inset, 2.5 pt left edge)
-  const explorables: Explorable3D[] = [];
-  const INSET = 9;
+  // Boxes on the page for explorables, equations and self-checks, from their start and end anchors.
+  // Learning boxes have a 9 pt inset and a 2.5 pt left edge; an equation's anchors sit at its edges.
+  const boxes = new Map<string, { page: number; rect: Rect }>();
   const starts = new Map<string, Anchor>();
   for (const a of anchors.filter(isAnchor)) {
-    if (!a.id.startsWith('xpl-')) continue;
+    if (!/^(xpl|eq|chk)-/.test(a.id)) continue;
     if (a.edge === 'start') starts.set(a.id, a);
     else {
       const s0 = starts.get(a.id);
-      const blockData = exploreBlocks.get(a.id);
-      if (!s0 || !blockData || s0.page !== a.page || a.y <= s0.y) continue;
-      explorables.push({ id: a.id, number: numbering.explore.get(a.id) ?? '', title: blockData.title, page: s0.page, rect: { x: s0.x - INSET - 2.5, y: s0.y - INSET, w: textWidth, h: a.y - s0.y + 2 * INSET }, block: blockData as unknown as Record<string, unknown> });
+      if (!s0 || s0.page !== a.page || a.y <= s0.y) continue; // split across pages: no single box
+      const inset = a.id.startsWith('eq-') ? 0 : 9;
+      const edge = a.id.startsWith('eq-') ? 0 : 2.5;
+      boxes.set(a.id, { page: s0.page, rect: { x: s0.x - inset - edge, y: s0.y - inset - (inset ? 0 : 2), w: textWidth, h: a.y - s0.y + 2 * inset + (inset ? 0 : 4) } });
     }
+  }
+  const plain = (t: string) => captionText(t, numbering);
+  // chapter openers: from the chapter chip (start) to the first thing after the title (end: the
+  // hook's first line, or inside the goals box, 9 pt below its top edge)
+  const chapters: Chapter3D[] = [];
+  const chStarts = new Map<string, Anchor>();
+  for (const a of anchors.filter(isAnchor)) {
+    if (!a.id.startsWith('ch-')) continue;
+    if (a.edge === 'start') {
+      chStarts.set(a.id, a);
+      continue;
+    }
+    const s0 = chStarts.get(a.id);
+    const ci = book.chapters.findIndex((c) => c.id === a.id);
+    if (!s0 || s0.page !== a.page || ci < 0 || chapters.some((c) => c.id === a.id)) continue;
+    const ch = book.chapters[ci]!;
+    const top = Math.max(0, s0.y - CHAPTER_ABOVE);
+    const bottom = a.y - (ch.hook ? 0 : 9) - CHAPTER_GAP;
+    chapters.push({ id: ch.id, number: ci + 1, title: ch.title, page: a.page, rect: { x: s0.x, y: top, w: textWidth, h: bottom - top }, hook: ch.hook ? plain(ch.hook) : undefined, goals: ch.goals.map(plain) });
+  }
+  const explorables: Explorable3D[] = [];
+  const equations: Equation3D[] = [];
+  const checks: Check3D[] = [];
+  for (const { block } of allBlocks(book)) {
+    if (!('id' in block) || !block.id) continue;
+    const where = boxes.get(block.id);
+    if (!where) continue;
+    if (block.kind === 'explore') explorables.push({ id: block.id, number: numbering.explore.get(block.id) ?? '', title: block.title, ...where, block: block as unknown as Record<string, unknown> });
+    if (block.kind === 'equation')
+      equations.push({
+        id: block.id,
+        number: numbering.equation.get(block.id) ?? '',
+        ...where,
+        intuition: plain(block.intuition),
+        text: latexToText(block.latex),
+        symbols: block.where.map((w) => ({ symbol: latexToText(w.symbol), meaning: plain(w.meaning), unit: w.unit })),
+        example: plain(block.example.text),
+        validity: plain(block.validity),
+      });
+    if (block.kind === 'quiz') checks.push({ id: block.id, number: numbering.quiz.get(block.id) ?? '', ...where, question: plain(block.question), options: block.options.map((o) => ({ text: plain(o.text), correct: o.correct, why: plain(o.why) })) });
   }
 
   const manifest = Book3D.parse({
@@ -232,6 +275,9 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
     pageScale: scale,
     figures,
     explorables,
+    equations,
+    checks,
+    chapters,
     webEdition: input.webEdition,
     style: book.meta.style,
     cloth: roles.signal.light,

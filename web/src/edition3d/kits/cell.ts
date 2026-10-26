@@ -133,16 +133,17 @@ export function cellKit(): FigureObject {
   k.label('Cytoplasm', [0.9 - UNIT * 0.5, -UNIT * 0.35, UNIT * 0.4], big.cytoplasm);
   k.label('Reference cell, r = 1 µm', [-3.4, -UNIT * 1.1, 0], small.root);
 
-  const setTime = (t: number): string => {
-    r = 1 + (R_MAX - 1) * t;
+  const show = (radius: number): string => {
+    r = radius;
     apply();
     const A = 4 * Math.PI * r * r;
     const V = (4 / 3) * Math.PI * r ** 3;
     if (r < 1.02) return 'Both cells have radius 1 µm: 12.6 µm² of membrane for 4.2 µm³ of cell, 3 µm² for every µm³. Press play to grow the right-hand cell.';
     return `r = ${r.toFixed(1)} µm: ${(r * r).toFixed(1)}× the membrane (${A.toFixed(0)} µm²) but ${(r ** 3).toFixed(1)}× the volume (${V.toFixed(0)} µm³), so each µm³ gets ${(3 / r).toFixed(2)} µm² of membrane, ${(1 / r).toFixed(2)} of the small cell's.`;
   };
+  const setTime = (t: number): string => show(1 + (R_MAX - 1) * t);
   setTime(0);
-  return k.finish({
+  const obj = k.finish({
     duration: 9,
     setTime,
     tick: (dt) => {
@@ -151,4 +152,12 @@ export function cellKit(): FigureObject {
       moveDots(smallDots, smallSeeds, 1, 14);
     },
   });
+  // an explorable can set the radius in µm; the scene draws 1–4 µm and says when it clips
+  obj.setInput = (name, value) => {
+    if (name !== 'radius' || !Number.isFinite(value)) return '';
+    const shown = Math.min(R_MAX, Math.max(1, value));
+    const msg = show(shown);
+    return shown !== value ? `${msg} (The explorable says ${value.toPrecision(2)} µm; this scene draws 1 to ${R_MAX} µm.)` : msg;
+  };
+  return obj;
 }

@@ -9,6 +9,11 @@ import type { Theme } from './theme.ts';
 export const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 /** Strong ease-out (cubic-bezier(0.23, 1, 0.32, 1) shape) for things arriving. */
 export const easeOut = (t: number) => 1 - (1 - t) ** 4;
+/** Overshoots a little and settles, like a sprung paper fold. */
+export const easeOutBack = (k: number): number => {
+  const c = 1.70158;
+  return 1 + (c + 1) * (k - 1) ** 3 + c * (k - 1) ** 2;
+};
 
 interface Tween {
   start: number;

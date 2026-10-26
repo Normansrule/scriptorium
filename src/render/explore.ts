@@ -230,5 +230,6 @@ export function exploreProblems(b: Explore): string[] {
   for (const s of b.plot.series) check(`Curve "${s.label}"`, s.expr, { ...d, x: mid });
   for (const r of b.readouts) check(`Readout "${r.label}"`, r.expr, d);
   if (b.plot.marker) check('The marker', b.plot.marker.x, d);
+  for (const dr of b.drives ?? []) check(`The link to the ${dr.kit} scene`, dr.expr, d);
   return out;
 }

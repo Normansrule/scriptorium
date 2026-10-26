@@ -59,6 +59,19 @@
 
 *The six scene kits, each partway through its timeline. Browse them under* Samples → Scene kits*, or open `3d.html?kit=vessel` directly.*
 
+**New — the pop-up book.** In the 3D Edition, the pages now behave like a pop-up book. As a spread opens, its figures, equations and self-checks rise off the page as paper cards on folded struts, each edged in its own colour (figures sky blue, 3D scenes green, equations orange, explorables pink, checks yellow; colour-blind-safe, and always with a name, never colour alone). Every chapter opener stands a **banner** in the binding's colours, with flaps that swing out to count what the chapter holds; open it for the chapter's goals, everything inside in reading order, and *Study this chapter*. Then you can:
+
+- **Pull it out.** An equation opens as a card with its intuition, every symbol and unit, a worked example and where it holds; a check asks its question and explains each answer.
+- **Bring it to life.** An explorable can **drive** a 3D scene: drag the resistance slider and the RC circuit charges at the new time constant, in real seconds; narrow the vessel slider and the blood slows.
+- **Keep it.** *Keep on desk* flies the card off its page onto the table in front of the book. The desk is saved in your browser only, per book.
+- **Study it.** Your desk, or a chapter, becomes a deck of practice cards that ask before they tell; *Again* brings a card back a few cards later. This is retrieval practice, one of the best-supported study techniques [20].
+
+Press **P** for pop-ups on or off (off by default when your device asks for reduced motion) and **D** for the desk.
+
+<p align="center"><img src="assets/rendered/screens/pop-up-book.png" alt="Four views of the 3D Edition. Top left: a spread of the engineering sample with a figure, two equations and a self-check standing up as paper cards edged in green, orange and yellow, each with a coloured button (Bring to life, Pull out, Quiz me), and two kept cards on the table in front of the book. Top right: the medicine sample's chapter opener with a purple and gold banner, Chapter 1, Pump and Pipes, and five coloured flaps counting 1 3D scene, 2 figures, 3 equations, 2 explorables and 3 checks. Bottom left: that chapter's overview panel with its goals and a colour-coded list of everything inside, and buttons to study the chapter or keep it all. Bottom right: the RC circuit scene on its board, driven by the explorable's resistance and capacitance sliders in a panel beside it." width="880"></p>
+
+*The pop-up book: cards stand up off the spread and kept ones wait on the desk; a chapter banner counts what's inside and opens the chapter's overview; an explorable drives a scene.*
+
 ---
 
 ## What you'll see
@@ -504,6 +517,8 @@ Citation style: IEEE. All sources are in English.
 
 [19] Citation Style Language. [Online]. Available: https://citationstyles.org/
 
+[20] J. Dunlosky, K. A. Rawson, E. J. Marsh, M. J. Nathan, and D. T. Willingham, "Improving students' learning with effective learning techniques: Promising directions from cognitive and educational psychology," *Psychological Science in the Public Interest*, vol. 14, no. 1, pp. 4–58, 2013, doi: 10.1177/1529100612453266.
+
 Each sample book lists its own sources, with a verification record for each, in its `references.json`: OpenStax *University Physics Volume 2*, MIT OpenCourseWare 6.002, Analog Devices *Basic Linear Design* and Sallen & Key 1955 (engineering); OpenStax *Chemistry 2e*; OpenStax *Biology 2e*; OpenStax *Anatomy and Physiology 2e*.
 
 ---
@@ -522,6 +537,7 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 0 (Living Textbook Forge) | Audit, research, architecture, three visual concepts; 3D Edition prototype (page turns, pop-off figures, transistor kit, converter v0) | **Gate: waiting for review** ([docs/PHASE-0.md](docs/PHASE-0.md)) |
 | 0c (Living Textbook Forge) | Explorables (live sliders, plot and numbers; print stills; 3D Edition panel) and self-checks (instant feedback; answers at the back), in every sample with tests that evaluate the book's own expressions; two more scene kits (cell size, electron groups) and their diagrams; readable schema errors | **Done** |
 | 0b (Living Textbook Forge) | Book styles (six, WCAG-tested, shared by print, ebook, web and 3D); three more scene kits (capacitor, RC circuit, blood vessel) with a gallery; converter never turns a data plot into a scene; scroll-in motion for the web edition | **Done** |
+| 0d (Living Textbook Forge) | The pop-up book: cards stand up off each spread, chapter banners with counts and an overview; equation and check cards; explorables drive scenes (RC time constant, vessel radius, cell size); the desk (keep, fly to the table) and study mode | **Done** |
 | 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |
 

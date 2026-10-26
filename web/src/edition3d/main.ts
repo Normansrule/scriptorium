@@ -11,13 +11,18 @@
  */
 import * as THREE from 'three';
 import { Book3D, type Explorable3D, type Figure3D } from '../../../src/edition3d/manifest.ts';
+import { DeskStore, DeskTable } from './desk.ts';
+import { chapterCounts, chapterItems, cutOut, itemsOf, type Item } from './items.ts';
+import { KIND } from './kinds.ts';
+import { checkContent, chip, el as panelEl, equationContent, exploreContent, Modal, plain } from './panel.ts';
+import { PopUps } from './popups.ts';
+import { startStudy } from './study.ts';
 import { KITS as KIT_INFO, kitById } from '../../../src/edition3d/kits.ts';
 import { BookModel } from './book.ts';
 import { FigureView, KITS, type CameraPose } from './figure.ts';
 import { ICON } from './icons.ts';
 import { Stage } from './stage.ts';
 import { applyTheme, pickTheme, type Theme } from './theme.ts';
-import { ExplorePanel } from './explore-panel.ts';
 import './edition3d.css';
 
 const root = document.getElementById('edition3d')!;
@@ -172,17 +177,22 @@ async function main(): Promise<void> {
     }
     tools.append(nav);
   }
+  const popBtn = el('button', { type: 'button', class: 'btn ghost', 'aria-pressed': 'true', title: 'Pop-up book: figures, equations and checks stand up off the page (P)', 'aria-keyshortcuts': 'P' }, `${ICON.popup}<span>Pop-up</span>`);
+  const deskBtn = el('button', { type: 'button', class: 'btn ghost desk-btn', title: 'Your desk: what you kept from the book (D)', 'aria-keyshortcuts': 'D' }, `${ICON.desk}<span>Desk</span><span class="count" aria-hidden="true">0</span>`);
+  if (!preview) tools.append(popBtn, deskBtn);
   const aboutBtn = el('button', { type: 'button', class: 'btn ghost', 'aria-expanded': 'false', 'aria-controls': 'about' }, `${ICON.info}<span>About</span>`);
   tools.append(aboutBtn);
   top.append(title, tools);
   const prev = el('button', { type: 'button', class: 'turn prev', 'aria-label': 'Previous page', 'aria-keyshortcuts': 'ArrowLeft' }, ICON.prev);
   const next = el('button', { type: 'button', class: 'turn next', 'aria-label': 'Next page', 'aria-keyshortcuts': 'ArrowRight' }, ICON.next);
-  const hotspots = el('div', { class: 'hotspots', role: 'group', 'aria-label': 'Figures on these pages' });
+  const hotspots = el('div', { class: 'hotspots', role: 'group', 'aria-label': 'Things to pull out of these pages' });
   const about = el('aside', { class: 'about', id: 'about', hidden: '' });
   about.innerHTML = `<h2>About this edition</h2>
-    <p>The same book as the print edition, page for page. Figures marked with a lift button rise off the page: drag to rotate them, and where a figure supports it, cut it open, explode it into parts, see through it, or play its process.</p>
+    <p>The same book as the print edition, page for page. In pop-up mode, figures, equations and checks stand up as paper cards when you open a spread. Pull any of them out: figures lift off the page or come to life in 3D (rotate, cut open, explode, X-ray, play), equations open as cards with every symbol, explorables give you live sliders, and checks quiz you.</p>
+    <p>Keep what you want to remember: it lands on your desk in front of the book. Some explorables can drive a 3D scene: open the scene and choose “Drive with”. Study mode turns your desk into practice cards.</p>
+    <p class="legend">${(['figure', 'scene', 'equation', 'explore', 'check'] as const).map((k) => `<span class="chip" style="--chip:${KIND[k].color};--chip-ink:${KIND[k].ink}">${KIND[k].icon}${KIND[k].label}</span>`).join(' ')}</p>
     <h3>Keys</h3>
-    <ul><li><kbd>←</kbd> <kbd>→</kbd> turn pages</li><li><kbd>Tab</kbd> then <kbd>Enter</kbd> lift a figure</li><li>Arrow keys rotate it · <kbd>X</kbd> X-ray · <kbd>L</kbd> labels · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>Esc</kbd> back to the page</li></ul>`;
+    <ul><li><kbd>←</kbd> <kbd>→</kbd> turn pages · <kbd>P</kbd> pop-ups on or off · <kbd>D</kbd> your desk</li><li><kbd>Tab</kbd> then <kbd>Enter</kbd> pull something out</li><li>Arrow keys rotate it · <kbd>X</kbd> X-ray · <kbd>L</kbd> labels · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>Esc</kbd> back to the page</li></ul>`;
   if (book.disclosure) {
     const d = el('p', { class: 'muted' });
     d.textContent = `AI-content disclosure — text: ${book.disclosure.text}; images: ${book.disclosure.images}. Every source is verified; see the References at the end of the book.`;
@@ -204,11 +214,13 @@ async function main(): Promise<void> {
     const spread = model.W * 2 + 0.5;
     const a = (60 * Math.PI) / 180;
     const dW = spread / 2 / Math.tan(hfov / 2);
-    const dH = (model.H * Math.sin(a) + 1.1) / 2 / Math.tan(vfov / 2);
+    const deskDepth = deskTable?.depth ?? 0;
+    const dH = (model.H * Math.sin(a) + 1.1 + deskDepth) / 2 / Math.tan(vfov / 2);
     const d = Math.max(dW, dH) * 1.16;
-    const target = new THREE.Vector3(0, 0, 0.22);
+    const target = new THREE.Vector3(0, 0, 0.22 + deskDepth / 2);
     return { target, position: target.clone().add(new THREE.Vector3(0, Math.sin(a) * d, Math.cos(a) * d)) };
   };
+  let deskTable: DeskTable | null = null;
   const figureView = new FigureView(stage, model, base.href, theme, ui, bookPose, say);
   const placeCamera = () => {
     if (figureView.isOpen) return;
@@ -219,42 +231,58 @@ async function main(): Promise<void> {
   stage.onResize.add(placeCamera);
   placeCamera();
 
-  // ---- hotspots: one real button per liftable figure, and per explorable, on the open spread
-  const explorePanel = new ExplorePanel(ui, () => (theme.id === 'plate' ? 'light' : 'dark'));
-  type Spot = { id: string; page: number; rect: Figure3D['rect']; btn: HTMLButtonElement };
+  // ---- everything that can be pulled out of the book: pop-ups, hotspots, panels, the desk
+  const items = itemsOf(book);
+  const modal = new Modal(ui);
+  const popups = new PopUps(stage, model, items, theme);
+  const desk = new DeskStore(`scriptorium-desk:${book.title}`, items);
+  deskTable = preview ? null : new DeskTable(stage, model, desk);
+  const plotMode = () => (theme.id === 'plate' ? 'light' : 'dark') as 'light' | 'dark';
+  type Spot = { item: Item; btn: HTMLButtonElement };
   let spots: Spot[] = [];
-  const busy = () => figureView.isOpen || explorePanel.isOpen;
+  const busy = () => figureView.isOpen || modal.isOpen;
+  const visibleItems = () => items.filter((it) => model.figureRect(it.page, it.rect));
+
+  const keepButton = (it: Item, compact = false) => {
+    const b = el('button', { type: 'button', class: compact ? 'tool keep' : 'btn keep', 'aria-pressed': String(desk.has(it.key)) });
+    const paint = () => {
+      const on = desk.has(it.key);
+      b.setAttribute('aria-pressed', String(on));
+      b.innerHTML = `${ICON.keep}<span>${on ? 'On your desk' : 'Keep on desk'}</span>`;
+      b.title = on ? 'Take it off your desk' : 'Keep it on your desk, to come back to and to study';
+    };
+    paint();
+    b.addEventListener('click', () => {
+      const on = desk.toggle(it);
+      paint();
+      say(on ? `${it.name} is on your desk.` : `${it.name} is off your desk.`);
+    });
+    return b;
+  };
+
   const buildSpots = () => {
     hotspots.innerHTML = '';
-    const figs: Spot[] = book.figures
-      .filter((f) => f.treatment.mode !== 'flat' && model.figureRect(f.page, f.rect))
-      .map((fig) => {
-        const kind = fig.treatment.mode === 'lift' ? 'Lift' : 'Open in 3D';
-        const btn = el('button', { type: 'button', class: 'spot' }, `<span class="spot-pill">${fig.treatment.mode === 'lift' ? ICON.lift : ICON.cube}<span>${kind}</span></span>`);
-        btn.setAttribute('aria-label', `${kind}: ${fig.number ? `Figure ${fig.number}. ` : ''}${fig.alt}`);
-        btn.addEventListener('click', () => void openFigure(fig, btn));
-        return { id: fig.id, page: fig.page, rect: fig.rect, btn };
-      });
-    const xpls: Spot[] = book.explorables
-      .filter((x) => model.figureRect(x.page, x.rect))
-      .map((x) => {
-        const btn = el('button', { type: 'button', class: 'spot spot-explore' }, `<span class="spot-pill">${ICON.sliders}<span>Try it</span></span>`);
-        btn.setAttribute('aria-label', `Try it: Explore ${x.number}, ${x.title}. Opens live sliders over the book.`);
-        btn.addEventListener('click', () => openExplore(x, btn));
-        return { id: x.id, page: x.page, rect: x.rect, btn };
-      });
-    spots = [...figs, ...xpls];
+    spots = visibleItems().map((item) => {
+      const k = KIND[item.kind];
+      const btn = el('button', { type: 'button', class: `spot spot-${item.kind}` }, `<span class="spot-pill">${k.icon}<span>${k.verb}</span></span>`);
+      btn.style.setProperty('--kind', k.color);
+      btn.style.setProperty('--kind-ink', k.ink);
+      btn.setAttribute('aria-label', `${k.verb}: ${item.name}. ${item.title}`);
+      btn.addEventListener('click', () => void openItem(item, btn));
+      return { item, btn };
+    });
     hotspots.append(...spots.map((s) => s.btn));
     stage.invalidate();
   };
   stage.afterRender.add(() => {
-    for (const { page, rect, btn } of spots) {
-      const r = model.figureRect(page, rect);
-      if (!r || busy()) {
+    for (const { item, btn } of spots) {
+      // a standing pop-up card takes its hotspot with it
+      const corners = popups.corners(item.key) ?? model.figureRect(item.page, item.rect)?.corners;
+      if (!corners || busy()) {
         btn.hidden = true;
         continue;
       }
-      const pts = r.corners.map((c) => stage.project(c));
+      const pts = corners.map((c) => stage.project(c));
       const xs = pts.map((p) => p.x);
       const ys = pts.map((p) => p.y);
       btn.hidden = false;
@@ -263,18 +291,235 @@ async function main(): Promise<void> {
       btn.style.height = `${(Math.max(...ys) - Math.min(...ys)).toFixed(1)}px`;
     }
   });
-  const openExplore = (x: Explorable3D, btn: HTMLElement) => {
-    top.classList.add('dim');
-    prev.hidden = next.hidden = true;
-    explorePanel.open(x, btn);
+  modal.onChange = (open) => {
+    top.classList.toggle('dim', open);
+    prev.hidden = next.hidden = open;
+    if (!open) for (const s of spots) s.btn.hidden = false; // so focus can return to a hotspot before the next frame
+    if (!open) setTimeout(reframe, 0);
     stage.invalidate();
   };
-  explorePanel.onClose = () => {
-    top.classList.remove('dim');
-    prev.hidden = next.hidden = false;
-    for (const s of spots) s.btn.hidden = false; // so focus can return to the hotspot before the next frame
-    stage.invalidate();
+
+  /** Figures that a given explorable can drive (scenes whose kit its `drives` name). */
+  const drivenFigures = (x: Explorable3D) => {
+    const kits = new Set(((x.block as { drives?: Array<{ kit: string }> }).drives ?? []).map((d) => d.kit));
+    return book.figures.filter((f) => f.treatment.mode === 'scene' && kits.has(f.treatment.kit));
   };
+  figureView.driversFor = (fig) => (fig.treatment.mode === 'scene' ? book.explorables.filter((x) => drivenFigures(x).some((f) => f.id === fig.id)) : []);
+  figureView.toolsFor = (fig) => {
+    const it = items.find((i) => i.id === fig.id);
+    return it ? [keepButton(it, true)] : [];
+  };
+
+  /** A chapter's overview: its hook, its goals, everything inside it, and a way to study it. */
+  const openChapter = (item: Item, from?: HTMLElement) => {
+    if (item.ref.kind !== 'chapter') return;
+    const ch = item.ref.data;
+    const inside = chapterItems(item, items);
+    const counts = chapterCounts(inside);
+    const studyBtn = el('button', { type: 'button', class: 'btn primary' }, `${ICON.study}<span>Study this chapter</span>`);
+    studyBtn.disabled = !inside.length;
+    studyBtn.addEventListener('click', () => startStudy(modal, model, inside, from ?? null, (it) => void openItem(it, from), `Chapter ${ch.number}`));
+    const keepAll = el('button', { type: 'button', class: 'btn' }, `${ICON.keep}<span>Keep it all on my desk</span>`);
+    keepAll.disabled = !inside.length;
+    keepAll.addEventListener('click', () => {
+      const missing = inside.filter((it) => !desk.has(it.key));
+      for (const it of missing) desk.toggle(it);
+      say(missing.length ? `${missing.length} added to your desk.` : 'All of this chapter is already on your desk.');
+      keepAll.disabled = true;
+    });
+    modal.open({
+      kind: 'chapter',
+      kicker: item.name,
+      title: ch.title,
+      from,
+      variant: 'wide chapter',
+      build: (body) => {
+        if (ch.hook) body.append(panelEl('p', { class: 'ch-hook' }, plain(ch.hook)));
+        if (counts.length) {
+          const row = panelEl('div', { class: 'ch-counts', role: 'list', 'aria-label': 'In this chapter' });
+          for (const c of counts) {
+            const t = panelEl('span', { class: 'ch-count', role: 'listitem' });
+            t.style.setProperty('--kind', KIND[c.kind].color);
+            t.style.setProperty('--kind-ink', KIND[c.kind].ink);
+            t.append(panelEl('b', {}, String(c.n)), panelEl('span', {}, c.label));
+            row.append(t);
+          }
+          body.append(row);
+        }
+        if (ch.goals.length) {
+          const g = panelEl('section', { class: 'ch-goals' });
+          g.append(panelEl('p', { class: 'mini-label' }, 'By the end of this chapter you can'));
+          const ul = panelEl('ul');
+          for (const goal of ch.goals) ul.append(panelEl('li', {}, plain(goal)));
+          g.append(ul);
+          body.append(g);
+        }
+        if (inside.length) {
+          const list = panelEl('div', { class: 'ch-inside' });
+          list.append(panelEl('p', { class: 'mini-label' }, 'Inside, in reading order'));
+          for (const it of inside) {
+            const b = panelEl('button', { type: 'button', class: 'ch-item' });
+            b.style.setProperty('--kind', KIND[it.kind].color);
+            b.append(chip(it.kind, it.name), panelEl('span', { class: 'ch-item-title' }, plain(it.title)), panelEl('span', { class: 'ch-page' }, `p. ${it.page}`));
+            b.addEventListener('click', () => {
+              modal.close(true);
+              modal.onChange?.(false);
+              if (!model.figureRect(it.page, it.rect)) model.goToPage(it.page - 1);
+              setTimeout(() => void openItem(it, from), 420);
+            });
+            list.append(b);
+          }
+          body.append(list);
+        }
+      },
+      actions: [studyBtn, keepAll],
+    });
+  };
+
+  const openItem = async (item: Item, from?: HTMLElement, opts: { drive?: Explorable3D } = {}) => {
+    if (busy() && !modal.isOpen) return;
+    const r = item.ref;
+    if (r.kind === 'figure' || r.kind === 'model' || r.kind === 'scene') {
+      modal.close(true);
+      modal.onChange?.(false);
+      if (!model.figureRect(item.page, item.rect)) model.goToPage(item.page - 1);
+      await popups.foldAll();
+      await openFigure(r.data, from, opts);
+      return;
+    }
+    if (r.kind === 'explore') {
+      const x = r.data;
+      const links = drivenFigures(x).map((f) => {
+        const b = el('button', { type: 'button', class: 'btn link-3d' }, `${ICON.link}<span>Drive Figure ${f.number} in 3D</span>`);
+        b.addEventListener('click', () => {
+          const fi = items.find((i) => i.id === f.id);
+          if (fi) void openItem(fi, from, { drive: x });
+        });
+        return b;
+      });
+      modal.open({ kind: 'explore', kicker: item.name, title: x.title, from, variant: 'wide', build: (body) => exploreContent(body, x, { mode: plotMode }), actions: [...links, keepButton(item)] });
+      return;
+    }
+    if (r.kind === 'equation') {
+      const pic = await cutOut(model, item);
+      const e = r.data;
+      modal.open({ kind: 'equation', kicker: item.name, title: 'Equation card', from, build: (body) => equationContent(body, e, pic), actions: [keepButton(item)] });
+      return;
+    }
+    if (r.kind === 'chapter') {
+      openChapter(item, from);
+      return;
+    }
+    if (r.kind !== 'check') return;
+    const c = r.data;
+    modal.open({ kind: 'check', kicker: item.name, title: 'Check yourself', from, build: (body) => checkContent(body, c), actions: [keepButton(item)] });
+  };
+
+  /** Frame the book and the desk together (after the desk grows or shrinks), unless a panel is up. */
+  let framedDepth = deskTable?.depth ?? 0;
+  const reframe = () => {
+    if (busy() || (deskTable?.depth ?? 0) === framedDepth) return;
+    framedDepth = deskTable?.depth ?? 0;
+    const p = bookPose();
+    const cam = stage.camera;
+    const from = cam.position.clone();
+    void stage.tween(500, (k) => {
+      cam.position.lerpVectors(from, p.position, k);
+      cam.lookAt(p.target);
+    });
+  };
+
+  // ---- the desk: what the reader kept
+  const paintDesk = () => {
+    const n = desk.items.length;
+    const c = deskBtn.querySelector('.count')!;
+    c.textContent = String(n);
+    deskBtn.classList.toggle('has', n > 0);
+    deskBtn.setAttribute('aria-label', `Your desk: ${n} kept`);
+  };
+  desk.onChange.add(() => {
+    paintDesk();
+    setTimeout(reframe, 450); // once the card has landed
+  });
+  paintDesk();
+  if (deskTable) {
+    deskTable.onPick = (it) => void openItem(it);
+    void deskTable.sync().then(reframe); // a desk kept from an earlier visit
+  }
+  const openDesk = (from?: HTMLElement) => {
+    modal.open({
+      kicker: 'Your desk',
+      title: desk.items.length ? `${desk.items.length} kept from the book` : 'Nothing kept yet',
+      variant: 'wide desk',
+      from,
+      build: (body) => {
+        if (!desk.items.length) {
+          body.append(panelEl('p', { class: 'muted' }, 'Pull something out of the book (a figure, an equation, an explorable or a check) and press “Keep on desk”. It lands on the table in front of the book, ready to open again or to study.'));
+          return;
+        }
+        const grid = panelEl('div', { class: 'desk-grid' });
+        for (const it of desk.items) {
+          const card = panelEl('div', { class: 'desk-card' });
+          card.style.setProperty('--kind', KIND[it.kind].color);
+          const pic = panelEl('div', { class: 'desk-pic' });
+          void cutOut(model, it, 520).then((c) => {
+            if (!c) return;
+            const img = panelEl('img', { alt: '' });
+            img.src = c.toDataURL('image/png');
+            pic.append(img);
+          });
+          const open = panelEl('button', { type: 'button', class: 'desk-open' });
+          open.append(chip(it.kind, it.name), panelEl('span', { class: 'desk-title' }, it.title));
+          open.addEventListener('click', () => void openItem(it, deskBtn));
+          const rm = panelEl('button', { type: 'button', class: 'btn ghost icon-only', 'aria-label': `Take ${it.name} off your desk` });
+          rm.innerHTML = ICON.close;
+          rm.addEventListener('click', () => {
+            desk.toggle(it);
+            openDesk(from);
+          });
+          card.append(pic, open, rm);
+          grid.append(card);
+        }
+        body.append(grid);
+      },
+      actions: desk.items.length
+        ? [
+            (() => {
+              const b = el('button', { type: 'button', class: 'btn primary' }, `${ICON.study}<span>Study my desk</span>`);
+              b.addEventListener('click', () => startStudy(modal, model, desk.items, deskBtn, (it) => void openItem(it, deskBtn)));
+              return b;
+            })(),
+            (() => {
+              const b = el('button', { type: 'button', class: 'btn ghost' }, 'Clear the desk');
+              b.addEventListener('click', () => {
+                if (b.dataset.armed) {
+                  desk.clear();
+                  openDesk(from);
+                } else {
+                  b.dataset.armed = '1';
+                  b.textContent = 'Clear everything? Press again';
+                }
+              });
+              return b;
+            })(),
+          ]
+        : [],
+    });
+  };
+  deskBtn.addEventListener('click', () => openDesk(deskBtn));
+
+  // ---- pop-up book
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let popOn = !reduced && params.get('popup') !== '0';
+  const paintPop = () => popBtn.setAttribute('aria-pressed', String(popOn));
+  paintPop();
+  void popups.set(popOn, []);
+  popBtn.addEventListener('click', () => {
+    popOn = !popOn;
+    paintPop();
+    void popups.set(popOn, visibleItems());
+    say(popOn ? 'Pop-ups on: figures, equations and checks stand up off the page.' : 'Pop-ups off: everything lies flat on the page.');
+  });
 
   const pageLabel = () => {
     const s = model.spread;
@@ -287,20 +532,22 @@ async function main(): Promise<void> {
   model.onSpread.add(() => {
     pageLabel();
     buildSpots();
+    if (!figureView.isOpen) void popups.raise(visibleItems());
     say(t2.textContent ?? '');
   });
 
-  const openFigure = async (fig: Figure3D, btn?: HTMLElement) => {
+  const openFigure = async (fig: Figure3D, btn?: HTMLElement, opts: { drive?: Explorable3D } = {}) => {
     top.classList.add('dim');
     prev.hidden = next.hidden = true;
-    await figureView.open(fig, btn);
+    await figureView.open(fig, btn, opts);
   };
   figureView.onClose = (fig) => {
     top.classList.remove('dim');
     prev.hidden = next.hidden = false;
     buildSpots();
     // the hotspots were rebuilt: put keyboard focus back on the figure that was open
-    spots.find((s) => s.id === fig.id)?.btn.focus({ preventScroll: true });
+    if (popOn) void popups.raise(visibleItems());
+    spots.find((s) => s.item.id === fig.id)?.btn.focus({ preventScroll: true });
   };
 
   const turn = async (dir: 1 | -1) => {
@@ -363,6 +610,8 @@ async function main(): Promise<void> {
       void turn(-1);
     } else if (e.key === 'Home') model.goToPage(0);
     else if (e.key === 'End') model.goToPage(book.pages.length - 1);
+    else if ((e.key === 'p' || e.key === 'P') && !preview) popBtn.click();
+    else if ((e.key === 'd' || e.key === 'D') && !preview) openDesk(deskBtn);
     else if (e.key === 'Escape' && !about.hidden) aboutBtn.click();
   });
 
@@ -383,7 +632,15 @@ async function main(): Promise<void> {
       setTimeout(() => void openFigure(fig), 350);
     }
   }
-  if (params.has('debug')) Object.assign(window, { __stage: stage, __book: model, __THREE: THREE });
+  const autoItem = params.get('item');
+  if (autoItem) {
+    const it = items.find((i) => i.id === autoItem);
+    if (it) {
+      model.goToPage(it.page - 1);
+      setTimeout(() => void openItem(it), 450);
+    }
+  }
+  if (params.has('debug')) Object.assign(window, { __stage: stage, __book: model, __THREE: THREE, __desk: desk, __popups: popups });
   root.dataset.ready = '1';
 }
 

@@ -613,6 +613,18 @@
                 "stills": [
                   3.3,
                   33
+                ],
+                "drives": [
+                  {
+                    "kit": "rc-loop",
+                    "input": "tau",
+                    "expr": "R * C / 1000"
+                  },
+                  {
+                    "kit": "capacitor",
+                    "input": "tau",
+                    "expr": "R * C / 1000"
+                  }
                 ]
               },
               {

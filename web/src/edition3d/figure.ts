@@ -3,7 +3,9 @@
  * controls for what this kind of figure can do appear. Closing reverses it, back onto the page.
  */
 import * as THREE from 'three';
-import type { Figure3D } from '../../../src/edition3d/manifest.ts';
+import type { Explorable3D, Figure3D } from '../../../src/edition3d/manifest.ts';
+import { compile } from '../../../src/core/expr.ts';
+import { exploreContent, el as panelEl } from './panel.ts';
 import type { BookModel } from './book.ts';
 import { ICON } from './icons.ts';
 import { capacitorKit } from './kits/capacitor.ts';
@@ -53,6 +55,11 @@ export class FigureView {
   private returnFocus: HTMLElement | null = null;
   /** Called after a figure is back on its page, with that figure (so focus can return to it). */
   onClose: ((fig: Figure3D) => void) | null = null;
+  /** Explorables in the book that can drive this figure's scene (their `drives` name its kit). */
+  driversFor: ((fig: Figure3D) => Explorable3D[]) | null = null;
+  /** Extra buttons for the dock (Keep on desk…), made fresh for each figure. */
+  toolsFor: ((fig: Figure3D) => HTMLElement[]) | null = null;
+  private drive: HTMLElement | null = null;
 
   constructor(
     private stage: Stage,
@@ -141,7 +148,7 @@ export class FigureView {
   }
 
   /** Open a figure that sits on the visible spread (or, for a kit preview, from the page centre). */
-  async open(fig: Figure3D, trigger?: HTMLElement): Promise<void> {
+  async open(fig: Figure3D, trigger?: HTMLElement, opts: { drive?: Explorable3D } = {}): Promise<void> {
     if (this.obj) await this.close();
     const t = fig.treatment;
     let obj: FigureObject;
@@ -213,6 +220,7 @@ export class FigureView {
     this.hold();
     this.announce(`Figure ${fig.number} opened in 3D. Drag or use the arrow keys to rotate. Escape puts it back on the page.`);
     (this.dock.querySelector('button') as HTMLButtonElement | null)?.focus({ preventScroll: true });
+    if (opts.drive) this.attachDriver(opts.drive);
   }
 
   async close(): Promise<void> {
@@ -222,6 +230,7 @@ export class FigureView {
     this.playing = false;
     this.dock.hidden = true;
     this.caption.hidden = true;
+    this.detachDriver();
     this.labelEls.forEach((l) => l.remove());
     this.labelEls = [];
     obj.setExplode(0);
@@ -357,12 +366,72 @@ export class FigureView {
       d.append(lb);
       this.showLabels(true);
     }
+    // explorables that can drive this scene: their sliders move it
+    const fig = this.fig;
+    if (fig && obj.setInput) {
+      for (const x of this.driversFor?.(fig) ?? []) {
+        const b = el('button', { type: 'button', class: 'tool drive', 'aria-pressed': 'false', title: `Drive this scene with the sliders of Explore ${x.number}` }, `${ICON.sliders}<span>Drive with Explore ${x.number}</span>`);
+        b.dataset.drive = x.id;
+        b.addEventListener('click', () => (b.getAttribute('aria-pressed') === 'true' ? this.detachDriver() : this.attachDriver(x)));
+        d.append(b);
+      }
+    }
+    if (fig) d.append(...(this.toolsFor?.(fig) ?? []));
     const reset = el('button', { type: 'button', class: 'tool', title: 'Reset the view (R)', 'aria-keyshortcuts': 'R' }, `${ICON.reset}<span>Reset</span>`);
     reset.addEventListener('click', () => this.reset());
     const close = el('button', { type: 'button', class: 'tool', title: 'Back to the page (Escape)', 'aria-keyshortcuts': 'Escape' }, `${ICON.close}<span>Back to page</span>`);
     close.addEventListener('click', () => void this.close());
     d.append(reset, close);
     d.hidden = false;
+  }
+
+  /**
+   * Put an explorable's sliders beside the scene. Every slider change runs the explorable's
+   * `drives` expressions for this kit and hands the results to the scene.
+   */
+  private attachDriver(x: Explorable3D): void {
+    const obj = this.obj;
+    const fig = this.fig;
+    if (!obj?.setInput || !fig || fig.treatment.mode !== 'scene') return;
+    this.detachDriver();
+    const kit = fig.treatment.kit;
+    const drives = ((x.block as { drives?: Array<{ kit: string; input: string; expr: string }> }).drives ?? []).filter((dr) => dr.kit === kit);
+    const panel = panelEl('aside', { class: 'fig-drive', 'aria-label': `Explore ${x.number} driving the scene` });
+    const head = panelEl('div', { class: 'drive-head' });
+    head.append(panelEl('p', { class: 'drive-title' }, `Explore ${x.number} · ${x.title}`));
+    const off = el('button', { type: 'button', class: 'btn ghost icon-only', 'aria-label': 'Stop driving the scene' }, ICON.close);
+    off.addEventListener('click', () => this.detachDriver());
+    head.append(off);
+    panel.append(head, panelEl('p', { class: 'drive-note' }, 'Move a slider: the scene follows.'));
+    const body = panelEl('div');
+    panel.append(body);
+    this.ui.append(panel);
+    this.drive = panel;
+    exploreContent(body, x, {
+      mode: () => (this.theme.id === 'plate' ? 'light' : 'dark'),
+      compact: true,
+      onChange: (values) => {
+        const msgs: string[] = [];
+        for (const dr of drives) {
+          try {
+            const msg = obj.setInput!(dr.input, compile(dr.expr)(values));
+            if (msg) msgs.push(msg);
+          } catch {
+            /* a broken link expression is caught by the build; never break the scene */
+          }
+        }
+        if (msgs.length) this.status.textContent = msgs.join(' ');
+        this.stage.invalidate();
+      },
+    });
+    this.dock.querySelectorAll<HTMLElement>('[data-drive]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.drive === x.id)));
+    this.announce(`Explore ${x.number} now drives the scene. Its sliders are beside it.`);
+  }
+
+  private detachDriver(): void {
+    this.drive?.remove();
+    this.drive = null;
+    this.dock.querySelectorAll<HTMLElement>('[data-drive]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
   }
 
   private togglePlay(btn: HTMLElement): void {

@@ -103,6 +103,28 @@ describe('2D → 3D converter', () => {
     expect(p.reason).toMatch(/Needs your approval\.$/);
   });
 
+  it('links explorables only to inputs their scenes have, inside the range the scene draws', async () => {
+    const { compile } = await import('../../src/core/expr.ts');
+    let links = 0;
+    for (const dir of ['rc-circuits', 'heart-and-vessels', 'cells-and-dna', 'molecular-shapes']) {
+      const { book } = loadBook(join(REPO_ROOT, 'examples', dir));
+      for (const ch of book.chapters)
+        for (const s of ch.sections)
+          for (const b of [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits]) {
+            if (b.kind !== 'explore') continue;
+            for (const d of b.drives) {
+              links++;
+              const input = KITS.find((k) => k.id === d.kit)?.inputs?.find((i) => i.name === d.input);
+              expect(input, `${b.id} → ${d.kit}.${d.input}`).toBeDefined();
+              const v = compile(d.expr)(Object.fromEntries(b.params.map((p) => [p.name, p.value])));
+              expect(v).toBeGreaterThanOrEqual(input!.min);
+              expect(v).toBeLessThanOrEqual(input!.max);
+            }
+          }
+    }
+    expect(links).toBe(4);
+  });
+
   it('describes every kit fully, with swatch colours for the gallery', () => {
     expect(new Set(KITS.map((k) => k.id)).size).toBe(KITS.length);
     for (const k of KITS) {
@@ -148,6 +170,28 @@ describe('buildEdition3D', () => {
       expect(f.rect.y + f.rect.h).toBeLessThanOrEqual(r.manifest.page.height + 0.01);
       expect(r.files[f.asset!]).toBeDefined();
     }
+    // everything else a reader can pull out: equations, explorables and checks, each boxed on its page
+    expect(r.manifest.equations.map((e) => e.id)).toEqual(['eq-sa-volume', 'eq-dna-length', 'eq-dna-turns']);
+    expect(r.manifest.explorables.map((x) => x.id)).toEqual(['xpl-cell-size']);
+    expect(r.manifest.checks.map((c) => c.id)).toEqual(['chk-double-radius', 'chk-dna-turn']);
+    const eq = r.manifest.equations[0]!;
+    expect(eq.text).toBe('A/V = 4πr²/(4/3πr³) = 3/r');
+    expect(eq.symbols.map((x) => x.symbol)).toContain('A');
+    expect(r.manifest.checks[0]!.options.filter((o) => o.correct)).toHaveLength(1);
+    for (const b of [...r.manifest.equations, ...r.manifest.explorables, ...r.manifest.checks]) {
+      expect(b.rect.x).toBeGreaterThanOrEqual(0);
+      expect(b.rect.h).toBeGreaterThan(20);
+      expect(b.rect.x + b.rect.w).toBeLessThanOrEqual(r.manifest.page.width + 0.01);
+      expect(b.rect.y + b.rect.h).toBeLessThanOrEqual(r.manifest.page.height + 0.01);
+    }
+    // chapter openers: each chapter stands a banner on its first page, with its goals
+    expect(r.manifest.chapters.map((c) => c.id)).toEqual(['ch-cells-dna']);
+    expect(r.manifest.chapters.map((c) => c.number)).toEqual([1]);
+    for (const c of r.manifest.chapters) {
+      expect(c.goals.length).toBeGreaterThan(0);
+      expect(c.rect.y + c.rect.h).toBeLessThanOrEqual(r.manifest.page.height);
+    }
+    expect(r.manifest.chapters.every((c, i, a) => i === 0 || c.page > a[i - 1]!.page)).toBe(true);
     expect(byId.get('fig-dna')!.caption).toMatch(/\[1, §14\.2\]/); // citations become numbers
     expect(Book3D.safeParse(JSON.parse(new TextDecoder().decode(r.files['book3d.json']))).success).toBe(true);
   }, 120_000);

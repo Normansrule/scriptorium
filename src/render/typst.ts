@@ -115,14 +115,14 @@ function equation(b: Equation, ctx: TypstContext): string {
   const rows = b.where.map((w) => `[$${latexToTypst(w.symbol)}$], [${md(w.meaning, ctx)}], [${escMarkup(w.unit)}]`).join(',\n    ');
   return `
 #block(breakable: false, width: 100%)[
-  #text(style: "italic")[${md(b.intuition, ctx)}]
+  ${anchor(b.id, 'start', ctx)}#text(style: "italic")[${md(b.intuition, ctx)}]
   #v(2pt)
   #grid(columns: (1fr, auto), align: (center + horizon, right + horizon),
     [$ ${latexToTypst(b.latex)} $], [#text(fill: ${C.muted})[(${num})]])
   #v(2pt)
   #text(font: "${fonts.sans}", size: 8.5pt, fill: ${C.muted})[where]
   #table(columns: (auto, 1fr, auto), stroke: none, inset: (x: 4pt, y: 2.5pt),
-    ${rows})
+    ${rows})${anchor(b.id, 'end', ctx)}
 ]
 #block(fill: ${C.panel}, inset: 8pt, radius: 4pt, width: 100%, breakable: false)[
   #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[Worked example] \\
@@ -253,9 +253,9 @@ function typstExplore(b: Explore, ctx: TypstContext): string {
 /** A self-check in print: lettered answers; the answer and why are in the back of the book. */
 function typstQuiz(b: Quiz, ctx: TypstContext): string {
   return learnBox(
-    `Check yourself ${ctx.numbering.quiz.get(b.id)} #h(1fr) #text(weight: "regular", size: 8pt, fill: ${C.muted})[answer at the back]`,
+    `${anchor(b.id, 'start', ctx)}Check yourself ${ctx.numbering.quiz.get(b.id)} #h(1fr) #text(weight: "regular", size: 8pt, fill: ${C.muted})[answer at the back]`,
     `  ${md(b.question, ctx)}
-  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 6pt, ${b.options.map((o, i) => `[#text(font: "${fonts.sans}", weight: "semibold", fill: bk-heading)[(${String.fromCharCode(97 + i)})]], [${md(o.text, ctx)}]`).join(', ')})`,
+  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 6pt, ${b.options.map((o, i) => `[#text(font: "${fonts.sans}", weight: "semibold", fill: bk-heading)[(${String.fromCharCode(97 + i)})]], [${md(o.text, ctx)}]`).join(', ')})${anchor(b.id, 'end', ctx)}`,
     'bk-mark',
     false,
   );
@@ -357,12 +357,12 @@ function chapter(ch: Chapter, ci: number, ctx: TypstContext): string {
     .join(',\n    ');
   return `
 #pagebreak(to: "odd", weak: true)
-#box(fill: bk-band, inset: (x: 6pt), outset: (y: 3pt), radius: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt, fill: bk-band-ink, tracking: 0.03em)[Chapter ${ci + 1}]]
+${anchor(ch.id, 'start', ctx)}#box(fill: bk-band, inset: (x: 6pt), outset: (y: 3pt), radius: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt, fill: bk-band-ink, tracking: 0.03em)[Chapter ${ci + 1}]]
 = ${escMarkup(ch.title)}
 
-${ch.hook ? `#block(inset: (left: 8pt), stroke: (left: 2pt + bk-mark))[#text(size: 12pt)[${md(ch.hook, ctx)}]]\n#v(4pt)` : ''}
+${ch.hook ? `#block(inset: (left: 8pt), stroke: (left: 2pt + bk-mark))[${anchor(ch.id, 'end', ctx)}#text(size: 12pt)[${md(ch.hook, ctx)}]]\n#v(4pt)` : ''}
 #block(width: 100%, inset: 9pt, fill: bk-tint, radius: 4pt)[
-  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In this chapter you will learn to]
+  ${ch.hook ? '' : anchor(ch.id, 'end', ctx)}#text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In this chapter you will learn to]
 ${ch.goals.map((g) => `  - ${md(g, ctx)}`).join('\n')}${
   ch.prerequisites.length ? `\n  #text(size: 9pt)[#text(font: "${fonts.sans}", weight: "semibold")[You’ll need:] ${ch.prerequisites.map((x) => md(x, ctx)).join(' · ')}]` : ''
 }

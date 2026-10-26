@@ -168,6 +168,8 @@ export class BookModel {
   private endpaper: THREE.Texture;
   private readonly t: number;
   readonly onSpread = new Set<(s: Spread) => void>();
+  /** Called as a leaf starts to move (by a turn or a drag), so pop-ups can fold flat first. */
+  readonly onTurnStart = new Set<() => void>();
 
   constructor(
     private stage: Stage,
@@ -273,6 +275,29 @@ export class BookModel {
     return t;
   }
 
+  /** A page's image once it has loaded (for cutting figures and equations out as cards). */
+  pageImage(index: number): Promise<HTMLImageElement | null> {
+    if (this.blankPages || index < 0 || index >= this.book.pages.length) return Promise.resolve(null);
+    const t = this.texture(index);
+    const img = t.image as HTMLImageElement | undefined;
+    if (img && img.complete && img.naturalWidth) return Promise.resolve(img);
+    return new Promise((resolve) => {
+      let tries = 0;
+      const check = () => {
+        const i = t.image as HTMLImageElement | undefined;
+        if (i && i.complete && i.naturalWidth) resolve(i);
+        else if (++tries > 200) resolve(null); // ~12 s: give up quietly, the card stays plain
+        else setTimeout(check, 60);
+      };
+      check();
+    });
+  }
+
+  /** Pixels per point of the page images. */
+  get pageScale(): number {
+    return this.book.pageScale;
+  }
+
   /** Load the pages around the current spread, release the rest (memory stays flat in long books). */
   private keepNear(): void {
     const s = this.spread;
@@ -366,6 +391,7 @@ export class BookModel {
     const forward = dir === 1;
     const L = forward ? this.leaf : this.leaf - 1; // the physical leaf that moves
     const n = this.book.pages.length;
+    this.onTurnStart.forEach((f) => f());
     this.setMap(this.turnFront, this.texture(2 * L < n ? 2 * L : -1));
     this.setMap(this.turnBack, this.texture(2 * L + 1 < n ? 2 * L + 1 : -1));
     // underneath: the page that will be revealed
@@ -392,6 +418,7 @@ export class BookModel {
     if (L < 0 || 2 * L >= this.book.pages.length) return;
     const n = this.book.pages.length;
     if (!this.turnFront.visible) {
+      this.onTurnStart.forEach((f) => f());
       this.setMap(this.turnFront, this.texture(2 * L));
       this.setMap(this.turnBack, this.texture(2 * L + 1 < n ? 2 * L + 1 : -1));
       if (forward) this.layout(this.leaf, this.leaf + 1);

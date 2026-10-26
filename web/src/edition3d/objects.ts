@@ -40,6 +40,11 @@ export interface FigureObject {
   duration?: number;
   /** every frame while open (for idle motion such as drifting electrons) */
   tick?(dt: number): void;
+  /**
+   * Inputs another part of the book can drive (an explorable's sliders, through the book's
+   * `drives` links). Returns a one-line status, like setTime.
+   */
+  setInput?(name: string, value: number): string;
   dispose(): void;
 }
 

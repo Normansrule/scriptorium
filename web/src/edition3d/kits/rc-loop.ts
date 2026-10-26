@@ -136,13 +136,18 @@ export function rcLoopKit(): FigureObject {
     iBar.scale.y = Math.max(0.001, current * 1.4);
     moveDots();
     if (!closed) return 'Switch open: no current, the capacitor is empty.';
-    return `t = ${tau.toFixed(1)} τ: the capacitor is at ${Math.round(v * 100)} % of the supply voltage; the current is down to ${Math.round(current * 100)} % of its first value.`;
+    const when = realTau ? `t = ${(tau * realTau).toFixed(realTau < 1 ? 2 : 1)} s (${tau.toFixed(1)} τ, with τ = ${fmtS(realTau)})` : `t = ${tau.toFixed(1)} τ`;
+    return `${when}: the capacitor is at ${Math.round(v * 100)} % of the supply voltage; the current is down to ${Math.round(current * 100)} % of its first value.`;
   };
+  // driven by an explorable: τ in real seconds, and the play button takes 5τ (when that is watchable)
+  let realTau: number | null = null;
+  let lastT = 0;
+  const fmtS = (v: number) => `${v < 1 ? v.toFixed(2) : v.toFixed(1)} s`;
   setTime(0);
   void board;
-  return k.finish({
+  const obj = k.finish({
     duration: 8,
-    setTime,
+    setTime: (t) => setTime((lastT = t)),
     tick: (dt) => {
       if (current <= 0.004) return;
       // dots travel at a speed proportional to the current
@@ -150,4 +155,13 @@ export function rcLoopKit(): FigureObject {
       moveDots();
     },
   });
+  obj.setInput = (name, value) => {
+    if (name !== 'tau' || !(value > 0)) return '';
+    realTau = value;
+    const real = 5 * value;
+    obj.duration = Math.min(30, Math.max(2.5, real / 0.97));
+    const note = real > 30 ? ' Playing faster than real time.' : real < 2.5 ? ' Playing slower than real time.' : ' Playing in real time.';
+    return `${setTime(lastT)}${note}`;
+  };
+  return obj;
 }

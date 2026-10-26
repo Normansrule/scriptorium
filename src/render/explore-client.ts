@@ -42,6 +42,8 @@ function parse(raw: string | undefined): Explore | null {
 export interface MountOptions {
   /** colour mode for the plot (default: follow the reader's light or dark setting) */
   mode?: () => Mode;
+  /** called with the slider values after every redraw (the 3D Edition drives a scene with them) */
+  onChange?: (values: Values) => void;
 }
 
 export function mountExplore(box: HTMLElement, opts: MountOptions = {}): void {
@@ -164,6 +166,7 @@ export function mountExplore(box: HTMLElement, opts: MountOptions = {}): void {
     for (const p of b!.params) outputs[p.name]!.textContent = `${formatValue(values[p.name]!, 3)}${p.unit ? ` ${p.unit}` : ''}`;
     readouts(b!, values).forEach((r, i) => (readoutEls[i]!.textContent = `${r.text}${r.unit ? ` ${r.unit}` : ''}`));
     clearBtn.disabled = !pinned.length;
+    opts.onChange?.(values);
     if (announceIt) {
       clearTimeout(announce);
       announce = window.setTimeout(() => say(summary()), 700);

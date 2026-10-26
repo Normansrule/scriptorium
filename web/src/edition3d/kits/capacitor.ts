@@ -85,16 +85,26 @@ export function capacitorKit(): FigureObject {
     fieldMat.opacity = 0.85 * frac;
     fieldMat.userData.live = fieldMat.opacity;
     const pct = Math.round(frac * 100);
+    const when = realTau ? `t = ${(tau * realTau).toFixed(realTau < 1 ? 2 : 1)} s (${tau.toFixed(1)} τ)` : `t = ${tau.toFixed(1)} τ`;
     return tau < 0.05
       ? 'Switch open: both plates are neutral and there is no field between them.'
-      : `t = ${tau.toFixed(1)} τ: each plate holds ${pct} % of its final charge, so the field between them is ${pct} % of full (q = Q(1 − e^(−t/τ))).`;
+      : `${when}: each plate holds ${pct} % of its final charge, so the field between them is ${pct} % of full (q = Q(1 − e^(−t/τ))).`;
   };
+  let realTau: number | null = null;
+  let lastT = 0;
   setTime(0);
-  return k.finish({
+  const obj = k.finish({
     duration: 7,
-    setTime,
+    setTime: (t) => setTime((lastT = t)),
     afterXray: () => {
       fieldMat.opacity = (fieldMat.userData.live as number | undefined) ?? 0;
     },
   });
+  obj.setInput = (name, value) => {
+    if (name !== 'tau' || !(value > 0)) return '';
+    realTau = value;
+    obj.duration = Math.min(30, Math.max(2.5, 5 * value));
+    return `${setTime(lastT)} τ = ${value < 1 ? value.toFixed(2) : value.toFixed(1)} s from the explorable.`;
+  };
+  return obj;
 }

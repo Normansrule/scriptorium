@@ -64,6 +64,44 @@ export const Explorable3D = z.object({
 });
 export type Explorable3D = z.infer<typeof Explorable3D>;
 
+/** An equation on a page: it pops up as a card and can be pulled out, kept and studied. Text is plain (maths as Unicode). */
+export const Equation3D = z.object({
+  id: z.string().regex(/^eq-[a-z0-9-]+$/),
+  number: z.string(),
+  page: z.number().int().min(1),
+  rect: Rect,
+  intuition: z.string(),
+  /** the equation as plain text (for screen readers and the study cards) */
+  text: z.string(),
+  symbols: z.array(z.object({ symbol: z.string(), meaning: z.string(), unit: z.string() })),
+  example: z.string(),
+  validity: z.string(),
+});
+export type Equation3D = z.infer<typeof Equation3D>;
+
+/** A self-check on a page: the 3D Edition asks it in a panel and in study mode. */
+export const Check3D = z.object({
+  id: z.string().regex(/^chk-[a-z0-9-]+$/),
+  number: z.string(),
+  page: z.number().int().min(1),
+  rect: Rect,
+  question: z.string(),
+  options: z.array(z.object({ text: z.string(), correct: z.boolean(), why: z.string() })).min(2).max(5),
+});
+export type Check3D = z.infer<typeof Check3D>;
+
+/** A chapter opener: the 3D Edition stands a pop-up banner on it, with what the chapter holds. */
+export const Chapter3D = z.object({
+  id: z.string().regex(/^ch-[a-z0-9-]+$/),
+  number: z.number().int().min(1),
+  title: z.string(),
+  page: z.number().int().min(1),
+  rect: Rect,
+  hook: z.string().optional(),
+  goals: z.array(z.string()),
+});
+export type Chapter3D = z.infer<typeof Chapter3D>;
+
 export const Book3D = z.object({
   format: z.literal('scriptorium-3d'),
   version: z.literal(1),
@@ -78,6 +116,9 @@ export const Book3D = z.object({
   pageScale: z.number().positive(),
   figures: z.array(Figure3D),
   explorables: z.array(Explorable3D).default([]),
+  equations: z.array(Equation3D).default([]),
+  checks: z.array(Check3D).default([]),
+  chapters: z.array(Chapter3D).default([]),
   /** relative link to the 2D web edition (reduced-motion fallback), if published alongside */
   webEdition: z.string().optional(),
   /** the book's style (meta.style), so the viewer can match its binding and interface */

@@ -249,6 +249,11 @@ export const Explore = z
     }),
     /** Live numbers under the plot, e.g. the time constant. */
     readouts: z.array(z.object({ label: z.string().max(50), expr: z.string().max(300), unit: z.string().max(12).default(''), digits: z.number().int().min(0).max(6).default(2) })).max(4).default([]),
+    /**
+     * Scene kits this explorable can drive in the 3D Edition: a kit input set from the sliders, e.g.
+     * { kit: "rc-loop", input: "tau", expr: "R * C / 1000" }. The scene then follows the sliders.
+     */
+    drives: z.array(z.object({ kit: z.string().regex(/^[a-z0-9-]+$/), input: z.string().regex(/^[a-z][a-z0-9]*$/), expr: z.string().max(200) })).max(3).default([]),
     /** Low and high values of the first slider for the printed still (default: halfway to each end). */
     stills: z.tuple([z.number(), z.number()]).optional(),
     /** What the reader should notice; printed under the stills. */

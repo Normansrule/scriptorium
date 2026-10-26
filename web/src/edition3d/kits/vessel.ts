@@ -111,8 +111,8 @@ export function vesselKit(): FigureObject {
   k.label('Red blood cells', [1.6, 0, 0], cells);
   k.label('Fastest in the middle', [-L / 2 + 1.4, 0.05, 0], arrows);
 
-  const setTime = (t: number): string => {
-    r = 1 - 0.5 * Math.sin(Math.PI * t);
+  const show = (radius: number): string => {
+    r = radius;
     speed = r * r;
     vessel.scale.set(1, r, r);
     placeCells();
@@ -121,8 +121,9 @@ export function vesselKit(): FigureObject {
     if (r > 0.995) return 'Original radius. Press play to narrow the vessel: resistance follows R ∝ 1/r⁴.';
     return `Radius ${r.toFixed(2)} × the original → resistance ${resist.toFixed(1)} × (R ∝ 1/r⁴). At the same pressure difference, flow is ${(r ** 4).toFixed(2)} × the original and the cells move ${speed.toFixed(2)} × as fast.`;
   };
+  const setTime = (t: number): string => show(1 - 0.5 * Math.sin(Math.PI * t));
   setTime(0);
-  return k.finish({
+  const obj = k.finish({
     duration: 10,
     setTime,
     tick: (dt) => {
@@ -135,4 +136,7 @@ export function vesselKit(): FigureObject {
       placeCells();
     },
   });
+  // an explorable can set the radius directly (as a fraction of the original; the scene shows 0.4–1.5)
+  obj.setInput = (name, value) => (name === 'radius' && Number.isFinite(value) ? show(Math.min(1.5, Math.max(0.4, value))) : '');
+  return obj;
 }

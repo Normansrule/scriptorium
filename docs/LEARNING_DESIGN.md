@@ -50,6 +50,25 @@ Every expression uses the safe expression language of the code-drawn plots, so a
 
 A **Check yourself** question ends a section where a mistake is worth catching. Each wrong answer is a slip a real student makes, and choosing it shows why it is wrong; choosing the right one shows why it is right. On the web this is plain HTML and CSS; in print, the answers are in the back of the book with the exercise solutions.
 
+## In the 3D Edition: pull out, keep, study
+
+The 3D Edition turns the same blocks into things a reader handles. Each kind keeps one colour and one icon everywhere (hotspot, pop-up card, desk card, study card), from the colour-blind-safe Okabe–Ito set, and always with its name:
+
+| Kind | Colour | What "pulling it out" does |
+|---|---|---|
+| Figure | sky blue | Lifts the printed figure off the page |
+| 3D model / scene | green | Opens it in 3D; a scene can be played, cut away, exploded and X-rayed |
+| Equation | orange | An equation card: intuition, every symbol with its unit, worked example, where it holds |
+| Explorable | pink | Live sliders; if the explorable names a scene in `drives`, its sliders move the scene |
+| Check yourself | yellow | The question; picking an answer explains it |
+| Chapter | vermilion | The chapter's hook, goals, counts and everything inside, in reading order |
+
+**Driving a scene** links the two most concrete things a section has: the explorable's numbers and the scene's picture. `drives` maps an expression of the sliders to a kit input (`R * C / 1000` → the RC kit's time constant in seconds), in the same safe expression language, and the build checks it.
+
+**The desk and study mode** are a small version of retrieval practice. A kept item becomes a card that asks before it tells: an equation card shows its intuition and asks for the equation; a figure shows the picture and asks for its takeaway; a check asks its question and grades itself. *Again* brings a card back two cards later; *Got it* retires it; the end screen counts first-try answers and suggests coming back the next day. Practice testing and spaced (distributed) practice are the two techniques a large review of study methods rated most useful [Dunlosky et al. 2013, *Psychological Science in the Public Interest* 14(1):4–58, doi:10.1177/1529100612453266]. Study mode is deliberately light: no streaks, scores kept or schedules, and nothing leaves the reader's browser.
+
+**Pop-ups** are for orientation, not decoration. When a spread opens, what can be pulled out stands up, so a reader sees at a glance what the spread offers; the chapter banner says how much is ahead. They fold flat the moment a page turns, and readers who ask their device for reduced motion start with them off.
+
 ## Concision rules
 
 `src/core/concision.ts` checks every book and reports each finding with a fix. The command line, the pipeline report and the editor's *Tighten* list all show these findings. They never block a build.

@@ -20,6 +20,8 @@ export interface KitInfo {
   animation?: string;
   /** the scene's main colours, for gallery cards (decoration only; the title carries the meaning) */
   swatch: string[];
+  /** values another part of the book can drive (an explorable's `drives` links), with the range the scene draws */
+  inputs?: Array<{ name: string; label: string; unit: string; min: number; max: number }>;
 }
 
 export const KITS: KitInfo[] = [
@@ -40,6 +42,7 @@ export const KITS: KitInfo[] = [
     notWhen: ['symbol', 'circuit diagram', 'truth table'],
     animation: 'Charging through a resistor: charge and field grow as q = Q(1 − e^(−t/τ)), from 0 to 5 τ.',
     swatch: ['#c3c9d1', '#f0e442', '#d55e00', '#0072b2'],
+    inputs: [{ name: 'tau', label: 'Time constant τ', unit: 's', min: 0.01, max: 1000 }],
   },
   {
     id: 'rc-loop',
@@ -49,6 +52,7 @@ export const KITS: KitInfo[] = [
     notWhen: ['low-pass', 'filter', 'input voltage', 'frequency response', 'bode'],
     animation: 'The switch closes: the current falls as e^(−t/τ) (the charge slows) while the capacitor voltage rises to the supply voltage, from 0 to 5 τ.',
     swatch: ['#25313f', '#c77a4a', '#56b4e9', '#d55e00'],
+    inputs: [{ name: 'tau', label: 'Time constant τ', unit: 's', min: 0.01, max: 1000 }],
   },
   {
     id: 'vessel',
@@ -58,6 +62,7 @@ export const KITS: KitInfo[] = [
     notWhen: ['heart chamber', 'valve', 'ecg', 'electrocardiogram'],
     animation: 'The vessel narrows to half its radius and back: resistance rises as 1/r⁴, flow falls as r⁴ and the cells slow as r².',
     swatch: ['#c0645a', '#f2c4b8', '#b3202a', '#0072b2'],
+    inputs: [{ name: 'radius', label: 'Radius (× the original)', unit: '', min: 0.4, max: 1.5 }],
   },
   {
     id: 'cell',
@@ -67,6 +72,7 @@ export const KITS: KitInfo[] = [
     notWhen: ['dna', 'helix', 'protein structure'],
     animation: 'The cell grows from 1 to 4 µm: membrane ×16, volume ×64, so the membrane per cubic micrometre falls to a quarter (3/r) and the cytoplasm pales.',
     swatch: ['#c0645a', '#f6c9bb', '#009e73', '#f0e442'],
+    inputs: [{ name: 'radius', label: 'Cell radius', unit: 'µm', min: 1, max: 4 }],
   },
   {
     id: 'vsepr',

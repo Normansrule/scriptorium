@@ -16,5 +16,13 @@ export const ICON = {
   reset: path('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>'),
   book: path('<path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5v13c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13"/>'),
   sliders: path('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
+  equation: path('<path d="M5 7h6M8 4v6"/><path d="M5 17h6"/><path d="M14 5l5 5M19 5l-5 5"/><path d="M14 15h5M14 19h5"/>'),
+  check: path('<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.8-5"/>'),
+  desk: path('<path d="M3 9h18v3H3z"/><path d="M5 12v7M19 12v7"/><path d="M7 9V6h4v3"/>'),
+  study: path('<rect x="4" y="5" width="12" height="9" rx="1.5"/><path d="M8 18h12V9"/>'),
+  keep: path('<path d="M7 4h10v16l-5-4-5 4z"/>'),
+  popup: path('<path d="M3 19h18"/><path d="M6 19l4-11 4 11"/><path d="M12 19l3-7 3 7"/>'),
+  link: path('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+  flip: path('<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>'),
   info: path('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/>'),
 };

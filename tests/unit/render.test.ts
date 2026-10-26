@@ -44,6 +44,8 @@ describe('latexToText (captions where maths cannot be typeset)', () => {
     expect(latexToText('R \\propto \\frac{1}{r^4}')).toBe('R ∝ 1/r⁴');
     expect(latexToText('C = 100\\,\\mu\\text{F}')).toBe('C = 100\u2009µF'); // a thin space before the unit
     expect(latexToText('V_s(1 - e^{-t/\\tau})')).toBe('Vₛ(1 - e^(-t/τ))');
+    expect(latexToText('\\frac{4\\pi r^2}{\\tfrac{4}{3}\\pi r^3}')).toBe('4πr²/(4/3πr³)');
+    expect(latexToText('t = \\tau \\ln 2')).toBe('t = τ ln 2'); // a function name keeps its space
     // unknown commands stay readable rather than vanishing
     expect(latexToText('\\weird x')).toBe('\\weird x');
   });

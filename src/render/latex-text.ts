@@ -51,7 +51,7 @@ export function latexToText(latex: string): string {
         const [a, r1] = arg(s);
         const [b, r2] = arg(r1);
         s = r2;
-        const wrap = (x: string) => (/^[\w.µ²³⁴]+$/u.test(x) ? x : `(${x})`);
+        const wrap = (x: string) => (/^[\w.µ²³⁴α-ωΑ-Ω⁰¹⁵⁶⁷⁸⁹]+$/u.test(x) ? x : `(${x})`);
         out += `${wrap(latexToText(a))}/${wrap(latexToText(b))}`;
       } else if (['mathrm', 'text', 'textrm', 'mathit', 'mathbf', 'boldsymbol', 'operatorname', 'mathsf'].includes(name)) {
         const [a, r] = arg(s);
@@ -84,5 +84,9 @@ export function latexToText(latex: string): string {
       s = s.slice(1);
     }
   }
-  return out.replace(/\s{2,}/g, ' ').replace(/\s*([=<>≈≤≥∝])\s*/g, ' $1 ').trim();
+  return out
+    .replace(/([α-ωΑ-Ω])\s+(?!(?:ln|log|exp|sin|cos|tan|max|min)\b)(?=[A-Za-z0-9(α-ω])/g, '$1') // "4\pi r" reads "4πr", as written by hand
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s*([=<>≈≤≥∝])\s*/g, ' $1 ')
+    .trim();
 }
