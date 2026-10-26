@@ -179,3 +179,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .edition3d-links { margin-top: 2rem; }
 .edition3d-links ul { padding-left: 1.2rem; }
 .edition3d-links li { margin: .3rem 0; }
+.steps-edit { display: grid; gap: .5rem; margin: .4rem 0 .8rem; }
+.step-edit { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: .4rem; align-items: start; }
+.step-n { font-weight: 600; color: var(--sc-muted); padding-top: .45rem; }
+.block.exercise { margin-top: .8rem; }
+.tighten { margin: .4rem 0 0; font-size: .92rem; } .tighten summary { cursor: pointer; color: var(--sc-muted); } .tighten ul { margin: .4rem 0 0; padding-left: 1.2rem; }

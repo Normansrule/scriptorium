@@ -167,3 +167,60 @@ def test_phase_at_cutoff():
     H = 1 / (1 + sp.I * w * R * C)
     phase = sp.arg(H.subs(w, 1 / (R * C)))
     assert sp.simplify(phase + sp.pi / 4) == 0
+
+
+# --- Chapter 2: worked problem, experiment, application, practice ------------------------------
+
+
+def test_threshold_problem():
+    """Problem: 5 V through 10 kΩ into 100 µF; the input reads high above 3.5 V."""
+    tau = (10e3 * u.ohm * 100e-6 * u.F).to("s")
+    assert close(tau.magnitude, 1.0)
+    t = tau * math.log(1 / (1 - 3.5 / 5.0))  # 1 - e^{-t/τ} = 0.7  →  t = τ ln(10/3)
+    assert close(t.magnitude, 1.204, rel=1e-3)
+    assert tau.magnitude < t.magnitude < 2 * tau.magnitude  # 70 % lies between 63 % (1τ) and 86 % (2τ)
+    # symbolic: the supply voltage cancels
+    tt, T, Vs = sp.symbols("t tau V_s", positive=True)
+    sol = sp.solve(sp.Eq(sp.Rational(7, 10) * Vs, Vs * (1 - sp.exp(-tt / T))), tt)
+    assert sp.simplify(sol[0] - T * sp.log(sp.Rational(10, 3))) == 0
+
+
+def test_measure_tau_experiment():
+    """Experiment: 100 kΩ and 100 µF give τ = 10 s; 63.2 % of a 4.5 V pack is 2.84 V; a 10 MΩ meter lowers the final voltage by about 1 %."""
+    assert close((100e3 * u.ohm * 100e-6 * u.F).to("s").magnitude, 10.0)
+    assert close(0.632 * 4.5, 2.84, rel=2e-3)
+    divider = 10e6 / (10e6 + 100e3)
+    assert close(1 - divider, 0.0099, rel=0.01)
+
+
+def test_debounce_numbers():
+    """Application: 10 kΩ and 1 µF give τ = 10 ms; the 70 % threshold is crossed at 12.0 ms."""
+    tau = (10e3 * u.ohm * 1e-6 * u.F).to("ms")
+    assert close(tau.magnitude, 10.0)
+    assert close(tau.magnitude * math.log(10 / 3), 12.04, rel=1e-3)
+
+
+def test_exercise_tau_value():
+    assert close((4.7e3 * u.ohm * 220e-6 * u.F).to("s").magnitude, 1.034, rel=1e-3)
+
+
+def test_exercise_three_tau():
+    assert close(1 - math.exp(-3), 0.950, rel=1e-3)
+
+
+def test_exercise_discharge_time():
+    """12 V → 3 V with τ = 2 s: t = τ ln 4 = 2.77 s, the same as two half-lives."""
+    t = 2.0 * math.log(12 / 3)
+    assert close(t, 2.77, rel=2e-3)
+    assert close(t, 2 * (2.0 * math.log(2)), rel=1e-9)
+
+
+def test_exercise_design():
+    """Two thirds of the supply in 50 ms with 10 µF: R = 4.55 kΩ; the nearest E12 value, 4.7 kΩ, gives 51.6 ms."""
+    tau = 50e-3 / math.log(3)
+    R = tau / 10e-6
+    assert close(R, 4551, rel=1e-3)
+    e12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
+    nearest = min((v * 1e3 for v in e12), key=lambda v: abs(v - R))
+    assert nearest == 4.7e3
+    assert close(nearest * 10e-6 * math.log(3) * 1e3, 51.6, rel=2e-3)

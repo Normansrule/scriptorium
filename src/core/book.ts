@@ -116,11 +116,113 @@ export const Model3D = z.object({
   width: z.number().min(0.2).max(1).default(1),
 });
 
-export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure, Model3D]);
+// ---------------------------------------------------------------------------
+// Learning blocks: theory turned into practice. Each is structured so it cannot be padded:
+// a derivation is a list of steps with the one-line reason for each; a worked problem names
+// its strategy before the algebra and ends with a check; an experiment states its prediction
+// from the theory before the observation. Word counts are policed by src/core/concision.ts.
+
+/** One step of a derivation or solution: the maths, and the one reason it follows. */
+export const Step = z.object({
+  /** LaTeX for this step's result (display maths). Optional in solutions that are pure reasoning. */
+  latex: z.string().optional(),
+  /** Why this step follows from the last: the law, substitution or move used. */
+  why: Inline,
+});
+
+/** A step-by-step derivation that arrives at an equation in the book. */
+export const Derivation = z.object({
+  kind: z.literal('derivation'),
+  id: z.string().regex(/^drv-[a-z0-9-]+$/),
+  /** What is derived, as a goal: "Find the capacitor voltage while it charges." */
+  goal: Inline,
+  assumptions: z.array(Inline).min(1),
+  steps: z.array(Step.extend({ latex: z.string() })).min(2).max(24),
+  /** The equation it arrives at (an `eq-` id in the book), if any. */
+  result: z.string().regex(/^eq-[a-z0-9-]+$/).optional(),
+  /** Sanity checks on the result: units, limits, special cases. */
+  check: Inline,
+  /** Automated re-derivation, e.g. "tests/equations/test_rc_book.py::test_charging_derivation". */
+  test: z.string(),
+});
+
+/** A worked problem: how to solve it, not only the answer. */
+export const Problem = z.object({
+  kind: z.literal('problem'),
+  id: z.string().regex(/^prb-[a-z0-9-]+$/),
+  level: z.enum(['core', 'stretch', 'challenge']),
+  statement: Inline,
+  given: z.array(Inline).min(1),
+  find: Inline,
+  /** The idea before the algebra, in one or two sentences. */
+  strategy: Inline,
+  steps: z.array(Step).min(1).max(16),
+  answer: Inline,
+  /** How to know the answer is right: units, size, a limiting case. */
+  check: Inline,
+  test: z.string(),
+});
+
+/** An experiment where theory meets data: predict, observe, explain. */
+export const Experiment = z.object({
+  kind: z.literal('experiment'),
+  id: z.string().regex(/^exp-[a-z0-9-]+$/),
+  /** hands-on: safe for a reader at home or in a teaching lab; demonstration: watch it; thought: reasoned only; data: real published measurements. */
+  type: z.enum(['hands-on', 'demonstration', 'thought', 'data']),
+  question: Inline,
+  setup: z.array(Inline).min(1),
+  procedure: z.array(Inline).min(1).max(12),
+  /** What the theory predicts, before looking. */
+  predict: Inline,
+  /** What you see (or what the data show). */
+  observe: Inline,
+  /** Back to the theory: why it came out that way, and why it may differ. */
+  explain: Inline,
+  /** Required for every experiment, even thought experiments ("No equipment needed."). */
+  safety: Inline,
+  /** Real measurements with their source, for type "data". */
+  data: z.object({ columns: z.array(z.string()).min(2), rows: z.array(z.array(z.union([z.number(), z.string()]))).min(1), source: Inline }).optional(),
+});
+
+/** A common wrong idea, why it is tempting, the correction, and a test that tells them apart. */
+export const Misconception = z.object({
+  kind: z.literal('misconception'),
+  wrong: Inline,
+  tempting: Inline,
+  right: Inline,
+  test: Inline,
+});
+
+/** Where the theory is used for real. */
+export const Application = z.object({
+  kind: z.literal('application'),
+  title: z.string(),
+  text: Inline,
+  /** A worked number from practice, if there is one. */
+  numbers: Inline.optional(),
+});
+
+export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure, Model3D, Derivation, Problem, Experiment, Misconception, Application]);
 export type Block = z.infer<typeof Block>;
 export type Equation = z.infer<typeof Equation>;
 export type Figure = z.infer<typeof Figure>;
 export type Model3D = z.infer<typeof Model3D>;
+export type Derivation = z.infer<typeof Derivation>;
+export type Problem = z.infer<typeof Problem>;
+export type Experiment = z.infer<typeof Experiment>;
+export type Misconception = z.infer<typeof Misconception>;
+export type Application = z.infer<typeof Application>;
+
+/** End-of-chapter practice: graded, with an answer and a full worked solution (printed at the back). */
+export const Exercise = z.object({
+  id: z.string().regex(/^ex-[a-z0-9-]+$/),
+  level: z.enum(['core', 'stretch', 'challenge']),
+  prompt: Inline,
+  answer: Inline,
+  solution: z.array(Step).min(1).max(16),
+  test: z.string(),
+});
+export type Exercise = z.infer<typeof Exercise>;
 
 // ---------------------------------------------------------------------------
 // Sections, chapters, book
@@ -143,12 +245,18 @@ export const Chapter = z.object({
   id: z.string().regex(/^ch-[a-z0-9-]+$/),
   title: z.string(),
   goals: z.array(Inline).min(1),
+  /** One or two sentences that make the reader want the chapter: a question, a puzzle, a use. */
+  hook: Inline.optional(),
+  /** What the reader should already know, in plain words. */
+  prerequisites: z.array(Inline).default([]),
   sections: z.array(Section).min(1),
   summary: z.array(Inline).min(1),
   /** ids of equations repeated in the chapter-end "Key equations" box */
   keyEquations: z.array(z.string()).default([]),
   /** reference ids for "Further reading" */
   furtherReading: z.array(z.string()).default([]),
+  /** Practice at the chapter's end; solutions are printed at the back of the book. */
+  exercises: z.array(Exercise).default([]),
 });
 export type Chapter = z.infer<typeof Chapter>;
 
@@ -249,21 +357,60 @@ export function* allBlocks(book: Book): Generator<{ chapter: Chapter; section?: 
   }
 }
 
+/** Every inline string a block carries (for citations, glossary links, readability and concision). */
+export function blockTexts(b: Block): string[] {
+  const steps = (xs: Array<{ why: string }>) => xs.map((x) => x.why);
+  switch (b.kind) {
+    case 'para':
+    case 'callout':
+      return [b.text];
+    case 'list':
+      return b.items;
+    case 'equation':
+      return [b.intuition, ...b.where.map((w) => w.meaning), b.example.text, b.validity];
+    case 'figure':
+    case 'model3d':
+      return [b.caption];
+    case 'derivation':
+      return [b.goal, ...b.assumptions, ...steps(b.steps), b.check];
+    case 'problem':
+      return [b.statement, ...b.given, b.find, b.strategy, ...steps(b.steps), b.answer, b.check];
+    case 'experiment':
+      return [b.question, ...b.setup, ...b.procedure, b.predict, b.observe, b.explain, b.safety, ...(b.data ? [b.data.source] : [])];
+    case 'misconception':
+      return [b.wrong, b.tempting, b.right, b.test];
+    case 'application':
+      return [b.text, ...(b.numbers ? [b.numbers] : [])];
+  }
+}
+
+export function exerciseTexts(e: Exercise): string[] {
+  return [e.prompt, e.answer, ...e.solution.map((s) => s.why)];
+}
+
 export function allInlineText(book: Book): string[] {
   const out: string[] = [];
-  for (const { block } of allBlocks(book)) {
-    if (block.kind === 'para' || block.kind === 'callout') out.push(block.text);
-    if (block.kind === 'list') out.push(...block.items);
-    if (block.kind === 'equation') out.push(block.intuition, block.example.text, block.validity, ...block.where.map((w) => w.meaning));
-    if (block.kind === 'figure' || block.kind === 'model3d') out.push(block.caption);
-  }
-  for (const block of book.preface) {
-    if (block.kind === 'para' || block.kind === 'callout') out.push(block.text);
-    if (block.kind === 'list') out.push(...block.items);
-  }
+  for (const { block } of allBlocks(book)) out.push(...blockTexts(block));
+  for (const block of book.preface) out.push(...blockTexts(block));
   for (const ch of book.chapters) {
-    out.push(...ch.goals, ...ch.summary);
+    out.push(...ch.goals, ...ch.summary, ...(ch.hook ? [ch.hook] : []), ...ch.prerequisites);
     for (const s of ch.sections) out.push(...s.layers.takeaways);
+    for (const e of ch.exercises) out.push(...exerciseTexts(e));
+  }
+  return out;
+}
+
+/** Every automated check the book points to, labelled the way the book numbers it. */
+export function allChecks(book: Book, label: (kind: 'equation' | 'derivation' | 'problem' | 'exercise', id: string) => string): Array<{ label: string; test: string }> {
+  const out: Array<{ label: string; test: string }> = [];
+  for (const ch of book.chapters) {
+    for (const s of ch.sections)
+      for (const b of [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits]) {
+        if (b.kind === 'equation') out.push({ label: label('equation', b.id), test: b.example.check });
+        if (b.kind === 'derivation') out.push({ label: label('derivation', b.id), test: b.test });
+        if (b.kind === 'problem') out.push({ label: label('problem', b.id), test: b.test });
+      }
+    for (const e of ch.exercises) out.push({ label: label('exercise', e.id), test: e.test });
   }
   return out;
 }

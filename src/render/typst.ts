@@ -3,12 +3,12 @@
  * in src/kdp/specs.ts. Every text string goes through `escMarkup`; math goes through the
  * LaTeX→Typst converter; nothing from the book is ever emitted as raw Typst code.
  */
-import type { Block, Book, Chapter, Equation, Model3D, Reference, Section } from '../core/book.ts';
+import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
 import { qrSvg } from './qr.ts';
 import { fonts, roles, surface } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { latexToTypst } from './latex-typst.ts';
-import { resolveRefs, type Numbering } from './numbering.ts';
+import { checkLabel, resolveRefs, type Numbering } from './numbering.ts';
 
 export interface TypstLayout {
   trimWidthIn: number;
@@ -158,6 +158,68 @@ function model3d(b: Model3D, ctx: TypstContext): string {
 `;
 }
 
+// ---------------------------------------------------------------------------
+// Learning blocks (print)
+
+const LEVEL_LABEL: Record<string, string> = { core: 'Core', stretch: 'Stretch', challenge: 'Challenge' };
+const EXP_LABEL: Record<string, string> = { 'hands-on': 'Hands-on', demonstration: 'Demonstration', thought: 'Thought experiment', data: 'From real data' };
+const label = (t: string) => `#text(font: "${fonts.sans}", weight: "semibold", size: 8.5pt, fill: ${C.muted})[${escMarkup(t)}]`;
+
+/** A boxed learning block with a heading line; breakable so long derivations can cross a page. */
+function learnBox(head: string, body: string, stroke = C.rule): string {
+  return `#block(width: 100%, inset: 9pt, stroke: 0.75pt + ${stroke}, radius: 4pt, breakable: true)[
+  #set par(justify: false)
+  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[${head}]
+  #v(2pt)
+${body}
+]
+`;
+}
+
+/** Numbered steps: the maths on its own line, the reason underneath in small type. */
+function typstSteps(xs: Array<{ latex?: string; why: string }>, ctx: TypstContext): string {
+  return `#grid(columns: (14pt, 1fr), row-gutter: 7pt, column-gutter: 4pt,
+${xs
+  .map((x, i) => `  [#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${i + 1}]], [${x.latex ? `#align(left)[$ ${latexToTypst(x.latex)} $] #v(-3pt)` : ''}#text(size: 9pt, fill: ${C.muted})[${md(x.why, ctx)}]]`)
+  .join(',\n')}
+)`;
+}
+
+function typstDerivation(b: Derivation, ctx: TypstContext): string {
+  const res = b.result ? ` #h(1fr) #text(weight: "regular", fill: ${C.muted})[→ Eq. (${ctx.numbering.equation.get(b.result) ?? b.result})]` : '';
+  return learnBox(`Derivation ${ctx.numbering.derivation.get(b.id)}${res}`, `  #strong[${md(b.goal, ctx)}] \\
+  ${label('Assume')} ${b.assumptions.map((a) => md(a, ctx)).join('; ')}.
+  ${typstSteps(b.steps, ctx)}
+  ${label('Check')} ${md(b.check, ctx)}`);
+}
+
+function typstProblem(b: Problem, ctx: TypstContext): string {
+  return learnBox(`Worked problem ${ctx.numbering.problem.get(b.id)} #h(1fr) #text(weight: "regular", fill: ${C.muted})[${LEVEL_LABEL[b.level]}]`, `  #strong[${md(b.statement, ctx)}]
+  #grid(columns: (1fr, 1fr), gutter: 8pt, [${label('Given')} \\ ${b.given.map((g) => md(g, ctx)).join(' \\ ')}], [${label('Find')} \\ ${md(b.find, ctx)}])
+  ${label('Strategy')} #emph[${md(b.strategy, ctx)}]
+  ${typstSteps(b.steps, ctx)}
+  ${label('Answer')} #strong[${md(b.answer, ctx)}] \\
+  ${label('Check')} ${md(b.check, ctx)}`);
+}
+
+function typstExperiment(b: Experiment, ctx: TypstContext): string {
+  const data = b.data
+    ? `\n  #table(columns: ${b.data.columns.length}, stroke: none, inset: (x: 4pt, y: 3pt), ${b.data.columns.map((c) => `[*${md(c, ctx)}*]`).join(', ')}, ${b.data.rows.flat().map((v) => `[${typeof v === 'number' ? escMarkup(String(v)) : md(v, ctx)}]`).join(', ')})\n  #text(size: 8pt, fill: ${C.muted})[${md(b.data.source, ctx)}]`
+    : '';
+  return learnBox(`Experiment ${ctx.numbering.experiment.get(b.id)} #h(1fr) #text(weight: "regular", fill: ${C.muted})[${EXP_LABEL[b.type]}]`, `  #strong[${md(b.question, ctx)}] \\
+  #text(size: 9pt)[${label('Safety')} ${md(b.safety, ctx)}]
+  #grid(columns: (1fr, 1.3fr), gutter: 10pt, [${label('You need')}
+${b.setup.map((x) => `  - ${md(x, ctx)}`).join('\n')}
+  ], [${label('Do')}
+${b.procedure.map((x, i) => `  ${i + 1}. ${md(x, ctx)}`).join('\n')}
+  ])
+  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 8pt, [${label('Predict')}], [${md(b.predict, ctx)}], [${label('Observe')}], [${md(b.observe, ctx)}], [${label('Explain')}], [${md(b.explain, ctx)}])${data}`);
+}
+
+function typstMisconception(b: Misconception, ctx: TypstContext): string {
+  return learnBox('Common mistake', `  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 8pt, [${label('The mistake')}], [${md(b.wrong, ctx)}], [${label('Why it’s tempting')}], [${md(b.tempting, ctx)}], [${label('What’s true')}], [${md(b.right, ctx)}], [${label('How to tell')}], [${md(b.test, ctx)}])`, C.accent);
+}
+
 /** Extension point: extra block kinds register a Typst renderer here. */
 export const extraTypstBlocks: Record<string, (b: Block, ctx: TypstContext) => string> = {};
 
@@ -189,6 +251,20 @@ function block(b: Block, ctx: TypstContext): string {
     }
     case 'model3d':
       return model3d(b, ctx);
+    case 'derivation':
+      return typstDerivation(b, ctx);
+    case 'problem':
+      return typstProblem(b, ctx);
+    case 'experiment':
+      return typstExperiment(b, ctx);
+    case 'misconception':
+      return typstMisconception(b, ctx);
+    case 'application':
+      return `#block(width: 100%, inset: 9pt, fill: ${C.panel}, radius: 4pt, breakable: false)[
+  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In practice] #text(font: "${fonts.sans}", size: 9pt, fill: ${C.muted})[${escMarkup(b.title)}] \\
+  ${md(b.text, ctx)}${b.numbers ? ` \\ #text(size: 9.5pt)[${md(b.numbers, ctx)}]` : ''}
+]
+`;
     default: {
       const r = extraTypstBlocks[(b as { kind: string }).kind];
       if (!r) throw new Error(`No print renderer for block kind "${(b as { kind: string }).kind}".`);
@@ -237,9 +313,12 @@ function chapter(ch: Chapter, ci: number, ctx: TypstContext): string {
 #text(font: "${fonts.sans}", size: 10pt, fill: ${C.muted})[Chapter ${ci + 1}]
 = ${escMarkup(ch.title)}
 
+${ch.hook ? `#text(size: 12pt)[${md(ch.hook, ctx)}]\n#v(4pt)` : ''}
 #block(width: 100%, inset: 9pt, fill: ${C.panel}, radius: 4pt)[
   #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In this chapter you will learn to]
-${ch.goals.map((g) => `  - ${md(g, ctx)}`).join('\n')}
+${ch.goals.map((g) => `  - ${md(g, ctx)}`).join('\n')}${
+  ch.prerequisites.length ? `\n  #text(size: 9pt)[#text(font: "${fonts.sans}", weight: "semibold")[You’ll need:] ${ch.prerequisites.map((x) => md(x, ctx)).join(' · ')}]` : ''
+}
 ]
 
 ${ch.sections.map((s) => section(s, ctx)).join('\n')}
@@ -255,8 +334,33 @@ ${
     : ''
 }
 
+${
+  ch.exercises.length
+    ? `#text(font: "${fonts.sans}", weight: "semibold")[Practice] #text(size: 9pt, fill: ${C.muted})[— answers and worked solutions are at the back of the book.]
+${ch.exercises.map((e) => `#grid(columns: (2.2em, 1fr), [#text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[${ctx.numbering.exercise.get(e.id)}]], [#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${LEVEL_LABEL[e.level]}] ${md(e.prompt, ctx)}])`).join('\n#v(4pt)\n')}
+`
+    : ''
+}
 #text(font: "${fonts.sans}", weight: "semibold")[Further reading]
 ${ch.furtherReading.map((id) => `- #link(<ref-${id}>)[\\[${ctx.numbering.cite.get(id)}\\]] ${escMarkup(ctx.bibliography.get(id) ?? id)}`).join('\n')}
+`;
+}
+
+/** "Solutions to practice": every exercise's answer and worked solution, by chapter. */
+function solutions(book: Book, ctx: TypstContext): string {
+  if (!book.chapters.some((c) => c.exercises.length)) return '';
+  return `#pagebreak(to: "odd", weak: true)
+= Solutions to practice
+${book.chapters
+  .filter((c) => c.exercises.length)
+  .map(
+    (c) => `== ${escMarkup(c.title)}
+${c.exercises
+  .map((e) => `#block(breakable: true, below: 10pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt)[${ctx.numbering.exercise.get(e.id)}] #h(4pt) ${label('Answer')} #strong[${md(e.answer, ctx)}]
+${typstSteps(e.solution, ctx)}]`)
+  .join('\n')}`,
+  )
+  .join('\n')}
 `;
 }
 
@@ -267,26 +371,25 @@ export function allEquations(book: Book): Equation[] {
   return out;
 }
 
-function findEquation(book: Book, id: string): Equation | undefined {
-  return allEquations(book).find((e) => e.id === id);
-}
-
 /** The report's opening sentence, true to what was actually checked (shared with the web and EPUB renderers). */
 export function verificationSummary(book: Book, refs: Reference[]): string {
-  const eqs = allEquations(book);
+  const checks = allChecks(book, (kind) => kind);
+  const eqOnly = checks.every((c) => c.label === 'equation');
   const unverifiedRefs = refs.filter((r) => r.verification.status !== 'verified').length;
-  const uncheckedEqs = eqs.filter((e) => !e.example.check.includes('::')).length;
+  const unchecked = checks.filter((c) => !c.test.includes('::')).length;
   const a = unverifiedRefs
     ? `${unverifiedRefs} of ${refs.length} sources ${unverifiedRefs === 1 ? 'is' : 'are'} not verified; ${unverifiedRefs === 1 ? 'it is' : 'they are'} marked below.`
     : refs.length === 1
       ? 'The one source was verified; the row below says how.'
       : `All ${refs.length} sources were verified; each row says how.`;
   const b =
-    eqs.length === 0
+    checks.length === 0
       ? ''
-      : uncheckedEqs
-        ? ` ${uncheckedEqs} of ${eqs.length} equations have no automated check yet and must be checked by hand before publishing.`
-        : ` All ${eqs.length} key equations and worked examples are re-derived by the automated tests listed below.`;
+      : unchecked
+        ? ` ${unchecked} of ${checks.length} ${eqOnly ? 'equations have' : 'equations, derivations and solutions have'} no automated check yet and must be checked by hand before publishing.`
+        : eqOnly
+          ? ` All ${checks.length} key equations and worked examples are re-derived by the automated tests listed below.`
+          : ` All ${checks.length} equations, derivations, worked problems and exercise solutions are re-derived by the automated tests listed below.`;
   return a + b;
 }
 
@@ -297,9 +400,9 @@ export function renderTypst(book: Book, ctx: TypstContext, layout: TypstLayout =
   const refsInOrder = [...ctx.numbering.cite.entries()].sort((a, b) => a[1] - b[1]);
   const byId = new Map(ctx.refs.map((r) => [r.id, r]));
   const citedRefs = ctx.refs.filter((r) => ctx.numbering.cite.has(r.id));
-  const eqEntries = [...ctx.numbering.equation.entries()];
-  const checkFiles = [...new Set(eqEntries.map(([id]) => findEquation(book, id)!.example.check.split('::')[0]!))];
-  const checkCells = eqEntries.map(([id, n]) => `[(${n})], [#raw("${escString(findEquation(book, id)!.example.check.split('::').pop()!)}")]`);
+  const checks = allChecks(book, checkLabel(ctx.numbering));
+  const checkFiles = [...new Set(checks.map((c) => c.test.split('::')[0]!))];
+  const checkCells = checks.map((c) => `[${escMarkup(c.label)}], [#raw("${escString(c.test.split('::').pop()!)}")]`);
   if (checkCells.length % 2) checkCells.push('[], []');
 
   return `// Generated by Scriptorium from book.json — edit the book, not this file.
@@ -362,6 +465,7 @@ ${book.preface.map((b) => block(b, ctx)).join('\n')}
 ${book.chapters.map((ch, i) => chapter(ch, i, ctx)).join('\n')}
 
 // ---------- back matter
+${solutions(book, ctx)}
 #pagebreak(to: "odd", weak: true)
 = Glossary
 ${book.glossary.map((g) => `/ ${escMarkup(g.term)}: ${md(g.definition, ctx)}`).join('\n')}
@@ -387,13 +491,13 @@ ${refsInOrder
   .join(',\n')}
 )
 ${
-  eqEntries.length
+  checks.length
     ? `
-#text(font: "${fonts.sans}", weight: "semibold", size: 10.5pt)[Equations]
+#text(font: "${fonts.sans}", weight: "semibold", size: 10.5pt)[Automated checks]
 #linebreak()Each check is a test function in ${checkFiles.map((f) => `#raw("${escString(f)}")`).join(', ')}\\; run them all with #raw("npm run test:equations").
 #show raw: set text(size: 7.5pt)
 #table(columns: (auto, 1fr, auto, 1fr), stroke: 0.5pt + ${C.rule}, inset: 3pt,
-  [*Eq.*], [*Automated check*], [*Eq.*], [*Automated check*],
+  [*What*], [*Test*], [*What*], [*Test*],
 ${checkCells.map((c, i) => (i % 2 === 0 ? `  ${c},` : ` ${c},`)).join('\n').replace(/,$/, '')}
 )`
     : ''

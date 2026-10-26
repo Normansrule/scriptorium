@@ -5,11 +5,11 @@
  * here, and the finished page is sanitized again with DOMPurify before it is written.
  */
 import katex from 'katex';
-import type { Block, Book, Chapter, Equation, Model3D, Reference, Section } from '../core/book.ts';
+import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Exercise, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
 import type { Model } from '../core/molecule.ts';
 import { cssVariables, fonts } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
-import { resolveRefs, type Numbering } from './numbering.ts';
+import { checkLabel, resolveRefs, type Numbering } from './numbering.ts';
 import { verificationSummary, viewAlt } from './typst.ts';
 
 export function escHtml(s: string): string {
@@ -116,6 +116,76 @@ function model3d(b: Model3D, ctx: HtmlContext): string {
 </figure>`;
 }
 
+// ---------------------------------------------------------------------------
+// Learning blocks
+
+const LEVEL: Record<string, string> = { core: 'Core', stretch: 'Stretch', challenge: 'Challenge' };
+const EXPERIMENT_TYPE: Record<string, string> = { 'hands-on': 'Hands-on', demonstration: 'Demonstration', thought: 'Thought experiment', data: 'From real data' };
+
+function steps(xs: Array<{ latex?: string; why: string }>, ctx: HtmlContext): string {
+  return `<ol class="steps">${xs
+    .map((x) => `<li>${x.latex ? `<div class="step-math">${math(x.latex, true, ctx)}</div>` : ''}<p class="why">${md(x.why, ctx)}</p></li>`)
+    .join('')}</ol>`;
+}
+
+function derivation(b: Derivation, ctx: HtmlContext): string {
+  const num = ctx.numbering.derivation.get(b.id)!;
+  const result = b.result ? ` <a class="to-eq" href="#${b.result}">→ Eq. (${ctx.numbering.equation.get(b.result) ?? b.result})</a>` : '';
+  return `<div class="learn derivation" id="${b.id}">
+  <div class="learn-head"><span class="learn-kind">Derivation ${num}</span>${result}</div>
+  <p class="goal">${md(b.goal, ctx)}</p>
+  <p class="assume"><span class="label">Assume:</span> ${b.assumptions.map((a) => md(a, ctx)).join('; ')}.</p>
+  ${steps(b.steps, ctx)}
+  <p class="sanity"><span class="label">Check:</span> ${md(b.check, ctx)}</p>
+  <p class="check">Re-derived by <code>${escHtml(b.test)}</code></p>
+</div>`;
+}
+
+function problem(b: Problem, ctx: HtmlContext): string {
+  const num = ctx.numbering.problem.get(b.id)!;
+  return `<div class="learn problem" id="${b.id}">
+  <div class="learn-head"><span class="learn-kind">Worked problem ${num}</span><span class="level ${b.level}">${LEVEL[b.level]}</span></div>
+  <p class="statement">${md(b.statement, ctx)}</p>
+  <div class="given-find"><div><span class="label">Given</span><ul>${b.given.map((g) => `<li>${md(g, ctx)}</li>`).join('')}</ul></div><div><span class="label">Find</span><p>${md(b.find, ctx)}</p></div></div>
+  <p class="strategy"><span class="label">Strategy:</span> ${md(b.strategy, ctx)}</p>
+  ${steps(b.steps, ctx)}
+  <p class="answer"><span class="label">Answer:</span> ${md(b.answer, ctx)}</p>
+  <p class="sanity"><span class="label">Check:</span> ${md(b.check, ctx)}</p>
+  <p class="check">Checked by <code>${escHtml(b.test)}</code></p>
+</div>`;
+}
+
+function experiment(b: Experiment, ctx: HtmlContext): string {
+  const num = ctx.numbering.experiment.get(b.id)!;
+  const data = b.data
+    ? `<table class="data"><thead><tr>${b.data.columns.map((c) => `<th>${md(c, ctx)}</th>`).join('')}</tr></thead><tbody>${b.data.rows
+        .map((r) => `<tr>${r.map((v) => `<td>${typeof v === 'number' ? escHtml(String(v)) : md(v, ctx)}</td>`).join('')}</tr>`)
+        .join('')}</tbody></table><p class="data-source">${md(b.data.source, ctx)}</p>`
+    : '';
+  return `<div class="learn experiment" id="${b.id}">
+  <div class="learn-head"><span class="learn-kind">Experiment ${num}</span><span class="level">${EXPERIMENT_TYPE[b.type]}</span></div>
+  <p class="statement">${md(b.question, ctx)}</p>
+  <p class="safety-line"><span class="label">Safety:</span> ${md(b.safety, ctx)}</p>
+  <div class="exp-cols"><div><span class="label">You need</span><ul>${b.setup.map((x) => `<li>${md(x, ctx)}</li>`).join('')}</ul></div><div><span class="label">Do</span><ol>${b.procedure.map((x) => `<li>${md(x, ctx)}</li>`).join('')}</ol></div></div>
+  <dl class="pox"><dt>Predict</dt><dd>${md(b.predict, ctx)}</dd><dt>Observe</dt><dd>${md(b.observe, ctx)}</dd><dt>Explain</dt><dd>${md(b.explain, ctx)}</dd></dl>
+  ${data}
+</div>`;
+}
+
+function misconception(b: Misconception, ctx: HtmlContext): string {
+  return `<div class="learn misconception">
+  <div class="learn-head"><span class="learn-kind">Common mistake</span></div>
+  <dl class="pox"><dt>The mistake</dt><dd>${md(b.wrong, ctx)}</dd><dt>Why it’s tempting</dt><dd>${md(b.tempting, ctx)}</dd><dt>What’s true</dt><dd>${md(b.right, ctx)}</dd><dt>How to tell</dt><dd>${md(b.test, ctx)}</dd></dl>
+</div>`;
+}
+
+function exerciseList(ch: Chapter, ctx: HtmlContext): string {
+  if (!ch.exercises.length) return '';
+  const one = (e: Exercise) => `<li id="${e.id}"><span class="ex-num">${ctx.numbering.exercise.get(e.id)}</span><span class="level ${e.level}">${LEVEL[e.level]}</span> ${md(e.prompt, ctx)}
+  <details><summary>Answer and worked solution</summary><p class="answer"><span class="label">Answer:</span> ${md(e.answer, ctx)}</p>${steps(e.solution, ctx)}<p class="check">Checked by <code>${escHtml(e.test)}</code></p></details></li>`;
+  return `<h4>Practice</h4><ol class="exercises">${ch.exercises.map(one).join('\n')}</ol>`;
+}
+
 /** Extension point: extra block kinds register an HTML renderer here. */
 export const extraHtmlBlocks: Record<string, (b: Block, ctx: HtmlContext) => string> = {};
 
@@ -146,6 +216,16 @@ function block(b: Block, ctx: HtmlContext): string {
     }
     case 'model3d':
       return model3d(b, ctx);
+    case 'derivation':
+      return derivation(b, ctx);
+    case 'problem':
+      return problem(b, ctx);
+    case 'experiment':
+      return experiment(b, ctx);
+    case 'misconception':
+      return misconception(b, ctx);
+    case 'application':
+      return `<aside class="learn application"><div class="learn-head"><span class="learn-kind">In practice</span> <span class="app-title">${escHtml(b.title)}</span></div><p>${md(b.text, ctx)}</p>${b.numbers ? `<p class="numbers">${md(b.numbers, ctx)}</p>` : ''}</aside>`;
     default: {
       const r = extraHtmlBlocks[(b as { kind: string }).kind];
       if (!r) throw new Error(`No HTML renderer for block kind "${(b as { kind: string }).kind}".`);
@@ -185,7 +265,10 @@ export function renderChapter(ch: Chapter, i: number, ctx: HtmlContext): string 
   return `<article class="chapter" id="${ch.id}">
 <p class="kicker">Chapter ${i + 1}</p>
 <h2>${escHtml(ch.title)}</h2>
-<div class="goals"><div class="label">In this chapter you will learn to</div><ul>${ch.goals.map((g) => `<li>${md(g, ctx)}</li>`).join('')}</ul></div>
+${ch.hook ? `<p class="hook">${md(ch.hook, ctx)}</p>` : ''}
+<div class="goals"><div class="label">In this chapter you will learn to</div><ul>${ch.goals.map((g) => `<li>${md(g, ctx)}</li>`).join('')}</ul>${
+    ch.prerequisites.length ? `<p class="prereq"><span class="label">You’ll need:</span> ${ch.prerequisites.map((x) => md(x, ctx)).join(' · ')}</p>` : ''
+  }</div>
 ${ch.sections.map((s) => section(s, ctx)).join('\n')}
 <section class="chapter-end">
 <h3>Chapter summary</h3><ul>${ch.summary.map((s) => `<li>${md(s, ctx)}</li>`).join('')}</ul>
@@ -200,6 +283,7 @@ ${
         .join('')}</tbody></table>`
     : ''
 }
+${exerciseList(ch, ctx)}
 <h4>Further reading</h4>
 <ul class="further">${ch.furtherReading.map((id) => `<li><a class="cite" href="${refHref}#ref-${id}">[${ctx.numbering.cite.get(id)}]</a> ${ctx.bibliography.get(id) ?? escHtml(id)}</li>`).join('')}</ul>
 </section>
@@ -228,7 +312,16 @@ ${order
   })
   .join('\n')}
 </tbody></table>
+${checksTable(book, ctx)}
 </section>`;
+}
+
+function checksTable(book: Book, ctx: HtmlContext): string {
+  const checks = allChecks(book, checkLabel(ctx.numbering));
+  if (!checks.length) return '';
+  return `<h3>Automated checks</h3><table class="report"><thead><tr><th>What</th><th>Test</th></tr></thead><tbody>${checks
+    .map((c) => `<tr><td>${escHtml(c.label)}</td><td><code>${escHtml(c.test)}</code></td></tr>`)
+    .join('')}</tbody></table>`;
 }
 
 export const CSP = "default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; base-uri 'none'; form-action 'none'";
@@ -329,6 +422,33 @@ table.report { border-collapse: collapse; font-size: .82rem; width: 100%; } .rep
 .status { font-weight: 600; } .status.verified { color: var(--sc-verified); } .status.failed, .status.unverified { color: var(--sc-accent); }
 code { font-size: .88em; }
 .katex { font-size: 1.05em; }
+.hook { font-size: 1.2rem; line-height: 1.5; margin: 1rem 0 1.4rem; }
+.prereq { margin: .6rem 0 0; font-size: .92rem; }
+.learn { border: 1px solid var(--sc-rule); border-radius: 10px; padding: .9rem 1.1rem; margin: 1.6rem 0; }
+.learn-head { display: flex; flex-wrap: wrap; gap: .6rem; align-items: baseline; margin-bottom: .4rem; font-family: "${fonts.sans}", sans-serif; }
+.learn-kind { font-weight: 600; } .to-eq { font-size: .88rem; margin-left: auto; }
+.level { font: 600 .74rem/1 "${fonts.sans}", sans-serif; letter-spacing: .03em; padding: .2rem .45rem; border-radius: 999px; background: var(--sc-panel); color: var(--sc-muted); }
+.level.stretch { color: var(--sc-signal); } .level.challenge { color: var(--sc-accent); }
+.learn p { margin: .45rem 0; } .goal, .statement { font-weight: 600; }
+.steps { counter-reset: step; list-style: none; padding: 0; margin: .6rem 0; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); column-gap: .4rem; padding: .35rem 0; border-top: 1px dashed var(--sc-rule); }
+.steps > li::before { content: counter(step); grid-row: 1 / span 2; font: 600 .82rem "${fonts.sans}", sans-serif; color: var(--sc-muted); padding-top: .9rem; }
+.step-math { overflow-x: auto; } .step-math .katex-display { margin: .3rem 0; } .step-math .katex-display > .katex { text-align: left; }
+.why { font-size: .92rem; color: var(--sc-muted); margin: 0 !important; }
+.steps > li:not(:has(.step-math))::before { padding-top: .1rem; }
+.given-find, .exp-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .4rem 1.4rem; }
+.given-find ul, .exp-cols ul, .exp-cols ol { margin: .2rem 0; padding-left: 1.2rem; }
+.answer { font-weight: 600; } .sanity { font-size: .92rem; }
+.pox { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem 1rem; margin: .6rem 0; }
+.pox dt { margin: 0; font-size: .9rem; color: var(--sc-muted); } .pox dd { margin: 0; }
+.safety-line { font-size: .9rem; border-left: 3px solid var(--sc-accent); padding-left: .6rem; }
+.misconception { border-color: color-mix(in srgb, var(--sc-accent) 45%, var(--sc-rule)); }
+.application { background: var(--sc-panel); border: 0; } .app-title { color: var(--sc-muted); } .numbers { font-size: .92rem; }
+table.data { border-collapse: collapse; font-size: .88rem; margin: .5rem 0; font-variant-numeric: tabular-nums; } table.data th, table.data td { border-bottom: 1px solid var(--sc-rule); padding: .25rem .8rem .25rem 0; text-align: left; }
+.data-source { font-size: .8rem; color: var(--sc-muted); }
+.exercises { list-style: none; padding: 0; } .exercises > li { padding: .6rem 0; border-top: 1px solid var(--sc-rule); }
+.ex-num { font: 600 .9rem "${fonts.sans}", sans-serif; margin-right: .4rem; }
+.exercises details { margin-top: .4rem; } .exercises summary { cursor: pointer; font: .9rem "${fonts.sans}", sans-serif; color: var(--sc-signal); }
 @media (max-width: 820px) { body { display: block; font-size: 17px; } .toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--sc-rule); } main { padding: 1.5rem 16px 4rem; } h1 { font-size: 1.9rem; } }
 @media print { .toc { display: none; } body { display: block; } }
 `;

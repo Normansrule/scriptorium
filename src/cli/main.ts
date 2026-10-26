@@ -33,6 +33,7 @@ import { exportPdf } from '../node/export-pdf.ts';
 import { exportWeb } from '../node/export-web.ts';
 import { exportEdition3D, PLAN_FILE, updatePlan } from '../node/export-edition3d.ts';
 import { effective } from '../edition3d/convert.ts';
+import { concisionSummary, lintBook } from '../core/concision.ts';
 import { cslAssets, loadBook, REPO_ROOT } from '../node/load.ts';
 import { approve, newState, runPipeline, Outline, STAGES } from '../core/pipeline.ts';
 import { AnthropicProvider } from '../llm/provider.ts';
@@ -150,6 +151,11 @@ async function build(args: string[]): Promise<BuildSummary> {
 
   writeFileSync(join(out, 'ai-disclosure.json'), JSON.stringify(disclosure, null, 2));
   console.log(`✓ AI disclosure → ${rel(join(out, 'ai-disclosure.json'))} (text: ${d.text}, images: ${d.images}, translations: ${d.translations})`);
+  // Concision is advice, not a gate: padding never stops a build.
+  const conc = lintBook(book);
+  console.log(`${conc.findings.length ? '•' : '✓'} Concision: ${concisionSummary(conc)}`);
+  for (const f of conc.findings.slice(0, args.includes('--all-findings') ? Infinity : 5)) console.log(`    • ${f.where}: “${f.text}” — ${f.fix}`);
+  if (conc.findings.length > 5 && !args.includes('--all-findings')) console.log(`    … ${conc.findings.length - 5} more (add --all-findings)`);
   if (profile.requiresProfessionalReview) {
     const msg = `The ${profile.name} profile requires review by a licensed professional before publishing.`;
     console.log(`! Professional review: ${msg}`);

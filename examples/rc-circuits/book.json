@@ -150,14 +150,14 @@
                   "text": "Two 10 cm × 10 cm plates ($A = 0.01\\,\\text{m}^2$) 1 mm apart in vacuum: $C = 8.85\\times10^{-12} \\times 0.01 / 0.001 \\approx 88.5\\,\\text{pF}$ (picofarads). In dry air ($\\kappa = 1.00059$) the answer changes by only 0.06 % [@openstax-up2, Table 8.1].",
                   "check": "tests/equations/test_rc_book.py::test_parallel_plate_example"
                 },
-                "validity": "Assumes the gap is much smaller than the plates, so the field is uniform and the extra field at the edges (fringing) can be ignored, and that the dielectric fills the whole gap [@openstax-up2, §8.1, §8.4].",
+                "validity": "Assumes the gap is much smaller than the plates, so the field is uniform and the extra field at the edges (fringing) can be ignored. Also assumes the dielectric fills the whole gap [@openstax-up2, §8.1, §8.4].",
                 "figure": "fig-parallel-plate"
               }
             ],
             "limits": [
               {
                 "kind": "para",
-                "text": "An 88.5 pF capacitor is tiny: everyday parts range from picofarads to thousands of microfarads. Real capacitors reach large values by rolling or stacking very thin layers (large $A$, small $d$) and by using insulators with a large dielectric constant $\\kappa$."
+                "text": "An 88.5 pF capacitor is tiny: everyday parts range from picofarads to thousands of microfarads. Real capacitors reach large values by rolling or stacking thin layers (large $A$, small $d$) and by using insulators with a large dielectric constant $\\kappa$."
               },
               {
                 "kind": "para",
@@ -235,7 +235,7 @@
               },
               {
                 "kind": "para",
-                "text": "Charging through a resistor from a fixed supply always wastes energy: the supply delivers $QV = CV^2$, the capacitor keeps $\\tfrac12 CV^2$, and the other half becomes heat in the resistor, whatever its value (checked in `test_charging_energy_split`)."
+                "text": "Charging through a resistor from a fixed supply always wastes energy. The supply delivers $QV = CV^2$ and the capacitor keeps $\\tfrac12 CV^2$; the other half becomes heat in the resistor, whatever its value (checked in `test_charging_energy_split`)."
               },
               {
                 "kind": "para",
@@ -261,7 +261,8 @@
       ],
       "furtherReading": [
         "openstax-up2"
-      ]
+      ],
+      "hook": "A camera flash, a heart defibrillator and every memory cell in a phone's main memory rely on the same part: two conductors with an insulator between them."
     },
     {
       "id": "ch-time",
@@ -286,7 +287,7 @@
             "intuition": [
               {
                 "kind": "para",
-                "text": "At the moment the switch closes, the capacitor is empty, so the whole supply voltage sits across the resistor and a large current flows. As the capacitor fills, its own voltage pushes back, leaving less voltage across the resistor, so the current shrinks. The capacitor fills more and more slowly, approaching the supply voltage but never quite reaching it."
+                "text": "At the moment the switch closes, the capacitor is empty, so the whole supply voltage sits across the resistor and a large current flows. As the capacitor fills, its own voltage pushes back, leaving less voltage across the resistor, so the current shrinks. The capacitor fills more and more slowly, approaching the supply voltage but never reaching it."
               },
               {
                 "kind": "figure",
@@ -337,7 +338,46 @@
               },
               {
                 "kind": "para",
-                "text": "Applying Kirchhoff's voltage law around the loop — the supply voltage equals the voltage across the resistor plus the voltage across the capacitor — and solving gives the charging curve [@openstax-up2, §10.5]."
+                "text": "Two laws give the whole charging curve: Kirchhoff's voltage law around the loop, and the capacitor's current law $i = C\\,dv_C/dt$. Derivation drv-charging works it through [@openstax-up2, §10.5]."
+              },
+              {
+                "kind": "derivation",
+                "id": "drv-charging",
+                "goal": "Find the capacitor voltage $v_C(t)$ while it charges through $R$ from a constant supply $V_s$.",
+                "assumptions": [
+                  "ideal resistor and capacitor",
+                  "constant supply voltage $V_s$",
+                  "the capacitor starts empty, $v_C(0) = 0$"
+                ],
+                "steps": [
+                  {
+                    "latex": "V_s = v_R + v_C",
+                    "why": "Kirchhoff's voltage law: around the loop, the resistor and capacitor voltages add up to the supply."
+                  },
+                  {
+                    "latex": "v_R = i\\,R, \\qquad i = C\\,\\frac{dv_C}{dt}",
+                    "why": "Ohm's law for the resistor. The capacitor's charge is $q = C v_C$, and current is the rate of change of charge [@openstax-up2, §10.5]."
+                  },
+                  {
+                    "latex": "V_s = RC\\,\\frac{dv_C}{dt} + v_C",
+                    "why": "Substitute both into step 1. This is a first-order differential equation for $v_C$."
+                  },
+                  {
+                    "latex": "\\frac{d}{dt}\\left(V_s - v_C\\right) = -\\frac{1}{RC}\\left(V_s - v_C\\right)",
+                    "why": "Rewrite using the gap $V_s - v_C$. The supply is constant, so the gap changes exactly as fast as $-v_C$ does."
+                  },
+                  {
+                    "latex": "V_s - v_C(t) = \\left(V_s - v_C(0)\\right) e^{-t/RC}",
+                    "why": "A quantity whose rate of change is a fixed negative multiple of itself decays exponentially."
+                  },
+                  {
+                    "latex": "v_C(t) = V_s\\left(1 - e^{-t/\\tau}\\right), \\qquad \\tau = RC",
+                    "why": "Use the empty start, $v_C(0) = 0$, and name $RC$ the time constant $\\tau$."
+                  }
+                ],
+                "result": "eq-charging",
+                "check": "At $t = 0$ it gives 0 V; as $t \\to \\infty$ it gives $V_s$. $RC$ is in seconds, so $t/RC$ is a pure number, as an exponent must be.",
+                "test": "tests/equations/test_rc_book.py::test_charging_derivation"
               },
               {
                 "kind": "equation",
@@ -390,9 +430,79 @@
                 "caption": "Changing the resistor changes the time constant: with $C = 100\\,\\mu\\text{F}$, a 47 kΩ resistor takes 4.7 times as long to charge as a 10 kΩ one.",
                 "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-charging), $V_s = 5$ V.",
                 "provenance": "code-drawn"
+              },
+              {
+                "kind": "problem",
+                "id": "prb-threshold",
+                "level": "core",
+                "statement": "A 5 V supply charges a 100 µF capacitor through 10 kΩ. The logic input watching the capacitor reads “high” once its voltage passes 3.5 V. How long after the switch closes does it switch?",
+                "given": [
+                  "$V_s = 5\\,\\text{V}$",
+                  "$R = 10\\,\\text{k}\\Omega$ and $C = 100\\,\\mu\\text{F}$, so $\\tau = 1\\,\\text{s}$ (Eq. (eq-tau))",
+                  "threshold $3.5\\,\\text{V}$, which is 70 % of $V_s$"
+                ],
+                "find": "The time $t$ at which $v_C(t) = 3.5\\,\\text{V}$.",
+                "strategy": "Set the charging curve equal to the threshold and solve for $t$; a logarithm undoes the exponential.",
+                "steps": [
+                  {
+                    "latex": "0.7\\,V_s = V_s\\left(1 - e^{-t/\\tau}\\right)",
+                    "why": "Put the threshold into Eq. (eq-charging)."
+                  },
+                  {
+                    "latex": "e^{-t/\\tau} = 0.3",
+                    "why": "Divide by $V_s$ and rearrange. The supply voltage has cancelled."
+                  },
+                  {
+                    "latex": "t = \\tau \\ln\\frac{1}{0.3} = \\tau \\ln\\frac{10}{3}",
+                    "why": "Take the natural logarithm of both sides and flip the sign."
+                  },
+                  {
+                    "latex": "t = 1\\,\\text{s} \\times 1.204 = 1.20\\,\\text{s}",
+                    "why": "Substitute $\\tau = 1$ s."
+                  }
+                ],
+                "answer": "$t \\approx 1.20\\,\\text{s}$.",
+                "check": "70 % lies between the 63 % reached at one time constant and the 86 % reached at two, so $t$ must fall between 1 s and 2 s. It does.",
+                "test": "tests/equations/test_rc_book.py::test_threshold_problem"
               }
             ],
             "limits": [
+              {
+                "kind": "experiment",
+                "id": "exp-measure-tau",
+                "type": "hands-on",
+                "question": "Does a real capacitor reach 63 % of the supply after one time constant?",
+                "setup": [
+                  "a 4.5 V battery pack (three AA cells)",
+                  "a 100 kΩ resistor and a 100 µF electrolytic capacitor, so $\\tau = 10\\,\\text{s}$",
+                  "a breadboard and jumper wires",
+                  "a multimeter on its DC volts range, and a phone to film the meter beside a stopwatch"
+                ],
+                "procedure": [
+                  "Join the capacitor's legs with a spare resistor for a few seconds so it starts empty.",
+                  "Build the loop: battery +, resistor, the capacitor's longer (+) leg; the striped (−) leg back to battery −. Leave one wire unplugged as the switch.",
+                  "Measure the battery voltage $V_s$ and work out $0.632\\,V_s$.",
+                  "Start filming, then plug in the last wire. Stop once the meter has passed $0.632\\,V_s$.",
+                  "Find the moment the meter crossed $0.632\\,V_s$. Repeat three times and average."
+                ],
+                "predict": "$\\tau = RC = 100\\,\\text{k}\\Omega \\times 100\\,\\mu\\text{F} = 10\\,\\text{s}$, so the meter should pass $0.632\\,V_s$ (2.84 V for a 4.5 V pack) about 10 s after the wire goes in.",
+                "observe": "The voltage climbs fast, then slows. The crossing comes near 10 s, rarely exactly on it.",
+                "explain": "The capacitor's real value differs from its label within the tolerance on its data sheet, which for electrolytic capacitors is often wide; your time divided by $R$ is your capacitor's actual capacitance. The meter also draws a little current: if its input resistance is 10 MΩ (check yours), it lowers the final voltage by about 1 %.",
+                "safety": "Batteries only. Never use mains power or a capacitor taken from a camera flash, microwave oven or power supply: they can hold a dangerous charge. Fit the electrolytic capacitor the right way round (stripe to −); reversed, it can overheat and burst."
+              },
+              {
+                "kind": "misconception",
+                "wrong": "Current flows through the capacitor, across the gap from one plate to the other.",
+                "tempting": "An ammeter on either side of the capacitor reads the same current, just as it would beside a resistor.",
+                "right": "No charge crosses the insulating gap. Charge piles up on one plate while the same amount leaves the other, so the wires on both sides carry equal current while the capacitor charges [@openstax-up2, §8.1].",
+                "test": "Disconnect a charged capacitor and it keeps its voltage; if charge could cross the gap, it would drain away. And once the capacitor is full, the current stops."
+              },
+              {
+                "kind": "application",
+                "title": "Cleaning up a push button",
+                "text": "A mechanical button's contacts bounce for a moment when pressed, so a fast logic input can count several presses. An RC network between button and input smooths the bounces. The capacitor voltage can only change on the time scale $\\tau$, so with $\\tau$ longer than the bounce the input crosses its threshold once.",
+                "numbers": "With $R = 10\\,\\text{k}\\Omega$ and $C = 1\\,\\mu\\text{F}$, $\\tau = 10\\,\\text{ms}$, and a 70 % threshold is crossed $\\tau \\ln\\frac{10}{3} \\approx 12\\,\\text{ms}$ after the press, as in Problem prb-threshold."
+              },
               {
                 "kind": "para",
                 "text": "In theory the capacitor never finishes charging. In practice engineers treat it as full after about five time constants, when it is within 1 % of the supply."
@@ -499,6 +609,93 @@
       "furtherReading": [
         "openstax-up2",
         "mit-6002"
+      ],
+      "hook": "A resistor and a capacitor can keep time with no clock chip at all. One number, the product $RC$, says how long they take.",
+      "prerequisites": [
+        "Ohm's law, $V = IR$",
+        "capacitance, $C = Q/V$ (Chapter 1)"
+      ],
+      "exercises": [
+        {
+          "id": "ex-tau-value",
+          "level": "core",
+          "prompt": "What is the time constant of a 4.7 kΩ resistor with a 220 µF capacitor?",
+          "answer": "$\\tau \\approx 1.03\\,\\text{s}$",
+          "solution": [
+            {
+              "latex": "\\tau = RC = 4700\\,\\Omega \\times 220\\times10^{-6}\\,\\text{F}",
+              "why": "Eq. (eq-tau), with both values in base units."
+            },
+            {
+              "latex": "\\tau = 1.034\\,\\text{s}",
+              "why": "Ohms times farads is seconds."
+            }
+          ],
+          "test": "tests/equations/test_rc_book.py::test_exercise_tau_value"
+        },
+        {
+          "id": "ex-three-tau",
+          "level": "core",
+          "prompt": "After three time constants of charging, what fraction of the supply voltage has the capacitor reached?",
+          "answer": "95.0 %",
+          "solution": [
+            {
+              "latex": "\\frac{v_C}{V_s} = 1 - e^{-3}",
+              "why": "Put $t = 3\\tau$ into Eq. (eq-charging)."
+            },
+            {
+              "latex": "1 - 0.0498 = 0.950",
+              "why": "$e^{-3} \\approx 0.0498$."
+            }
+          ],
+          "test": "tests/equations/test_rc_book.py::test_exercise_three_tau"
+        },
+        {
+          "id": "ex-discharge-time",
+          "level": "stretch",
+          "prompt": "A capacitor charged to 12 V discharges through a resistor with $\\tau = 2\\,\\text{s}$. How long until it is down to 3 V?",
+          "answer": "$t \\approx 2.77\\,\\text{s}$",
+          "solution": [
+            {
+              "latex": "3 = 12\\,e^{-t/2\\,\\text{s}}",
+              "why": "Eq. (eq-discharging) with $V_0 = 12$ V and $\\tau = 2$ s."
+            },
+            {
+              "latex": "e^{-t/2\\,\\text{s}} = \\tfrac{1}{4}",
+              "why": "Divide both sides by 12."
+            },
+            {
+              "latex": "t = 2\\,\\text{s} \\times \\ln 4 = 2.77\\,\\text{s}",
+              "why": "Take logarithms. Check: 12 V to 3 V is two halvings, and each half-life is $\\tau\\ln 2 = 1.39$ s."
+            }
+          ],
+          "test": "tests/equations/test_rc_book.py::test_exercise_discharge_time"
+        },
+        {
+          "id": "ex-design",
+          "level": "challenge",
+          "prompt": "Choose a resistor so that a 10 µF capacitor charges to two thirds of the supply in 50 ms. Which standard (E12) value is closest, and what delay does it give?",
+          "answer": "$R = 4.55\\,\\text{k}\\Omega$ exactly; use 4.7 kΩ, which gives 51.6 ms.",
+          "solution": [
+            {
+              "latex": "\\tfrac{2}{3} = 1 - e^{-t/\\tau} \\;\\Rightarrow\\; t = \\tau\\ln 3",
+              "why": "Eq. (eq-charging) at two thirds of the supply, solved for $t$."
+            },
+            {
+              "latex": "\\tau = \\frac{50\\,\\text{ms}}{\\ln 3} = 45.5\\,\\text{ms}",
+              "why": "Rearrange for the time constant the delay needs."
+            },
+            {
+              "latex": "R = \\frac{\\tau}{C} = \\frac{45.5\\,\\text{ms}}{10\\,\\mu\\text{F}} = 4.55\\,\\text{k}\\Omega",
+              "why": "Eq. (eq-tau) solved for $R$."
+            },
+            {
+              "latex": "t = 4.7\\,\\text{k}\\Omega \\times 10\\,\\mu\\text{F} \\times \\ln 3 = 51.6\\,\\text{ms}",
+              "why": "The nearest E12 values are 3.9 kΩ and 4.7 kΩ; 4.7 kΩ is closer. Recompute the delay with it."
+            }
+          ],
+          "test": "tests/equations/test_rc_book.py::test_exercise_design"
+        }
       ]
     },
     {
@@ -599,7 +796,7 @@
             "limits": [
               {
                 "kind": "para",
-                "text": "The cutoff is not a wall. At $f_c$ the signal is already down to 70.7 % of its amplitude, and above it the gain keeps falling gradually, so a simple RC filter only weakens unwanted frequencies; it does not remove them."
+                "text": "The cutoff is not a wall. At $f_c$ the signal is already down to 70.7 % of its amplitude, and above it the gain keeps falling gradually. A simple RC filter only weakens unwanted frequencies; it does not remove them."
               }
             ],
             "takeaways": [
@@ -701,7 +898,8 @@
         "adi-filters",
         "sallen-key-1955",
         "mit-6002"
-      ]
+      ],
+      "hook": "Turn the treble down on an old radio and you are often using one resistor and one capacitor. A capacitor treats fast and slow signals differently, and that is all a filter needs."
     }
   ],
   "glossary": [

@@ -8,6 +8,7 @@
  */
 import katex from 'katex';
 import type { Block, Book, Section } from '../../src/core/book.ts';
+import { concisionSummary, lintBook } from '../../src/core/concision.ts';
 import { clone, problems, type Project } from './project.ts';
 import { field, h, prose } from './ui.ts';
 
@@ -61,8 +62,19 @@ export function editorView(host: EditorHost, opts: { startInPreview?: boolean } 
       list.length
         ? h('details', { class: 'problems', open: true }, h('summary', {}, `${list.length} ${list.length === 1 ? 'thing' : 'things'} to fix before publishing`), h('ul', {}, ...list.map((x) => h('li', {}, x))))
         : h('p', { class: 'ok-line' }, p.origin === 'sample' ? '✓ The book builds. (This is a sample: edits are not kept.)' : '✓ The book builds. Edits are saved on this device as you type.'),
+      ...[tighten()].filter((x): x is HTMLDetailsElement => !!x),
     );
   };
+  // Padding is advice, never a blocker: words that do no work, with a fix for each.
+  const tighten = () => {
+    if (list().length) return null;
+    const r = lintBook(p.book);
+    return h('details', { class: 'tighten' },
+      h('summary', {}, concisionSummary(r)),
+      r.findings.length ? h('ul', {}, ...r.findings.slice(0, 40).map((f) => h('li', {}, `${f.where}: “${f.text}” — ${f.fix}`))) : null,
+    );
+  };
+  const list = () => problems(p);
   const onChange = () => {
     host.changed();
     refresh();
@@ -187,11 +199,52 @@ function chapterEditor(book: Book, ci: number, changed: () => void): HTMLElement
     changed();
   });
   const list = (label: string, arr: string[]) => field(label, prose(arr.join('\n'), label, (v) => { arr.splice(0, arr.length, ...v.split('\n').map((x) => x.trim()).filter(Boolean)); changed(); }, 3), 'One per line.');
+  const hook = field('Hook (one or two sentences that make the reader want this chapter)', prose(ch.hook ?? '', 'Hook', (v) => { ch.hook = v.trim() || undefined; changed(); }, 2));
+  const exercises = ch.exercises.map((e, i) =>
+    h('div', { class: 'block exercise' },
+      h('div', { class: 'block-label' }, `Practice ${ci + 1}.${i + 1} · ${e.level}`),
+      field('Question', prose(e.prompt, 'Question', (v) => { e.prompt = v; changed(); }, 2)),
+      field('Answer', prose(e.answer, 'Answer', (v) => { e.answer = v; changed(); }, 1)),
+      stepsEditor(e.solution, changed, `Worked solution — checked by ${e.test}. If you change the numbers, update that test too.`),
+    ),
+  );
   return h('div', { class: 'edit-card' },
     h('h2', {}, `Chapter ${ci + 1}`),
     field('Chapter title', title),
+    hook,
     list('Learning goals', ch.goals),
+    list('What the reader should already know', ch.prerequisites),
     list('Chapter summary', ch.summary),
+    ...(exercises.length ? [h('h3', {}, 'Practice'), ...exercises] : []),
+  );
+}
+
+/** Steps of a derivation or solution: the maths (LaTeX, previewed) and the one-line reason. */
+function stepsEditor(steps: Array<{ latex?: string; why: string }>, changed: () => void, hint: string): HTMLElement {
+  return h('div', { class: 'steps-edit' },
+    h('p', { class: 'hint' }, hint),
+    ...steps.map((st, i) => {
+      const latex = h('input', { 'aria-label': `Step ${i + 1} maths (LaTeX)`, class: 'mono', placeholder: 'maths (LaTeX), optional' });
+      latex.value = st.latex ?? '';
+      const preview = h('div', { class: 'eq-preview', 'aria-live': 'polite' });
+      const show = () => {
+        preview.replaceChildren();
+        if (!st.latex) return;
+        try {
+          katex.render(st.latex, preview, { displayMode: true, throwOnError: true, trust: false, strict: 'error', output: 'mathml' });
+          preview.classList.remove('bad');
+        } catch (e) {
+          preview.textContent = `Cannot read this maths: ${(e as Error).message}`;
+          preview.classList.add('bad');
+        }
+      };
+      latex.addEventListener('input', () => { st.latex = latex.value || undefined; show(); changed(); });
+      show();
+      return h('div', { class: 'step-edit' },
+        h('span', { class: 'step-n' }, String(i + 1)),
+        h('div', {}, latex, preview, prose(st.why, `Step ${i + 1}: why it follows`, (v) => { st.why = v; changed(); }, 1)),
+      );
+    }),
   );
 }
 
@@ -279,7 +332,41 @@ function blockEditor(b: Block, changed: () => void, siblings: Block[], index: nu
         field('Caption', prose(b.caption, 'Caption', (v) => { b.caption = v; changed(); }, 2)),
         field('Description for screen readers (alt text)', prose(b.alt, 'Alt text', (v) => { b.alt = v; changed(); }, 2)),
       );
-    default:
-      return box('Block');
+    case 'derivation':
+      return box('Derivation',
+        field('Goal', prose(b.goal, 'Goal', (v) => { b.goal = v; changed(); }, 1)),
+        field('Assumptions (one per line)', prose(b.assumptions.join('\n'), 'Assumptions', (v) => { b.assumptions = v.split('\n').map((x) => x.trim()).filter(Boolean); changed(); }, 2)),
+        stepsEditor(b.steps, changed, `Each step: the maths, then the one law or move that justifies it. Re-derived by ${b.test}.`),
+        field('Check (units, limits, special cases)', prose(b.check, 'Check', (v) => { b.check = v; changed(); }, 2)),
+      );
+    case 'problem':
+      return box(`Worked problem (${b.level})`,
+        field('Problem', prose(b.statement, 'Problem', (v) => { b.statement = v; changed(); }, 2)),
+        field('Strategy (the idea before the algebra)', prose(b.strategy, 'Strategy', (v) => { b.strategy = v; changed(); }, 2)),
+        stepsEditor(b.steps, changed, `Checked by ${b.test}. If you change the numbers, update that test too.`),
+        field('Answer', prose(b.answer, 'Answer', (v) => { b.answer = v; changed(); }, 1)),
+        field('Check', prose(b.check, 'Check', (v) => { b.check = v; changed(); }, 2)),
+      );
+    case 'experiment':
+      return box(`Experiment (${b.type})`,
+        field('Question', prose(b.question, 'Question', (v) => { b.question = v; changed(); }, 1)),
+        field('Safety (required)', prose(b.safety, 'Safety', (v) => { b.safety = v; changed(); }, 2)),
+        field('Predict', prose(b.predict, 'Predict', (v) => { b.predict = v; changed(); }, 2)),
+        field('Observe', prose(b.observe, 'Observe', (v) => { b.observe = v; changed(); }, 2)),
+        field('Explain', prose(b.explain, 'Explain', (v) => { b.explain = v; changed(); }, 3)),
+      );
+    case 'misconception':
+      return box('Common mistake',
+        field('The mistake', prose(b.wrong, 'The mistake', (v) => { b.wrong = v; changed(); }, 1)),
+        field('Why it’s tempting', prose(b.tempting, 'Why it is tempting', (v) => { b.tempting = v; changed(); }, 2)),
+        field('What’s true', prose(b.right, 'What is true', (v) => { b.right = v; changed(); }, 2)),
+        field('How to tell', prose(b.test, 'How to tell', (v) => { b.test = v; changed(); }, 2)),
+      );
+    case 'application': {
+      const t = h('input', { 'aria-label': 'Where it is used' });
+      t.value = b.title;
+      t.addEventListener('input', () => { b.title = t.value; changed(); });
+      return box('In practice', field('Where it is used', t), field('How the idea applies', prose(b.text, 'In practice', (v) => { b.text = v; changed(); }, 3)));
+    }
   }
 }

@@ -33,6 +33,10 @@
 
 **Status:** milestones 1–4 and 5a are done — four domain profiles (engineering, chemistry, biology, medicine) with a sample book each, rotatable 3D models, web book, print PDF, full-wrap cover, ebook cover, EPUB 3, metadata helper and KDP pre-flight, and an app (web and desktop) with three steps — **Write, Edit, Publish** — that builds and checks the whole KDP package itself, with guards against publishing too much, and saves the web edition for GitHub Pages. See [Roadmap](#roadmap).
 
+**New — learning blocks.** Theory turns into practice in every chapter: step-by-step **derivations** (each step with the law that justifies it), **worked problems** (strategy before algebra, a check at the end), **experiments** (predict → observe → explain, safety first), **common mistakes**, **in practice** boxes, and graded **practice** with full worked solutions printed at the back. Every derivation, answer and solution is re-checked by a test, and a **concision check** flags words that do no work. Design: [docs/LEARNING_DESIGN.md](docs/LEARNING_DESIGN.md).
+
+<p align="center"><img src="assets/rendered/screens/learning-blocks.png" alt="Two boxes from the web book. Left, Derivation 2.1: the goal, the assumptions, six numbered steps from Kirchhoff's voltage law to the charging equation, each with a one-line reason, and a check of the limits and units. Right, Worked problem 2.1: given, find, a one-line strategy, four numbered steps solving for the time a logic input switches, the answer 1.20 seconds and a check." width="880"></p>
+
 **New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits (first: a transistor) can be cut away, exploded, X-rayed and played. A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
 
 <p align="center"><img src="docs/phase-0/bookcloth-3d-popped.png" alt="The 3D Edition: an open book on a dark blue desk; the DNA model from Figure 1.2 has risen off the left page and floats above the book, with the figure's caption in a panel and controls to cut away, X-ray, reset or put it back." width="880"></p>
@@ -59,7 +63,7 @@
 *Figure 3 — One printed page from each domain's sample book. 3D models print as three fixed views plus a QR code that opens the rotatable version.*
 
 <p align="center">
-  <img src="assets/rendered/screens/kdp-outputs.png" alt="Left: the build output, every line ticked: web book, 27-page print PDF, interior pre-flight 9 of 9, cover PDF 12.313 by 9.250 inches, cover pre-flight 9 of 9, ebook cover 1600 by 2560 pixels, EPUB with no EPUBCheck errors, metadata with no errors. Middle: the full-wrap paperback cover with the description on the back and the title on the front. Right: the ebook cover." width="880">
+  <img src="assets/rendered/screens/kdp-outputs.png" alt="Left: the build output, every line ticked: web book, 33-page print PDF, interior pre-flight 9 of 9, cover PDF 12.327 by 9.250 inches, cover pre-flight 9 of 9, ebook cover 1600 by 2560 pixels, EPUB with no EPUBCheck errors, metadata with no errors. Middle: the full-wrap paperback cover with the description on the back and the title on the front. Right: the ebook cover." width="880">
 </p>
 
 *Figure 4 — One command builds everything KDP asks for and checks it: interior PDF, full-wrap cover, ebook cover, EPUB 3 and a metadata sheet.*
@@ -82,7 +86,7 @@ Expected output of `npm run demo` (a few seconds):
 ```text
 ✓ Drew 18 figure and model files (light + dark)
 ✓ Web book  → dist/rc-circuits/web/index.html
-✓ Print PDF → dist/rc-circuits/book.pdf (27 pages, 6" × 9")
+✓ Print PDF → dist/rc-circuits/book.pdf (33 pages, 6" × 9")
 ✓ KDP interior pre-flight: 9/9 checks pass
 ✓ Cover PDF → dist/rc-circuits/cover.pdf (12.313" × 9.250", spine 0.063", no spine text)
 ✓ KDP cover pre-flight: 9/9 checks pass
@@ -100,12 +104,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 132 unit, export, app and pipeline tests
+npm test                                         # 146 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  27 pages  all checks pass`, then `Tests  132 passed (132)` and `34 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  33 pages  all checks pass`, then `Tests  146 passed (146)` and `41 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -306,7 +310,7 @@ Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252
 
 *Figure 13 — The EPUB reflows to a phone screen; equations stay real text (MathML).*
 
-**Publishing from the app.** The app's Publish step builds the same files inside the browser or desktop window — Typst runs as WebAssembly, loaded only the first time you publish — and runs the same pre-flight. A test (`tests/unit/package.test.ts`) builds the engineering sample through this path and checks it matches the command line: 27 pages, every check passing. KDP has no upload API, so the app never uploads anything; it saves one package (`book.pdf`, `cover.pdf`, `book.epub`, `ebook-cover.jpg`, `kdp-metadata.txt`, `ai-disclosure.json`, `preflight.json`, `UPLOAD-CHECKLIST.txt`) for you to upload on kdp.amazon.com. Before the **Save** button unlocks, five guards must pass:
+**Publishing from the app.** The app's Publish step builds the same files inside the browser or desktop window — Typst runs as WebAssembly, loaded only the first time you publish — and runs the same pre-flight. A test (`tests/unit/package.test.ts`) builds the engineering sample through this path and checks it matches the command line: 33 pages, every check passing. KDP has no upload API, so the app never uploads anything; it saves one package (`book.pdf`, `cover.pdf`, `book.epub`, `ebook-cover.jpg`, `kdp-metadata.txt`, `ai-disclosure.json`, `preflight.json`, `UPLOAD-CHECKLIST.txt`) for you to upload on kdp.amazon.com. Before the **Save** button unlocks, five guards must pass:
 
 1. **Automated checks:** the book builds (no unknown citations, missing glossary terms or broken equations) and every interior, cover, ebook-cover and listing check passes.
 2. **Your confirmations:** you read the proof, checked the references, will match the cover text and answer the AI-content questions as listed — plus licensed-professional review for medicine.
@@ -331,9 +335,9 @@ The rules are pure functions tested in `tests/unit/publish-guard.test.ts`. Sampl
 
 ## Walkthrough
 
-1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 27-page 6″ × 9″ book, `cover.pdf` as a 12.313″ × 9.25″ wrap-around cover.
+1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 33-page 6″ × 9″ book, `cover.pdf` as a 12.327″ × 9.25″ wrap-around cover.
 2. **Check the pre-flight report.** Open `dist/rc-circuits/preflight.json` → sections `interior`, `cover`, `ebookCover` and `metadata`, every check passing.
-3. **Re-derive the math.** `npm run test:equations` → `34 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm run test:equations`, and see which check names it.
+3. **Re-derive the math.** `npm run test:equations` → `41 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm run test:equations`, and see which check names it.
 4. **Rotate a molecule.** `npm run build:all -- --allow-short`, open `dist/molecular-shapes/web/index.html`, drag the methane model, then press **front**: the 109.5° label appears only when the angle is face-on.
 5. **Re-verify the references.** `npm run verify-refs` → one line per reference; the Sallen–Key paper is re-checked live against Crossref, the three web sources show when they were checked by hand.
 6. **Validate the ebook.** `npm run cli -- epubcheck dist/rc-circuits/book.epub` → `✓ EPUBCheck: no errors` (needs Java).
@@ -498,6 +502,7 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 4 | Tauri desktop app with OS-keychain key storage; release installers with SHA-256 checksums + build-provenance attestations | **Done** |
 | 4b | Three-step app (Write, Edit, Publish); print PDF, covers and EPUB built inside the app; publishing guards | **Done** |
 | 5a | Web edition saved from the app (same files as the command line) with GitHub Pages steps; desktop app fixes for WSL graphics and missing keychains | **Done** |
+| 1a (Living Textbook Forge) | Learning blocks (derivation, worked problem, experiment, common mistake, in practice, graded practice with solutions), chapter hooks and prerequisites, concision check, drafting and review prompts that use them; flagship blocks in the engineering sample | **Done** |
 | 0 (Living Textbook Forge) | Audit, research, architecture, three visual concepts; 3D Edition prototype (page turns, pop-off figures, transistor kit, converter v0) | **Gate: waiting for review** ([docs/PHASE-0.md](docs/PHASE-0.md)) |
 | 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |

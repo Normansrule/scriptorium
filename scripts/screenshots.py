@@ -12,6 +12,7 @@ Re-running overwrites the PNGs; nothing here is edited by hand.
 from __future__ import annotations
 
 import html
+import io
 import json
 import shutil
 import subprocess
@@ -185,7 +186,17 @@ def main() -> None:
         ebook = frame(Image.open(DIST / "rc-circuits" / "ebook-cover.jpg").convert("RGB"))
         save(row([panel, cover, ebook], gap=28, bg=PAPER_BG["light"], height=640), "kdp-outputs.png")
 
-        # 8. The EPUB at phone width: reflowable text with a MathML equation.
+        # 8. Learning blocks in the web book: a derivation and a worked problem, side by side.
+        page.set_viewport_size({"width": 1100, "height": 900})
+        page.goto((DIST / "rc-circuits" / "web" / "index.html").as_uri())
+        shots = []
+        for sel in ("#drv-charging", "#prb-threshold"):
+            el = page.locator(sel)
+            el.scroll_into_view_if_needed()
+            shots.append(Image.open(io.BytesIO(el.screenshot())).convert("RGB"))
+        save(row(shots, gap=28, bg=PAPER_BG["light"]), "learning-blocks.png")
+
+        # 9. The EPUB at phone width: reflowable text with a MathML equation.
         tmp = Path(tempfile.mkdtemp())
         with zipfile.ZipFile(DIST / "rc-circuits" / "book.epub") as z:
             z.extractall(tmp)

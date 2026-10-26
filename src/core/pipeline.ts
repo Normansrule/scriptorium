@@ -6,7 +6,8 @@
  */
 import { z } from 'zod';
 import type { Book, Chapter, Reference, Section } from './book.ts';
-import { Block, Book as BookSchema } from './book.ts';
+import { Block, Book as BookSchema, Exercise } from './book.ts';
+import { lintBook } from './concision.ts';
 import type { Profile } from './profile.ts';
 import { fleschKincaid, TARGET_GRADE } from './readability.ts';
 import { compile } from './expr.ts';
@@ -63,6 +64,8 @@ export const Outline = z.object({
         id: z.string().regex(/^ch-[a-z0-9-]+$/),
         title: z.string(),
         goals: z.array(z.string()).min(1),
+        hook: z.string().optional(),
+        prerequisites: z.array(z.string()).default([]),
         queries: z.array(z.string()).min(1).max(6),
         sections: z.array(z.object({ id: z.string().regex(/^sec-[a-z0-9-]+$/), title: z.string(), summary: z.string() })).min(1),
       }),
@@ -107,6 +110,8 @@ const Draft = z.object({
   formal: z.array(DraftBlock).default([]),
   limits: z.array(DraftBlock).min(1),
   takeaways: z.array(z.string()).min(1),
+  /** practice questions for this section; gathered at the chapter's end */
+  exercises: z.array(z.any()).default([]),
   terms: z.array(z.object({ term: z.string(), definition: z.string() })).default([]),
   uncited_claims: z.array(z.string()).default([]),
   warnings: z.array(z.string()).default([]),
@@ -287,7 +292,7 @@ async function stageDraft(st: PipelineState, d: PipelineDeps): Promise<void> {
     const res = await callModel(d.provider, d.budget, {
       system: draftPrompt(d.profile),
       prompt: `Book: ${st.outline!.title}\nAudience: ${st.scope.audience}\nChapter: ${c.title}\nChapter goals: ${c.goals.join('; ')}\nSection: ${s.title}\nSection plan: ${s.summary}\n\n${refs}`,
-      maxTokens: 6000,
+      maxTokens: 9000,
       purpose: `draft ${c.id}/${s.id}`,
     });
     const draft = parseModelJson(res.text, Draft);
@@ -370,6 +375,17 @@ async function stageFigures(st: PipelineState, d: PipelineDeps): Promise<void> {
           }
           continue;
         }
+        const lb = b as { kind?: string; id?: string; steps?: Array<{ latex?: string }>; test?: string };
+        if (lb.kind === 'derivation' || lb.kind === 'problem') {
+          try {
+            for (const step of lb.steps ?? []) if (step.latex) renderMath(step.latex, true);
+          } catch (e) {
+            st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${lb.id}`, message: `${lb.kind === 'derivation' ? 'Derivation' : 'Worked problem'} has maths that does not parse and was dropped: ${(e as Error).message}` });
+            continue;
+          }
+          st.report.push({ stage: 'figures', level: 'warning', where: `${sid}/${lb.id}`, message: `${lb.kind === 'derivation' ? 'Derivation' : 'Worked problem'} is unverified: add a SymPy/Pint check in tests/equations and point "test" at it before publishing.` });
+          lb.test = 'unverified';
+        }
         const eq = b as { kind?: string; id?: string; latex?: string; example?: { check?: string } };
         if (eq.kind === 'equation') {
           try {
@@ -409,10 +425,12 @@ async function stageReview(st: PipelineState, d: PipelineDeps): Promise<void> {
 function assembleBook(st: PipelineState, d: PipelineDeps): Book {
   const o = st.outline!;
   const terms = new Map<string, string>();
+  const seenExercise = new Set<string>();
   const chapters: Chapter[] = o.chapters.map((c) => ({
     id: c.id,
     title: c.title,
     goals: c.goals,
+    hook: c.hook,
     sections: c.sections.map((s): Section => {
       const dr = st.drafts[s.id]!;
       dr.terms.forEach((t) => terms.set(t.term, t.definition));
@@ -429,6 +447,19 @@ function assembleBook(st: PipelineState, d: PipelineDeps): Book {
     summary: c.sections.map((s) => st.drafts[s.id]!.takeaways[0]!).filter(Boolean),
     keyEquations: c.sections.flatMap((s) => (st.drafts[s.id]!.formal as Array<{ kind?: string; id?: string }>).filter((b) => b.kind === 'equation').map((b) => b.id!)),
     furtherReading: [],
+    prerequisites: c.prerequisites,
+    exercises: c.sections.flatMap((s) =>
+      (st.drafts[s.id]!.exercises as unknown[]).flatMap((x) => {
+        const r = Exercise.safeParse({ ...(x as object), test: 'unverified' });
+        if (r.success && !seenExercise.has(r.data.id)) {
+          seenExercise.add(r.data.id);
+          return [r.data];
+        }
+        if (r.success) return [];
+        st.report.push({ stage: 'readability', level: 'warning', where: `${s.id}/exercises`, message: `Dropped a malformed exercise: ${r.error.issues[0]?.message ?? 'invalid'}` });
+        return [];
+      }),
+    ),
   }));
   const book = {
     meta: {
@@ -466,6 +497,10 @@ async function stageReadability(st: PipelineState, d: PipelineDeps): Promise<voi
   if (d.profile.requiresProfessionalReview)
     st.report.push({ stage: 'readability', level: 'problem', where: 'whole book', message: `The ${d.profile.name} profile requires review by a licensed professional before publishing.` });
   st.book = assembleBook(st, d);
+  // Padding is reported, never fatal: the editor shows the same list as places to tighten.
+  const conc = lintBook(st.book);
+  for (const f of conc.findings.slice(0, 12)) st.report.push({ stage: 'readability', level: 'info', where: f.where, message: `Tighten: “${f.text}” — ${f.fix}` });
+  if (conc.findings.length > 12) st.report.push({ stage: 'readability', level: 'info', where: 'whole book', message: `${conc.findings.length - 12} more places to tighten; see Edit.` });
 }
 
 const RUNNERS: Record<StageId, (st: PipelineState, d: PipelineDeps) => Promise<void>> = {
