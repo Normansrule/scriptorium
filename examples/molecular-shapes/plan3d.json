@@ -1,0 +1,42 @@
+{
+ "format": "scriptorium-plan3d",
+ "version": 1,
+ "entries": [
+  {
+   "id": "fig-methane",
+   "proposed": {
+    "mode": "model"
+   },
+   "reason": "This figure already has 3D data (a model from cited coordinates), so it becomes that model.",
+   "score": 1,
+   "approved": true
+  },
+  {
+   "id": "fig-water",
+   "proposed": {
+    "mode": "model"
+   },
+   "reason": "This figure already has 3D data (a model from cited coordinates), so it becomes that model.",
+   "score": 1,
+   "approved": true
+  },
+  {
+   "id": "fig-dilution",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-ph",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  }
+ ]
+}

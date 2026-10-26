@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Book } from '../../src/core/book.ts';
 import { buildEdition3D, figureRects } from '../../src/edition3d/build.ts';
-import { effective, planBook, propose, scoreForScene } from '../../src/edition3d/convert.ts';
+import { DATA_WORDS, effective, inSentence, planBook, propose, scoreForScene } from '../../src/edition3d/convert.ts';
 import { KITS } from '../../src/edition3d/kits.ts';
 import { Book3D } from '../../src/edition3d/manifest.ts';
 import { splitPages } from '../../src/edition3d/pages.ts';
@@ -78,6 +78,37 @@ describe('2D → 3D converter', () => {
     expect(plot.approved).toBe(true);
     // a choice naming a kit that does not exist falls back to a lift
     expect(effective({ ...plot, chosen: { mode: 'scene', kit: 'no-such-kit' } })).toEqual({ mode: 'lift' });
+  });
+
+  it('matches each sample figure to the kit made for it, and never turns a data plot into a scene', () => {
+    const rc = loadBook(join(REPO_ROOT, 'examples/rc-circuits')).book;
+    const heart = loadBook(join(REPO_ROOT, 'examples/heart-and-vessels')).book;
+    const scenes = (b: Book) => planBook(b).entries.filter((e) => e.proposed.mode === 'scene').map((e) => [e.id, (e.proposed as { kit: string }).kit]);
+    expect(scenes(rc)).toEqual([
+      ['fig-parallel-plate', 'capacitor'],
+      ['fig-rc-circuit', 'rc-loop'],
+    ]);
+    expect(scenes(heart)).toEqual([['fig-vessel-narrowing', 'vessel']]);
+    // every kit is vetoed by plot words, whatever else the figure says
+    for (const kit of KITS) expect(scoreForScene(`A ${DATA_WORDS[0]} of ${kit.keywords.join(' and ')}`, kit)).toBe(0);
+    // the RC loop is not a filter, and the vessel is not a heart valve
+    expect(propose(fig('Schematic of an RC low-pass filter with a resistor and a capacitor.')).proposed).toEqual({ mode: 'lift' });
+  });
+
+  it('names a kit grammatically in its plain-words reason', () => {
+    expect(inSentence('RC charging circuit (real parts)')).toBe('an RC charging circuit (real parts)');
+    expect(inSentence('Parallel-plate capacitor')).toBe('a parallel-plate capacitor');
+    expect(inSentence('MOSFET (n-channel, cross-section)')).toBe('a MOSFET (n-channel, cross-section)');
+    expect(inSentence('Blood vessel (flow and radius)')).toBe('a blood vessel (flow and radius)');
+  });
+
+  it('describes every kit fully, with swatch colours for the gallery', () => {
+    expect(new Set(KITS.map((k) => k.id)).size).toBe(KITS.length);
+    for (const k of KITS) {
+      expect(k.keywords.length).toBeGreaterThan(2);
+      expect(k.animation, k.id).toBeTruthy();
+      expect(k.swatch.every((c) => /^#[0-9a-f]{6}$/i.test(c))).toBe(true);
+    }
   });
 
   it('keeps an author’s decision only while the proposal it answered still stands', () => {

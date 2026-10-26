@@ -3,7 +3,7 @@
  *
  *   3d.html?book=books/cells-and-dna/3d/     open a book's 3D Edition (the folder holding book3d.json)
  *   3d.html?kit=mosfet                       preview a scene kit on a blank spread
- *   &theme=bookcloth|plate|window            the Phase 0 visual concepts
+ *   &theme=bookcloth|plate|window|lagoon|orchard   override the book's own style
  *
  * Keyboard: ← → (or Page Up / Page Down) turn pages, Tab reaches each figure on the spread,
  * Enter lifts it off the page, Escape puts it back. With "reduce motion" set, the viewer offers
@@ -11,20 +11,19 @@
  */
 import * as THREE from 'three';
 import { Book3D, type Figure3D } from '../../../src/edition3d/manifest.ts';
-import { kitById } from '../../../src/edition3d/kits.ts';
+import { KITS as KIT_INFO, kitById } from '../../../src/edition3d/kits.ts';
 import { BookModel } from './book.ts';
 import { FigureView, KITS, type CameraPose } from './figure.ts';
 import { ICON } from './icons.ts';
 import { Stage } from './stage.ts';
-import { themeFromUrl } from './theme.ts';
+import { applyTheme, pickTheme, type Theme } from './theme.ts';
 import './edition3d.css';
 
 const root = document.getElementById('edition3d')!;
 const params = new URLSearchParams(location.search);
-const theme = themeFromUrl();
-document.documentElement.dataset.theme = theme.id;
-for (const [k, v] of Object.entries(theme.ui)) document.documentElement.style.setProperty(`--${k}`, v);
-document.documentElement.style.setProperty('--ground', theme.ground);
+// until the book says which style it uses: the URL's choice, else Bookcloth
+let theme: Theme = pickTheme(params.get('theme'));
+applyTheme(theme);
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, html = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -137,6 +136,8 @@ async function main(): Promise<void> {
     return;
   }
   const { book, base, preview } = loaded;
+  theme = pickTheme(params.get('theme'), book.style);
+  applyTheme(theme);
   document.title = `${book.title} — 3D Edition`;
   if (!webglOk()) return void gate(book, base, 'webgl');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches && !params.has('motion')) await gate(book, base, 'motion');
@@ -158,6 +159,18 @@ async function main(): Promise<void> {
   title.append(t1, t2);
   const tools = el('div', { class: 'top-tools' });
   if (book.webEdition && !preview) tools.append(el('a', { class: 'btn ghost', href: new URL(book.webEdition, base).href, title: 'The same book as a 2D web page' }, `${ICON.book}<span>2D Edition</span>`));
+  if (preview) {
+    // a kit preview links to the other kits, so the gallery can be browsed from inside the viewer
+    const nav = el('nav', { class: 'kit-nav', 'aria-label': 'Scene kits' });
+    const current = params.get('kit');
+    for (const k of KIT_INFO) {
+      const a = el('a', { href: `?kit=${encodeURIComponent(k.id)}`, class: 'kit-link' });
+      a.textContent = k.title.replace(/ \(.*\)$/, '');
+      if (k.id === current) a.setAttribute('aria-current', 'page');
+      nav.append(a);
+    }
+    tools.append(nav);
+  }
   const aboutBtn = el('button', { type: 'button', class: 'btn ghost', 'aria-expanded': 'false', 'aria-controls': 'about' }, `${ICON.info}<span>About</span>`);
   tools.append(aboutBtn);
   top.append(title, tools);

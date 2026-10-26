@@ -6,12 +6,15 @@ import * as THREE from 'three';
 import type { Figure3D } from '../../../src/edition3d/manifest.ts';
 import type { BookModel } from './book.ts';
 import { ICON } from './icons.ts';
+import { capacitorKit } from './kits/capacitor.ts';
 import { mosfetKit } from './kits/mosfet.ts';
+import { rcLoopKit } from './kits/rc-loop.ts';
+import { vesselKit } from './kits/vessel.ts';
 import { liftCard, moleculeObject, type FigureObject } from './objects.ts';
 import { easeInOut, easeOut, type Stage } from './stage.ts';
 import type { Theme } from './theme.ts';
 
-export const KITS: Record<string, () => FigureObject> = { mosfet: mosfetKit };
+export const KITS: Record<string, () => FigureObject> = { mosfet: mosfetKit, capacitor: capacitorKit, 'rc-loop': rcLoopKit, vessel: vesselKit };
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, html = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);

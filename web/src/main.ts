@@ -22,6 +22,7 @@ import { formatBibliography } from '../../src/render/cite.ts';
 import { bookCss, renderHtml } from '../../src/render/html.ts';
 import { mountAll } from '../../src/render/viewer3d-client.ts';
 import { buildDisclosure } from '../../src/disclosure/ai-disclosure.ts';
+import { KITS as SCENE_KITS } from '../../src/edition3d/kits.ts';
 import { PURIFY_CONFIG } from '../../src/export/sanitize.ts';
 import { cssVariables } from '../../src/core/style.ts';
 import localeXml from '../../styles/locales-en-US.xml?raw';
@@ -339,6 +340,7 @@ function reportList(report: PipelineState['report'] | undefined): Node | null {
 
 function proofDom(p: Project): HTMLElement {
   const wrap = h('div', { class: 'proof' });
+  if (p.book.meta.style && p.book.meta.style !== 'classic') wrap.dataset.bookStyle = p.book.meta.style;
   const probs = problems(p);
   if (probs.length) {
     wrap.append(h('p', { class: 'blocker' }, 'The preview will appear when the problems above are fixed.'));
@@ -383,7 +385,17 @@ function samplesView(): Node {
           h('h2', {}, 'Read a sample in 3D'),
           h('p', { class: 'hint' }, 'The same pages in a book you can turn; figures lift off the page and models rotate. Preview of the 3D Edition.'),
           h('ul', {}, ...SAMPLES.map((s) => h('li', {}, h('a', { href: `3d.html?book=books/${s.dir}/3d/` }, s.book.meta.title)))),
-          h('p', { class: 'hint' }, h('a', { href: '3d.html?kit=mosfet' }, 'Scene kit preview: a transistor you can cut open, explode and switch on')),
+          h('h2', {}, 'Scene kits'),
+          h('p', { class: 'hint' }, 'Ready-made 3D scenes a figure can become, once its author approves. Each one rotates, cuts open, explodes into parts and plays its process.'),
+          h('div', { class: 'kit-grid' },
+            ...SCENE_KITS.map((k) =>
+              h('a', { class: 'kit-card', href: `3d.html?kit=${k.id}` },
+                h('span', { class: 'kit-swatch', 'aria-hidden': 'true' }, ...k.swatch.map((c) => h('i', { style: `background:${c}` }))),
+                h('span', { class: 'kit-title' }, k.title),
+                h('span', { class: 'kit-shows' }, k.animation ?? k.shows),
+              ),
+            ),
+          ),
         ),
   );
 }

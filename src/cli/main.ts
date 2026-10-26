@@ -312,7 +312,7 @@ async function plan3d(args: string[]): Promise<void> {
     const t = effective(e);
     const proposed = e.proposed.mode === 'scene' ? `scene:${e.proposed.kit}` : e.proposed.mode;
     const applied = t.mode === 'scene' ? `scene:${t.kit}` : t.mode;
-    console.log(`${e.approved ? '✓' : '?'} ${e.id.padEnd(28)} proposed ${proposed.padEnd(14)} → ${applied.padEnd(14)} ${e.reason}`);
+    console.log(`${e.approved ? '✓' : '?'} ${e.id.padEnd(28)} proposed ${proposed.padEnd(14)} → ${applied.padEnd(14)} ${e.approved ? e.reason.replace(/ Needs your approval\.$/, ' Approved.') : e.reason}`);
   }
   console.log(`Saved ${relative(process.cwd(), join(dir, PLAN_FILE))}. Scenes apply only after --approve.`);
 }

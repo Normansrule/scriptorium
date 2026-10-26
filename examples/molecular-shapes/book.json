@@ -4,6 +4,7 @@
     "subtitle": "A One-Chapter Sample on Molecular Geometry, Concentration and pH",
     "authors": ["Scriptorium sample book"],
     "profile": "chemistry",
+    "style": "window",
     "citationStyle": "american-chemical-society",
     "audience": "Curious newcomers with high-school algebra; no chemistry background needed.",
     "language": "en",

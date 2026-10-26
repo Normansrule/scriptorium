@@ -8,6 +8,7 @@
  */
 import katex from 'katex';
 import type { Block, Book, Section } from '../../src/core/book.ts';
+import { BOOK_STYLES, type BookStyleId } from '../../src/core/bookstyle.ts';
 import { concisionSummary, lintBook } from '../../src/core/concision.ts';
 import { clone, problems, type Project } from './project.ts';
 import { field, h, prose } from './ui.ts';
@@ -185,8 +186,44 @@ function detailsEditor(book: Book, changed: () => void): HTMLElement {
     lines('Keywords (one per line)', () => m.keywords ?? [], (v) => (m.keywords = v), 'Up to seven short phrases. Avoid "free", "bestselling", and words already in the title.'),
     lines('Categories (one per line)', () => m.categories ?? [], (v) => (m.categories = v), 'Up to three.'),
     field('Colophon (how the book was made)', prose(m.colophon ?? '', 'Colophon', (v) => { m.colophon = v || undefined; changed(); }, 3)),
+    stylePicker(book, changed),
     text('Web address of the web edition (optional)', () => m.webUrl ?? '', (v) => (m.webUrl = v.trim() || undefined),
       'Where you will publish the web edition, e.g. https://you.github.io/my-book/. The print book and the ebook link and QR-code 3D models to it. Publish → Web edition saves the site.'),
+  );
+}
+
+/**
+ * The book's look: a row of swatch cards, one per style. A real radio group underneath, so it
+ * works with the keyboard (arrow keys move the choice) and screen readers announce the names.
+ */
+function stylePicker(book: Book, changed: () => void): HTMLElement {
+  const current = book.meta.style ?? 'classic';
+  const group = h('div', { class: 'style-picker', role: 'radiogroup', 'aria-label': 'Book style' });
+  for (const s of Object.values(BOOK_STYLES)) {
+    const input = h('input', { type: 'radio', name: 'book-style', value: s.id });
+    input.checked = s.id === current;
+    input.addEventListener('change', () => {
+      book.meta.style = s.id === 'classic' ? undefined : (s.id as BookStyleId);
+      changed();
+    });
+    const t = s.light;
+    group.append(
+      h('label', { class: 'style-card' },
+        input,
+        h('span', { class: 'style-sample', 'aria-hidden': 'true', style: `--b:${t.band};--bi:${t.bandInk};--hd:${t.heading};--mk:${t.mark};--tn:${t.tint}` },
+          h('span', { class: 'ss-chip' }, 'Chapter 1'),
+          h('span', { class: 'ss-head' }, 'Aa'),
+          h('span', { class: 'ss-box' }),
+        ),
+        h('span', { class: 'style-name' }, s.name),
+        h('span', { class: 'style-desc' }, s.description),
+      ),
+    );
+  }
+  return h('fieldset', { class: 'style-field' },
+    h('legend', {}, 'Book style'),
+    h('p', { class: 'hint' }, 'The colour of chapter openers, headings and learning blocks, in print, the ebook, the web edition and the 3D Edition. Figures keep their colours, so a colour always means the same thing.'),
+    group,
   );
 }
 

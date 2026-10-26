@@ -41,6 +41,21 @@ Inside a data plot the colors lose their pipeline meaning and simply tell series
 
 Soft fills behind a role color use that color at **12 %** opacity (light) or **20 %** (dark).
 
+### Book styles (the colour of the chrome)
+
+A book picks one style with `meta.style` ([`src/core/bookstyle.ts`](../src/core/bookstyle.ts)). The style colours only the *chrome*: the chapter-number chip, headings, the left edge of learning blocks and the hook, step-number discs, and the tint behind goal boxes. Figures, plots and callouts keep the roles above, so a style can never change what a colour means. No style token reuses a role colour (tested).
+
+| Style | Chip / headings | Edge mark | Tint | Feel |
+|---|---|---|---|---|
+| `classic` (default) | grey / ink | hairline | panel | Quiet; colour only where it means something |
+| `bookcloth` | deep blue `#1E4F9C` | orange `#D0601C` | `#EEF3FB` | Cloth binding with a headband thread |
+| `plate` | black `#141414` | signal orange `#E8582A` | `#EEF3EF` | Museum plate |
+| `window` | olive `#525E1B` | ochre `#A87C22` | `#F7F3E6` | Old reading room |
+| `lagoon` | teal `#0F6E73` | coral `#D9553A` | `#EAF5F4` | Bright and calm |
+| `orchard` | plum `#5B2A6E` | gold `#B57F12` | `#F5EFF7` | Warm |
+
+Each style has a dark-mode set too. [`tests/unit/bookstyle.test.ts`](../tests/unit/bookstyle.test.ts) checks, in both modes: chip text on the chip ≥ 4.5 : 1, headings on paper and on the tint ≥ 4.5 : 1, body text on the tint ≥ 4.5 : 1, and the edge mark on paper ≥ 3 : 1. The 3D Edition opens in the matching binding and interface (Classic books get Bookcloth); `?theme=` overrides it.
+
 ### Never rely on color alone
 
 Books get printed in black ink, and some readers can't separate hues. So:

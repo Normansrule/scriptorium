@@ -6,12 +6,51 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { plot } from '../../src/render/svg.ts';
+import { arrow, palette, plot, svgDoc, text } from '../../src/render/svg.ts';
 import type { Mode } from '../../src/core/style.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Two lengthwise cuts through a vessel, the second at half the radius. Arrows give the flow speed
+ * across the vessel for idealised smooth flow (a parabola, fastest at the centre). At the same
+ * pressure difference, flow scales as r⁴ (the inverse of R ∝ 1/r⁴) and the cross-section as r², so
+ * the average speed scales as r²: the narrow vessel's arrows are a quarter as long.
+ */
+function vesselNarrowing(mode: Mode): string {
+  const pal = palette(mode);
+  const W = 420;
+  const H = 250;
+  const x1 = 40;
+  const x2 = 250;
+  const wallInk = mode === 'light' ? '#b5524a' : '#e0857c';
+  const parts: string[] = [];
+  const vessel = (cy: number, r: number, k: number, title: string, line1: string, line2: string) => {
+    // walls
+    parts.push(`<rect x="${x1}" y="${cy - r - 9}" width="${x2 - x1}" height="9" rx="3" fill="${wallInk}"/>`);
+    parts.push(`<rect x="${x1}" y="${cy + r}" width="${x2 - x1}" height="9" rx="3" fill="${wallInk}"/>`);
+    parts.push(`<rect x="${x1}" y="${cy - r}" width="${x2 - x1}" height="${2 * r}" fill="${pal.tint('accent')}"/>`);
+    // velocity profile: u(ρ) = u_max (1 − (ρ/r)²), u_max ∝ k = (r / r₀)²
+    const x0 = x1 + 24;
+    const uMax = 150 * k;
+    for (let i = -3; i <= 3; i++) {
+      const f = i / 3.6;
+      const len = uMax * (1 - f * f);
+      if (len < 6) continue;
+      parts.push(arrow(x0, cy + f * r, x0 + len, cy + f * r, pal.role('signal'), 1.5));
+    }
+    parts.push(text(x2 + 14, cy - 10, title, { fill: pal.ink, size: 12, weight: 600 }));
+    parts.push(text(x2 + 14, cy + 6, line1, { fill: pal.ink, size: 11 }));
+    parts.push(text(x2 + 14, cy + 21, line2, { fill: pal.role('signal'), size: 11 }));
+  };
+  vessel(70, 40, 1, 'Original radius r', 'Resistance × 1', 'Flow × 1');
+  vessel(178, 20, 0.25, 'Half the radius', 'Resistance × 16', 'Flow ÷ 16');
+  parts.push(text(x1, H - 10, 'Arrows: flow speed across the vessel, same pressure difference (schematic)', { fill: pal.muted, size: 10.5 }));
+  return svgDoc(W, H, 'Narrowing a vessel', 'Two vessels, the second at half the radius; flow-speed arrows are fastest at the centre and a quarter as long in the narrow vessel, whose resistance is 16 times higher and flow one sixteenth.', parts.join('\n'), pal);
+}
+
 const plots: Record<string, (mode: Mode) => string> = {
+  'vessel-narrowing': vesselNarrowing,
   'cardiac-output': (mode) =>
     plot(
       {

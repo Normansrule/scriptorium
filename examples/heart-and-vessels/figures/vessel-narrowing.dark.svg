@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 250" width="420" height="250" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Narrowing a vessel</title>
+<desc id="d">Two vessels, the second at half the radius; flow-speed arrows are fastest at the centre and a quarter as long in the narrow vessel, whose resistance is 16 times higher and flow one sixteenth.</desc>
+<rect width="420" height="250" fill="#0D1117"/>
+<rect x="40" y="21" width="210" height="9" rx="3" fill="#e0857c"/>
+<rect x="40" y="110" width="210" height="9" rx="3" fill="#e0857c"/>
+<rect x="40" y="30" width="210" height="80" fill="rgba(224, 101, 31, 0.2)"/>
+<line x1="64.0" y1="36.7" x2="104.8" y2="36.7" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M109.8,36.7 L103.6,39.8 L103.6,33.5 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="47.8" x2="162.7" y2="47.8" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M167.7,47.8 L161.5,51.0 L161.5,44.6 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="58.9" x2="197.4" y2="58.9" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M202.4,58.9 L196.2,62.1 L196.2,55.7 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="70.0" x2="209.0" y2="70.0" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M214.0,70.0 L207.8,73.2 L207.8,66.8 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="81.1" x2="197.4" y2="81.1" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M202.4,81.1 L196.2,84.3 L196.2,77.9 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="92.2" x2="162.7" y2="92.2" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M167.7,92.2 L161.5,95.4 L161.5,89.0 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="103.3" x2="104.8" y2="103.3" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M109.8,103.3 L103.6,106.5 L103.6,100.2 Z" fill="#3D95C9"/>
+<text x="264.0" y="60.0" font-size="12" fill="#E6EDF3" text-anchor="start" font-weight="600">Original radius r</text>
+<text x="264.0" y="76.0" font-size="11" fill="#E6EDF3" text-anchor="start">Resistance × 1</text>
+<text x="264.0" y="91.0" font-size="11" fill="#3D95C9" text-anchor="start">Flow × 1</text>
+<rect x="40" y="149" width="210" height="9" rx="3" fill="#e0857c"/>
+<rect x="40" y="198" width="210" height="9" rx="3" fill="#e0857c"/>
+<rect x="40" y="158" width="210" height="40" fill="rgba(224, 101, 31, 0.2)"/>
+<line x1="64.0" y1="161.3" x2="70.5" y2="161.3" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M75.5,161.3 L69.2,164.5 L69.2,158.2 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="166.9" x2="84.9" y2="166.9" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M89.9,166.9 L83.7,170.1 L83.7,163.7 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="172.4" x2="93.6" y2="172.4" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M98.6,172.4 L92.4,175.6 L92.4,169.3 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="178.0" x2="96.5" y2="178.0" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M101.5,178.0 L95.3,181.2 L95.3,174.8 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="183.6" x2="93.6" y2="183.6" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M98.6,183.6 L92.4,186.7 L92.4,180.4 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="189.1" x2="84.9" y2="189.1" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M89.9,189.1 L83.7,192.3 L83.7,185.9 Z" fill="#3D95C9"/>
+<line x1="64.0" y1="194.7" x2="70.5" y2="194.7" stroke="#3D95C9" stroke-width="1.5" stroke-linecap="round"/><path d="M75.5,194.7 L69.2,197.8 L69.2,191.5 Z" fill="#3D95C9"/>
+<text x="264.0" y="168.0" font-size="12" fill="#E6EDF3" text-anchor="start" font-weight="600">Half the radius</text>
+<text x="264.0" y="184.0" font-size="11" fill="#E6EDF3" text-anchor="start">Resistance × 16</text>
+<text x="264.0" y="199.0" font-size="11" fill="#3D95C9" text-anchor="start">Flow ÷ 16</text>
+<text x="40.0" y="240.0" font-size="10.5" fill="#8B949E" text-anchor="start">Arrows: flow speed across the vessel, same pressure difference (schematic)</text>
+</svg>

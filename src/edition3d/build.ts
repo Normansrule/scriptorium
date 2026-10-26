@@ -16,7 +16,8 @@ import { roles } from '../core/style.ts';
 import { parseInline, type InlineToken } from '../render/inline.ts';
 import { buildDisclosure } from '../disclosure/ai-disclosure.ts';
 import { formatBibliography, type CslAssets } from '../render/cite.ts';
-import { numberBook } from '../render/numbering.ts';
+import { numberBook, resolveRefs, type Numbering } from '../render/numbering.ts';
+import { latexToText } from '../render/latex-text.ts';
 import { ANCHOR_LABEL, renderTypst, type TypstLayout } from '../render/typst.ts';
 import { cleanTypstSvg } from '../export/cover.ts';
 import type { EncodeJpeg, Rasterize, TypstEngine } from '../export/engine.ts';
@@ -68,7 +69,8 @@ const enc = new TextEncoder();
 const PT_PER_IN = 72;
 
 /** Caption text for the viewer: citations become their numbers ([1, §14.2]), markup is dropped. */
-function captionText(src: string, cite: Map<string, number>): string {
+function captionText(src: string, numbering: Numbering): string {
+  const cite = numbering.cite;
   const walk = (tokens: InlineToken[]): string =>
     tokens
       .map((k) => {
@@ -80,12 +82,14 @@ function captionText(src: string, cite: Map<string, number>): string {
             const n = cite.get(k.id);
             return n ? `[${n}${k.locator ? `, ${k.locator}` : ''}]` : '';
           }
+          case 'math':
+            return latexToText(k.v);
           default:
             return k.v;
         }
       })
       .join('');
-  return walk(parseInline(src)).replace(/\s+([.,;:])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+  return resolveRefs(walk(parseInline(src)), numbering).replace(/\s+([.,;:])/g, '$1').replace(/\s{2,}/g, ' ').trim();
 }
 
 function isAnchor(v: unknown): v is Anchor {
@@ -192,8 +196,8 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
       page: where.page,
       rect: where.rect,
       alt: fig.alt,
-      caption: captionText(fig.caption, numbering.cite),
-      credit: captionText(fig.credit, numbering.cite),
+      caption: captionText(fig.caption, numbering),
+      credit: captionText(fig.credit, numbering),
       treatment,
       asset,
       ...(fig.kind === 'model3d' ? { atomScale: fig.atomScale, scale: fig.scale } : {}),
@@ -211,6 +215,7 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
     pageScale: scale,
     figures,
     webEdition: input.webEdition,
+    style: book.meta.style,
     cloth: roles.signal.light,
     disclosure: { text: disclosure.text.answer, images: disclosure.images.answer },
   });

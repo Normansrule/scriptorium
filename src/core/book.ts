@@ -276,6 +276,8 @@ export const BookMeta = z.object({
   colophon: Inline.optional(),
   /** Where the web edition will live; print and EPUB link 3D models here. */
   webUrl: z.string().url().regex(/^https:\/\/[^\s"'<>]+$/, 'must be an https:// address').optional(),
+  /** Colour of the book's chrome: chapter openers, headings, learning-block frames (src/core/bookstyle.ts). Never changes what a colour means in a figure. */
+  style: z.enum(['classic', 'bookcloth', 'plate', 'window', 'lagoon', 'orchard']).optional(),
   /** Figure id to show on the front cover (default: the first figure or 3D model). */
   coverFigure: z.string().regex(/^fig-[a-z0-9-]+$/).optional(),
   /** Back-cover and store description (≤ 4000 characters for KDP; checked by src/kdp/metadata.ts). */

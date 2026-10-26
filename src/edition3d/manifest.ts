@@ -65,6 +65,8 @@ export const Book3D = z.object({
   figures: z.array(Figure3D),
   /** relative link to the 2D web edition (reduced-motion fallback), if published alongside */
   webEdition: z.string().optional(),
+  /** the book's style (meta.style), so the viewer can match its binding and interface */
+  style: z.string().regex(/^[a-z-]{1,24}$/).optional(),
   /** colors for the binding, from the book's profile */
   cloth: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   /** honesty: what the AI drafted, shown in the viewer's About panel */

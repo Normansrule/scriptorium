@@ -5,6 +5,7 @@
  */
 import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
 import { qrSvg } from './qr.ts';
+import { styleTypst } from '../core/bookstyle.ts';
 import { fonts, roles, surface } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { latexToTypst } from './latex-typst.ts';
@@ -166,10 +167,10 @@ const EXP_LABEL: Record<string, string> = { 'hands-on': 'Hands-on', demonstratio
 const label = (t: string) => `#text(font: "${fonts.sans}", weight: "semibold", size: 8.5pt, fill: ${C.muted})[${escMarkup(t)}]`;
 
 /** A boxed learning block with a heading line; breakable so long derivations can cross a page. */
-function learnBox(head: string, body: string, stroke = C.rule): string {
-  return `#block(width: 100%, inset: 9pt, stroke: 0.75pt + ${stroke}, radius: 4pt, breakable: true)[
+function learnBox(head: string, body: string, edge = 'bk-mark'): string {
+  return `#block(width: 100%, inset: 9pt, stroke: (rest: 0.75pt + ${C.rule}, left: 2.5pt + ${edge}), radius: 4pt, breakable: true)[
   #set par(justify: false)
-  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[${head}]
+  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt, fill: bk-heading)[${head}]
   #v(2pt)
 ${body}
 ]
@@ -180,7 +181,7 @@ ${body}
 function typstSteps(xs: Array<{ latex?: string; why: string }>, ctx: TypstContext): string {
   return `#grid(columns: (14pt, 1fr), row-gutter: 7pt, column-gutter: 4pt,
 ${xs
-  .map((x, i) => `  [#text(font: "${fonts.sans}", size: 8pt, fill: ${C.muted})[${i + 1}]], [${x.latex ? `#align(left)[$ ${latexToTypst(x.latex)} $] #v(-3pt)` : ''}#text(size: 9pt, fill: ${C.muted})[${md(x.why, ctx)}]]`)
+  .map((x, i) => `  [#box(fill: bk-band, radius: 50%, width: 11pt, height: 11pt, baseline: 2pt)[#align(center + horizon)[#text(font: "${fonts.sans}", weight: "semibold", size: 7pt, fill: bk-band-ink)[${i + 1}]]]], [${x.latex ? `#align(left)[$ ${latexToTypst(x.latex)} $] #v(-3pt)` : ''}#text(size: 9pt, fill: ${C.muted})[${md(x.why, ctx)}]]`)
   .join(',\n')}
 )`;
 }
@@ -260,8 +261,8 @@ function block(b: Block, ctx: TypstContext): string {
     case 'misconception':
       return typstMisconception(b, ctx);
     case 'application':
-      return `#block(width: 100%, inset: 9pt, fill: ${C.panel}, radius: 4pt, breakable: false)[
-  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In practice] #text(font: "${fonts.sans}", size: 9pt, fill: ${C.muted})[${escMarkup(b.title)}] \\
+      return `#block(width: 100%, inset: 9pt, fill: bk-tint, stroke: (left: 2.5pt + bk-mark), radius: 4pt, breakable: false)[
+  #text(font: "${fonts.sans}", weight: "semibold", size: 9pt, fill: bk-heading)[In practice] #text(font: "${fonts.sans}", size: 9pt, fill: ${C.muted})[${escMarkup(b.title)}] \\
   ${md(b.text, ctx)}${b.numbers ? ` \\ #text(size: 9.5pt)[${md(b.numbers, ctx)}]` : ''}
 ]
 `;
@@ -310,11 +311,11 @@ function chapter(ch: Chapter, ci: number, ctx: TypstContext): string {
     .join(',\n    ');
   return `
 #pagebreak(to: "odd", weak: true)
-#text(font: "${fonts.sans}", size: 10pt, fill: ${C.muted})[Chapter ${ci + 1}]
+#box(fill: bk-band, inset: (x: 6pt), outset: (y: 3pt), radius: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt, fill: bk-band-ink, tracking: 0.03em)[Chapter ${ci + 1}]]
 = ${escMarkup(ch.title)}
 
-${ch.hook ? `#text(size: 12pt)[${md(ch.hook, ctx)}]\n#v(4pt)` : ''}
-#block(width: 100%, inset: 9pt, fill: ${C.panel}, radius: 4pt)[
+${ch.hook ? `#block(inset: (left: 8pt), stroke: (left: 2pt + bk-mark))[#text(size: 12pt)[${md(ch.hook, ctx)}]]\n#v(4pt)` : ''}
+#block(width: 100%, inset: 9pt, fill: bk-tint, radius: 4pt)[
   #text(font: "${fonts.sans}", weight: "semibold", size: 9pt)[In this chapter you will learn to]
 ${ch.goals.map((g) => `  - ${md(g, ctx)}`).join('\n')}${
   ch.prerequisites.length ? `\n  #text(size: 9pt)[#text(font: "${fonts.sans}", weight: "semibold")[You’ll need:] ${ch.prerequisites.map((x) => md(x, ctx)).join(' · ')}]` : ''
@@ -413,8 +414,9 @@ export function renderTypst(book: Book, ctx: TypstContext, layout: TypstLayout =
 #show math.equation: set text(font: "${fonts.mathPrint}")
 #show raw: set text(font: "${fonts.mono}", size: 9pt)
 #set heading(bookmarked: false)
-#show heading.where(level: 1): it => block(below: 14pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 22pt, fill: ${C.ink})[#it.body]]
-#show heading.where(level: 2): it => block(above: 16pt, below: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 13.5pt, fill: ${C.ink})[#it.body]]
+${styleTypst(m.style)}
+#show heading.where(level: 1): it => block(below: 14pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 22pt, fill: bk-heading)[#it.body]]
+#show heading.where(level: 2): it => block(above: 16pt, below: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 13.5pt, fill: bk-heading)[#it.body]]
 #show link: set text(fill: ${C.signal})
 #set list(indent: 4pt, marker: text(fill: ${C.muted})[•])
 

@@ -37,11 +37,21 @@
 
 <p align="center"><img src="assets/rendered/screens/learning-blocks.png" alt="Two boxes from the web book. Left, Derivation 2.1: the goal, the assumptions, six numbered steps from Kirchhoff's voltage law to the charging equation, each with a one-line reason, and a check of the limits and units. Right, Worked problem 2.1: given, find, a one-line strategy, four numbered steps solving for the time a logic input switches, the answer 1.20 seconds and a check." width="880"></p>
 
-**New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits (first: a transistor) can be cut away, exploded, X-rayed and played. A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
+**New — book styles.** Six looks for a book's chrome: Classic, Bookcloth, Plate & Field, Sentence & Window, Lagoon and Orchard. A style colours chapter openers, headings, learning-block edges and step numbers in print, the ebook, the web edition and the 3D Edition (whose binding and interface follow it). Figures never change colour, so blue still means the main quantity in every book, and every pairing passes WCAG AA contrast in light and dark mode (tested). Pick one in the editor, or set `"style"` in `book.json`. In the web edition, learning blocks and figures rise into place as you scroll, when your device welcomes motion.
+
+<p align="center"><img src="assets/rendered/screens/book-styles.png" alt="Four printed chapter openers side by side. Bookcloth: a deep-blue Chapter 1 chip, blue headings and an orange bar beside the hook. Lagoon: teal chip and headings with a pale teal goals box. Orchard: plum chip and headings with a lilac goals box. Sentence and Window: olive chip and headings with a warm cream goals box." width="880"></p>
+
+*The four sample books, each in its own style. Same text, same figures; only the chrome changes.*
+
+**New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits can be cut away, exploded, X-rayed and played. Four kits so far: a **transistor** (the channel forms as the gate voltage rises), a **parallel-plate capacitor** (charge and field build up), an **RC circuit** as real parts on a board (the charge slows as the capacitor fills) and a **blood vessel** (narrow it to half its radius and watch the cells slow, at sixteen times the resistance). A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
 
 <p align="center"><img src="docs/phase-0/bookcloth-3d-popped.png" alt="The 3D Edition: an open book on a dark blue desk; the DNA model from Figure 1.2 has risen off the left page and floats above the book, with the figure's caption in a panel and controls to cut away, X-ray, reset or put it back." width="880"></p>
 
 *3D Edition preview — Figure 1.2 of the biology sample has lifted off its page; its dashed outline stays on the page.*
+
+<p align="center"><img src="assets/rendered/screens/scene-kits.png" alt="Four scene kits in the 3D Edition. Top left: a transistor cross-section with its inversion channel glowing between source and drain. Top right: a parallel-plate capacitor with orange and blue charges on the plates and field arrows through a yellow dielectric. Bottom left: a circuit board with a battery, switch, striped resistor and blue capacitor, glowing charges on the copper loop and two bars for voltage and current. Bottom right: a blood vessel split into a back wall and a glass front half, red blood cells inside and blue arrows showing the flow fastest in the middle." width="880"></p>
+
+*The four scene kits, each mid-way through its timeline. Browse them under* Samples → Scene kits*, or open `3d.html?kit=vessel` directly.*
 
 ---
 
@@ -104,12 +114,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 146 unit, export, app and pipeline tests
+npm test                                         # 155 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  33 pages  all checks pass`, then `Tests  146 passed (146)` and `41 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  33 pages  all checks pass`, then `Tests  155 passed (155)` and `41 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -504,6 +514,7 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 5a | Web edition saved from the app (same files as the command line) with GitHub Pages steps; desktop app fixes for WSL graphics and missing keychains | **Done** |
 | 1a (Living Textbook Forge) | Learning blocks (derivation, worked problem, experiment, common mistake, in practice, graded practice with solutions), chapter hooks and prerequisites, concision check, drafting and review prompts that use them; flagship blocks in the engineering sample | **Done** |
 | 0 (Living Textbook Forge) | Audit, research, architecture, three visual concepts; 3D Edition prototype (page turns, pop-off figures, transistor kit, converter v0) | **Gate: waiting for review** ([docs/PHASE-0.md](docs/PHASE-0.md)) |
+| 0b (Living Textbook Forge) | Book styles (six, WCAG-tested, shared by print, ebook, web and 3D); three more scene kits (capacitor, RC circuit, blood vessel) with a gallery; converter never turns a data plot into a scene; scroll-in motion for the web edition | **Done** |
 | 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |
 

@@ -1,0 +1,89 @@
+{
+ "format": "scriptorium-plan3d",
+ "version": 1,
+ "entries": [
+  {
+   "id": "fig-parallel-plate",
+   "proposed": {
+    "mode": "scene",
+    "kit": "capacitor"
+   },
+   "reason": "The figure describes a parallel-plate capacitor; the \"capacitor\" scene shows two plates, the dielectric between them, the charge on each plate and the electric field lines across the gap. Needs your approval.",
+   "score": 1,
+   "approved": true
+  },
+  {
+   "id": "fig-energy",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-rc-circuit",
+   "proposed": {
+    "mode": "scene",
+    "kit": "rc-loop"
+   },
+   "reason": "The figure describes an RC charging circuit (real parts); the \"rc-loop\" scene shows battery, switch, colour-coded resistor and electrolytic capacitor wired in a loop, with the moving charge and bars for capacitor voltage and current. Needs your approval.",
+   "score": 1,
+   "approved": true
+  },
+  {
+   "id": "fig-charging",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-tau",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-discharge",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-lowpass-circuit",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-bode",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  },
+  {
+   "id": "fig-cutoff-shift",
+   "proposed": {
+    "mode": "lift"
+   },
+   "reason": "A 2D figure: it lifts off the page as a card you can tilt and bring close. No scene kit matches its subject.",
+   "score": 0.2,
+   "approved": true
+  }
+ ]
+}

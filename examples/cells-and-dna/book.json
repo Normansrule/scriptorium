@@ -4,6 +4,7 @@
     "subtitle": "A One-Chapter Sample on Cell Size and the Shape of DNA",
     "authors": ["Scriptorium sample book"],
     "profile": "biology",
+    "style": "lagoon",
     "citationStyle": "nature",
     "audience": "Curious newcomers with high-school algebra; no biology background needed.",
     "language": "en",

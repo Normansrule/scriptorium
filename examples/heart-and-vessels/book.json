@@ -4,6 +4,7 @@
     "subtitle": "A One-Chapter Sample on Cardiac Output, Blood Pressure and Vessel Resistance",
     "authors": ["Scriptorium sample book"],
     "profile": "medicine",
+    "style": "orchard",
     "citationStyle": "american-medical-association",
     "audience": "Curious newcomers and first-year health-science students with high-school algebra.",
     "language": "en",
@@ -77,7 +78,8 @@
               { "kind": "para", "text": "How much blood flows depends on that pressure difference and on the resistance of the vessels; resistance depends on the blood's viscosity and on each vessel's length and radius [@openstax-ap2e, §20.2]." }
             ],
             "intuition": [
-              { "kind": "para", "text": "Drinking through a straw shows the idea: a thick milkshake (higher viscosity), a longer straw, or a narrower straw all make you suck harder for the same sip. Of the three, the width of the straw matters most." }
+              { "kind": "para", "text": "Drinking through a straw shows the idea: a thick milkshake (higher viscosity), a longer straw, or a narrower straw all make you suck harder for the same sip. Of the three, the width of the straw matters most." },
+              { "kind": "figure", "id": "fig-vessel-narrowing", "src": "figures/vessel-narrowing.svg", "alt": "Diagram of two blood vessels cut lengthwise. The top vessel has the original radius; arrows across it show blood flowing fastest at the centre and slowest at the wall. The bottom vessel has half the radius, its resistance is 16 times higher and its flow one sixteenth, and its arrows are a quarter as long.", "caption": "Halve a vessel's radius and, at the same pressure difference, flow falls to one sixteenth, because resistance scales as $1/r^4$. Arrows show flow speed across the vessel in idealised smooth flow; schematic, not to scale.", "credit": "Drawn by examples/heart-and-vessels/figures.ts from Eq. (eq-resistance-radius).", "provenance": "code-drawn" }
             ],
             "formal": [
               {

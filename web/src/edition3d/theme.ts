@@ -1,9 +1,10 @@
 /**
- * The three visual concepts from Phase 0, as tokens the viewer can switch between
- * (`?theme=bookcloth|plate|window`). Bookcloth is the proposed default; the gate picks one.
+ * The viewer's looks, one per book style (src/core/bookstyle.ts): the three Phase 0 concepts plus
+ * Lagoon and Orchard. A book opens in its own style; `?theme=` overrides it. Classic books get
+ * Bookcloth, the default binding.
  */
 export interface Theme {
-  id: 'bookcloth' | 'plate' | 'window';
+  id: 'bookcloth' | 'plate' | 'window' | 'lagoon' | 'orchard';
   name: string;
   /** scene background and the table the book rests on */
   ground: string;
@@ -47,9 +48,40 @@ export const THEMES: Record<Theme['id'], Theme> = {
     paper: '#faf8f2',
     ui: { panel: 'rgba(71, 41, 19, 0.9)', ink: '#e4e0cf', muted: '#c2ad90', accent: '#c79a3e', accentInk: '#2b170a', line: 'rgba(228, 224, 207, 0.16)' },
   },
+  lagoon: {
+    id: 'lagoon',
+    name: 'Lagoon',
+    ground: '#062a2c',
+    table: '#0a3a3d',
+    cloth: '#0f6e73',
+    headband: '#f08466',
+    paper: '#fbfaf6',
+    ui: { panel: 'rgba(6, 36, 38, 0.88)', ink: '#e9f6f4', muted: '#9fc4c0', accent: '#f08466', accentInk: '#2a0d06', line: 'rgba(233, 246, 244, 0.16)' },
+  },
+  orchard: {
+    id: 'orchard',
+    name: 'Orchard',
+    ground: '#1f1026',
+    table: '#2b1734',
+    cloth: '#5b2a6e',
+    headband: '#e6ae3a',
+    paper: '#fcfaf6',
+    ui: { panel: 'rgba(33, 17, 41, 0.88)', ink: '#f4ecf7', muted: '#c4afcd', accent: '#e6ae3a', accentInk: '#2a1a02', line: 'rgba(244, 236, 247, 0.16)' },
+  },
 };
 
-export function themeFromUrl(): Theme {
-  const id = new URLSearchParams(location.search).get('theme');
-  return id && id in THEMES ? THEMES[id as Theme['id']] : THEMES.bookcloth;
+const isTheme = (id: string | null | undefined): id is Theme['id'] => !!id && id in THEMES;
+
+/** The URL's choice wins, then the book's style, then Bookcloth. */
+export function pickTheme(fromUrl: string | null, bookStyle?: string): Theme {
+  if (isTheme(fromUrl)) return THEMES[fromUrl];
+  if (isTheme(bookStyle)) return THEMES[bookStyle];
+  return THEMES.bookcloth;
+}
+
+export function applyTheme(theme: Theme): void {
+  const root = document.documentElement;
+  root.dataset.theme = theme.id;
+  for (const [k, v] of Object.entries(theme.ui)) root.style.setProperty(`--${k}`, v);
+  root.style.setProperty('--ground', theme.ground);
 }

@@ -55,5 +55,5 @@ Start from the concrete (a question, an everyday case), then the idea, then the 
 ## Next
 
 - **A visual vocabulary per book:** each recurring concept keeps one colour and one mark in every figure, the way the best illustrated books give each actor a consistent look. Figures already share colour-blind-safe roles (`src/core/style.ts`); the next step makes the mapping from concept to role part of the book source.
-- **Living diagrams:** a process animates with a scrubbable timeline in the 3D Edition, and print gets numbered stills of the same steps.
+- **Living diagrams:** a process animates with a scrubbable timeline in the 3D Edition (four scene kits do this today: transistor, capacitor, RC circuit, blood vessel); next, print gets numbered stills of the same steps.
 - **The flagship chapter:** the transistor, with every block type and its scene kit.

@@ -7,6 +7,7 @@
 import katex from 'katex';
 import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Exercise, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
 import type { Model } from '../core/molecule.ts';
+import { styleCss } from '../core/bookstyle.ts';
 import { cssVariables, fonts } from '../core/style.ts';
 import { parseInline, type InlineToken } from './inline.ts';
 import { checkLabel, resolveRefs, type Numbering } from './numbering.ts';
@@ -334,7 +335,7 @@ export function renderHtml(book: Book, ctx: HtmlContext): string {
     .map((ch, i) => `<li><a href="#${ch.id}">${i + 1}. ${escHtml(ch.title)}</a><ol>${ch.sections.map((s) => `<li><a href="#${s.id}">${escHtml(s.title)}</a></li>`).join('')}</ol></li>`)
     .join('');
   return `<!doctype html>
-<html lang="${escHtml(m.language)}">
+<html lang="${escHtml(m.language)}"${m.style && m.style !== 'classic' ? ` data-book-style="${escHtml(m.style)}"` : ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -376,6 +377,7 @@ export function bookCss(): string {
 @font-face { font-family: "${fonts.sans}"; src: url("fonts/SourceSans3-Semibold.ttf"); font-weight: 600; font-display: swap; }
 :root { ${cssVariables('light')} color-scheme: light dark; }
 @media (prefers-color-scheme: dark) { :root { ${cssVariables('dark')} } }
+${styleCss()}
 * { box-sizing: border-box; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 body { margin: 0; background: var(--sc-paper); color: var(--sc-ink); font: 18px/1.6 "${fonts.body}", Georgia, serif; display: grid; grid-template-columns: 17rem minmax(0, 1fr); }
@@ -389,10 +391,12 @@ h1, h2, h3, h4, .label, .layer-label, .kicker, figcaption, .eq-where caption, ta
 h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 .3rem; } .subtitle { font: 1.25rem/1.3 "${fonts.sans}", sans-serif; color: var(--sc-muted); margin: 0 0 1rem; }
 .byline { color: var(--sc-muted); font-family: "${fonts.sans}", sans-serif; } .colophon { font-size: .85rem; color: var(--sc-muted); }
 h2 { font-size: 1.9rem; margin: 3.5rem 0 1rem; font-weight: 600; } h3 { font-size: 1.35rem; margin: 2.5rem 0 .8rem; font-weight: 600; } h4 { margin: 1.5rem 0 .5rem; }
-.kicker { color: var(--sc-muted); margin: 4rem 0 -0.8rem; font-size: .95rem; }
+.kicker { display: inline-block; margin: 4rem 0 0; padding: .2rem .7rem; border-radius: 999px; background: var(--bk-band); color: var(--bk-band-ink); font-size: .85rem; font-weight: 600; letter-spacing: .04em; }
+.kicker + h2 { margin-top: .6rem; }
+h2, h3 { color: var(--bk-heading); }
 .chapter { border-top: 1px solid var(--sc-rule); }
 .layer { margin: 1.1rem 0; } .layer-label { font-size: .78rem; letter-spacing: .04em; color: var(--sc-muted); font-weight: 600; margin-bottom: .2rem; }
-.goals, .takeaways, .example { background: var(--sc-panel); border-radius: 8px; padding: .8rem 1rem; margin: 1.2rem 0; }
+.goals, .takeaways, .example { background: var(--bk-tint); border-radius: 8px; padding: .8rem 1rem; margin: 1.2rem 0; }
 .takeaways { background: transparent; border: 1px solid var(--sc-rule); }
 .label { font-weight: 600; font-size: .9rem; }
 .callout { border-left: 4px solid var(--sc-signal); background: var(--sc-panel); padding: .7rem 1rem; margin: 1.2rem 0; border-radius: 0 8px 8px 0; }
@@ -422,9 +426,10 @@ table.report { border-collapse: collapse; font-size: .82rem; width: 100%; } .rep
 .status { font-weight: 600; } .status.verified { color: var(--sc-verified); } .status.failed, .status.unverified { color: var(--sc-accent); }
 code { font-size: .88em; }
 .katex { font-size: 1.05em; }
-.hook { font-size: 1.2rem; line-height: 1.5; margin: 1rem 0 1.4rem; }
+.hook { font-size: 1.2rem; line-height: 1.5; margin: 1rem 0 1.4rem; padding-left: .9rem; border-left: 3px solid var(--bk-mark); }
 .prereq { margin: .6rem 0 0; font-size: .92rem; }
-.learn { border: 1px solid var(--sc-rule); border-radius: 10px; padding: .9rem 1.1rem; margin: 1.6rem 0; }
+.learn { border: 1px solid var(--sc-rule); border-left: 4px solid var(--bk-mark); border-radius: 10px; padding: .9rem 1.1rem; margin: 1.6rem 0; }
+.learn-kind { color: var(--bk-heading); }
 .learn-head { display: flex; flex-wrap: wrap; gap: .6rem; align-items: baseline; margin-bottom: .4rem; font-family: "${fonts.sans}", sans-serif; }
 .learn-kind { font-weight: 600; } .to-eq { font-size: .88rem; margin-left: auto; }
 .level { font: 600 .74rem/1 "${fonts.sans}", sans-serif; letter-spacing: .03em; padding: .2rem .45rem; border-radius: 999px; background: var(--sc-panel); color: var(--sc-muted); }
@@ -432,10 +437,18 @@ code { font-size: .88em; }
 .learn p { margin: .45rem 0; } .goal, .statement { font-weight: 600; }
 .steps { counter-reset: step; list-style: none; padding: 0; margin: .6rem 0; }
 .steps > li { counter-increment: step; display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); column-gap: .4rem; padding: .35rem 0; border-top: 1px dashed var(--sc-rule); }
-.steps > li::before { content: counter(step); grid-row: 1 / span 2; font: 600 .82rem "${fonts.sans}", sans-serif; color: var(--sc-muted); padding-top: .9rem; }
+.steps > li::before { content: counter(step); grid-row: 1 / span 2; align-self: start; display: grid; place-items: center; width: 1.35rem; height: 1.35rem; margin-top: .75rem; border-radius: 50%; background: var(--bk-band); color: var(--bk-band-ink); font: 600 .74rem/1 "${fonts.sans}", sans-serif; }
 .step-math { overflow-x: auto; } .step-math .katex-display { margin: .3rem 0; } .step-math .katex-display > .katex { text-align: left; }
 .why { font-size: .92rem; color: var(--sc-muted); margin: 0 !important; }
-.steps > li:not(:has(.step-math))::before { padding-top: .1rem; }
+.steps > li:not(:has(.step-math))::before { margin-top: 0; }
+/* Learning blocks, figures and equations rise into place as they scroll into view: CSS only, screen only, and only when motion is welcome. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .learn, figure, .equation, .goals, .takeaways { animation: sc-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+    @keyframes sc-rise { from { opacity: .001; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+  }
+}
+.toc a:focus-visible, .toc a:hover { color: var(--bk-heading); }
 .given-find, .exp-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .4rem 1.4rem; }
 .given-find ul, .exp-cols ul, .exp-cols ol { margin: .2rem 0; padding-left: 1.2rem; }
 .answer { font-weight: 600; } .sanity { font-size: .92rem; }
@@ -443,7 +456,7 @@ code { font-size: .88em; }
 .pox dt { margin: 0; font-size: .9rem; color: var(--sc-muted); } .pox dd { margin: 0; }
 .safety-line { font-size: .9rem; border-left: 3px solid var(--sc-accent); padding-left: .6rem; }
 .misconception { border-color: color-mix(in srgb, var(--sc-accent) 45%, var(--sc-rule)); }
-.application { background: var(--sc-panel); border: 0; } .app-title { color: var(--sc-muted); } .numbers { font-size: .92rem; }
+.application { background: var(--bk-tint); border: 0; border-left: 4px solid var(--bk-mark); } .app-title { color: var(--sc-muted); } .numbers { font-size: .92rem; }
 table.data { border-collapse: collapse; font-size: .88rem; margin: .5rem 0; font-variant-numeric: tabular-nums; } table.data th, table.data td { border-bottom: 1px solid var(--sc-rule); padding: .25rem .8rem .25rem 0; text-align: left; }
 .data-source { font-size: .8rem; color: var(--sc-muted); }
 .exercises { list-style: none; padding: 0; } .exercises > li { padding: .6rem 0; border-top: 1px solid var(--sc-rule); }
