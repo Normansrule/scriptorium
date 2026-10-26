@@ -17,7 +17,7 @@
     "mode": "scene",
     "kit": "vessel"
    },
-   "reason": "The figure describes a blood vessel (flow and radius); the \"vessel\" scene shows the vessel wall and inner lining as two halves, red blood cells, and the velocity profile across the lumen. Needs your approval.",
+   "reason": "It matches the scene kit “Blood vessel (flow and radius)”, which shows the vessel wall and inner lining (the front half as glass), red blood cells, and the flow-speed profile across the vessel. Needs your approval.",
    "score": 1,
    "approved": true
   },

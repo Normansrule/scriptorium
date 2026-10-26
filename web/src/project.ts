@@ -3,6 +3,7 @@
  * file), plus validation and autosave. Everything the three steps — Write, Edit, Publish —
  * read and change lives here.
  */
+import { describePath } from '../../src/core/issues.ts';
 import { Bibliography, Book, citedIds, missingTerms, type Reference } from '../../src/core/book.ts';
 import { Model } from '../../src/core/molecule.ts';
 import type { PipelineState, ReportItem } from '../../src/core/pipeline.ts';
@@ -57,7 +58,7 @@ export function problems(p: Project): string[] {
   const out: string[] = [];
   const parsed = Book.safeParse(p.book);
   if (!parsed.success) {
-    for (const i of parsed.error.issues.slice(0, 6)) out.push(`${i.path.join(' › ') || 'book'}: ${i.message}`);
+    for (const i of parsed.error.issues.slice(0, 6)) out.push(`${describePath(p.book, i.path as PropertyKey[])}: ${i.message}`);
     return out;
   }
   const book = parsed.data;
@@ -104,7 +105,7 @@ export function fromFile(text: string, sanitizeSvg?: (svg: string) => string): P
   }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('That file is not a Scriptorium project.');
   const book = Book.safeParse(raw.book);
-  if (!book.success) throw new Error(`The book in that file does not pass the schema: ${book.error.issues[0]?.path.join(' › ')} ${book.error.issues[0]?.message}`);
+  if (!book.success) throw new Error(`The book in that file does not pass the schema: ${describePath(raw.book, (book.error.issues[0]?.path ?? []) as PropertyKey[])}: ${book.error.issues[0]?.message}`);
   const refs = Bibliography.safeParse(raw.references ?? []);
   if (!refs.success) throw new Error(`The references in that file do not pass the schema: ${refs.error.issues[0]?.message}`);
   const figures: Record<string, string> = {};

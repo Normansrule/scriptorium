@@ -5,7 +5,7 @@
  *   index.html                the whole book (sanitized), with KaTeX math and MathML
  *   assets/book.css           the book's styles; fonts in assets/fonts/
  *   assets/katex/…            KaTeX's stylesheet and fonts
- *   assets/viewer3d.js        the 3D viewer, only when the book has 3D models
+ *   assets/viewer3d.js        3D viewer + explorables, only when the book has either
  *   figures/…                 every figure, light and dark
  *
  * The folder works opened from disk and on any static host, including GitHub Pages.
@@ -24,7 +24,7 @@ export interface WebAssets {
   katexFonts: Record<string, Uint8Array>;
   /** Source Serif 4 / Source Sans 3 files by name, as referenced from book.css */
   fonts: Record<string, Uint8Array>;
-  /** the bundled 3D viewer script; needed only for books with 3D models */
+  /** the bundled page script (3D viewer and explorables); needed only for books with either */
   viewerJs?: string;
 }
 
@@ -79,7 +79,7 @@ export function buildWebBook(input: WebInput, assets: WebAssets, sanitize: (body
   }
   for (const [path, data] of Object.entries(input.files)) if (/^figures\/[^/]+\.(svg|png)$/.test(path)) out[path] = data;
   if (hasModels(book)) {
-    if (!assets.viewerJs) throw new Error('This book has 3D models, so the web edition needs the 3D viewer script.');
+    if (!assets.viewerJs) throw new Error('This book has 3D models or explorables, so the web edition needs its script (assets/viewer3d.js).');
     out['assets/viewer3d.js'] = enc.encode(assets.viewerJs);
   }
   return out;

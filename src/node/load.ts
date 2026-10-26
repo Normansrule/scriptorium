@@ -1,6 +1,7 @@
 /**
  * Node-side loading of a book folder: book.json + references.json + figures/.
  */
+import { describeIssues } from '../core/issues.ts';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +22,10 @@ export function loadBook(bookJsonPath: string): LoadedBook {
   if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'book.json');
   if (!existsSync(path)) throw new Error(`No book found at ${path}. Pass a book.json file or the folder that contains one.`);
   const dir = dirname(path);
-  const book = Book.parse(JSON.parse(readFileSync(path, 'utf8')));
+  const raw: unknown = JSON.parse(readFileSync(path, 'utf8'));
+  const parsed = Book.safeParse(raw);
+  if (!parsed.success) throw new Error(`${path} does not match the book format:\n${describeIssues(raw, parsed.error.issues)}`);
+  const book = parsed.data;
   const refs = Bibliography.parse(JSON.parse(readFileSync(join(dir, book.bibliography), 'utf8')));
   const ids = new Set(refs.map((r) => r.id));
   const missing = [...citedIds(book)].filter((id) => !ids.has(id));

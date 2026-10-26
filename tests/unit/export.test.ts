@@ -28,11 +28,13 @@ describe('exports', () => {
     expect(bib.get('sallen-key-1955')).toMatch(/R\. P\. Sallen and E\. L\. Key, “A practical method of designing RC active filters,” IRE Transactions on Circuit Theory, vol\. 2, no\. 1, pp\. 74–85/);
   });
 
-  it('web page has a CSP, no scripts, and survives sanitizing unchanged in meaning', () => {
+  it('web page has a CSP, only its own script, and survives sanitizing unchanged in meaning', () => {
     const html = sanitizePage(renderHtml(book, { numbering, bibliography: formatBibliography(refs, order, assets, 'html'), refs, figureBase: 'figures/' }));
     expect(html).toContain('Content-Security-Policy');
-    expect(html).toMatch(/default-src 'none'/);
-    expect(html).not.toMatch(/<script/i);
+    expect(html).toMatch(/default-src 'none'; script-src 'self';/);
+    // one script, our own file, loaded from the head; nothing inline survives in the body
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script defer src="assets/viewer3d.js">']);
+    expect(html.split('<body>')[1]).not.toMatch(/<script|on\w+=/i);
     expect(html).toContain('<math');
     expect(html).toContain('media="(prefers-color-scheme: dark)"');
   });

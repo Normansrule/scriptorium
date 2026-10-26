@@ -6,7 +6,8 @@
  */
 import { z } from 'zod';
 import type { Book, Chapter, Reference, Section } from './book.ts';
-import { Block, Book as BookSchema, Exercise } from './book.ts';
+import { Block, Book as BookSchema, Exercise, Explore, Quiz } from './book.ts';
+import { exploreProblems } from '../render/explore.ts';
 import { lintBook } from './concision.ts';
 import type { Profile } from './profile.ts';
 import { fleschKincaid, TARGET_GRADE } from './readability.ts';
@@ -374,6 +375,25 @@ async function stageFigures(st: PipelineState, d: PipelineDeps): Promise<void> {
             st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${pb.data.id}`, message: `Plot dropped: ${(e as Error).message}` });
           }
           continue;
+        }
+        if ((b as { kind?: string }).kind === 'explore') {
+          // a proposed explorable must parse, and its expressions must only use its own sliders
+          const xb = Explore.safeParse({ ...(b as object), test: 'unverified' });
+          const problems = xb.success ? exploreProblems(xb.data) : [xb.error.issues.map((i) => i.message).join('; ')];
+          if (problems.length) {
+            st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${(b as { id?: string }).id ?? 'explore'}`, message: `Explorable dropped: ${problems.join(' ')}` });
+            continue;
+          }
+          st.report.push({ stage: 'figures', level: 'warning', where: `${sid}/${xb.data!.id}`, message: 'Explorable readouts are unverified: add a check in tests/equations that recomputes them at the defaults, and point "test" at it before publishing.' });
+          out.push(xb.data!);
+          continue;
+        }
+        if ((b as { kind?: string }).kind === 'quiz') {
+          const q = Quiz.safeParse(b);
+          if (!q.success) {
+            st.report.push({ stage: 'figures', level: 'problem', where: `${sid}/${(b as { id?: string }).id ?? 'quiz'}`, message: `Self-check dropped: ${q.error.issues.map((i) => i.message).join('; ')}` });
+            continue;
+          }
         }
         const lb = b as { kind?: string; id?: string; steps?: Array<{ latex?: string }>; test?: string };
         if (lb.kind === 'derivation' || lb.kind === 'problem') {

@@ -78,3 +78,20 @@ def test_dna_model_pairs_are_complementary():
     pair = {"A": "T", "T": "A", "G": "C", "C": "G"}
     for k in range(0, len(atoms), 4):
         assert pair[atoms[k + 1]["label"]] == atoms[k + 2]["label"]
+
+
+# --- Explorables: the book's own expressions, evaluated from book.json --------------------------
+
+from explore_check import close as near, curve, find, readouts  # noqa: E402
+
+
+def test_explore_cell_size():
+    b = find("cells-and-dna", "xpl-cell-size")
+    r = readouts(b)
+    assert near(r["Surface per volume, 3/r"], 3.0)  # radius 1 µm, as in Eq. (eq-sa-volume)'s example
+    assert near(r["Surface area 4πr²"] / r["Volume 4πr³/3"], r["Surface per volume, 3/r"])
+    big = readouts(b, r=10)
+    assert near(big["Surface area 4πr²"] / r["Surface area 4πr²"], 100)
+    assert near(big["Volume 4πr³/3"] / r["Volume 4πr³/3"], 1000)
+    assert near(big["Surface per volume, 3/r"], 0.3)  # the textbook-sized 20 µm cell
+    assert near(curve(b, 10), 0.3)

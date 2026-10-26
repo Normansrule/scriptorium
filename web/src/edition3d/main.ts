@@ -10,13 +10,14 @@
  * the 2D Edition first and, if opened anyway, nothing animates.
  */
 import * as THREE from 'three';
-import { Book3D, type Figure3D } from '../../../src/edition3d/manifest.ts';
+import { Book3D, type Explorable3D, type Figure3D } from '../../../src/edition3d/manifest.ts';
 import { KITS as KIT_INFO, kitById } from '../../../src/edition3d/kits.ts';
 import { BookModel } from './book.ts';
 import { FigureView, KITS, type CameraPose } from './figure.ts';
 import { ICON } from './icons.ts';
 import { Stage } from './stage.ts';
 import { applyTheme, pickTheme, type Theme } from './theme.ts';
+import { ExplorePanel } from './explore-panel.ts';
 import './edition3d.css';
 
 const root = document.getElementById('edition3d')!;
@@ -218,25 +219,38 @@ async function main(): Promise<void> {
   stage.onResize.add(placeCamera);
   placeCamera();
 
-  // ---- hotspots: one real button per liftable figure on the open spread
-  let spots: Array<{ fig: Figure3D; btn: HTMLButtonElement }> = [];
-  const visibleFigures = () => book.figures.filter((f) => f.treatment.mode !== 'flat' && model.figureRect(f.page, f.rect));
+  // ---- hotspots: one real button per liftable figure, and per explorable, on the open spread
+  const explorePanel = new ExplorePanel(ui, () => (theme.id === 'plate' ? 'light' : 'dark'));
+  type Spot = { id: string; page: number; rect: Figure3D['rect']; btn: HTMLButtonElement };
+  let spots: Spot[] = [];
+  const busy = () => figureView.isOpen || explorePanel.isOpen;
   const buildSpots = () => {
     hotspots.innerHTML = '';
-    spots = visibleFigures().map((fig) => {
-      const kind = fig.treatment.mode === 'lift' ? 'Lift' : 'Open in 3D';
-      const btn = el('button', { type: 'button', class: 'spot' }, `<span class="spot-pill">${fig.treatment.mode === 'lift' ? ICON.lift : ICON.cube}<span>${kind}</span></span>`);
-      btn.setAttribute('aria-label', `${kind}: ${fig.number ? `Figure ${fig.number}. ` : ''}${fig.alt}`);
-      btn.addEventListener('click', () => void openFigure(fig, btn));
-      hotspots.append(btn);
-      return { fig, btn };
-    });
+    const figs: Spot[] = book.figures
+      .filter((f) => f.treatment.mode !== 'flat' && model.figureRect(f.page, f.rect))
+      .map((fig) => {
+        const kind = fig.treatment.mode === 'lift' ? 'Lift' : 'Open in 3D';
+        const btn = el('button', { type: 'button', class: 'spot' }, `<span class="spot-pill">${fig.treatment.mode === 'lift' ? ICON.lift : ICON.cube}<span>${kind}</span></span>`);
+        btn.setAttribute('aria-label', `${kind}: ${fig.number ? `Figure ${fig.number}. ` : ''}${fig.alt}`);
+        btn.addEventListener('click', () => void openFigure(fig, btn));
+        return { id: fig.id, page: fig.page, rect: fig.rect, btn };
+      });
+    const xpls: Spot[] = book.explorables
+      .filter((x) => model.figureRect(x.page, x.rect))
+      .map((x) => {
+        const btn = el('button', { type: 'button', class: 'spot spot-explore' }, `<span class="spot-pill">${ICON.sliders}<span>Try it</span></span>`);
+        btn.setAttribute('aria-label', `Try it: Explore ${x.number}, ${x.title}. Opens live sliders over the book.`);
+        btn.addEventListener('click', () => openExplore(x, btn));
+        return { id: x.id, page: x.page, rect: x.rect, btn };
+      });
+    spots = [...figs, ...xpls];
+    hotspots.append(...spots.map((s) => s.btn));
     stage.invalidate();
   };
   stage.afterRender.add(() => {
-    for (const { fig, btn } of spots) {
-      const r = model.figureRect(fig.page, fig.rect);
-      if (!r || figureView.isOpen) {
+    for (const { page, rect, btn } of spots) {
+      const r = model.figureRect(page, rect);
+      if (!r || busy()) {
         btn.hidden = true;
         continue;
       }
@@ -249,6 +263,18 @@ async function main(): Promise<void> {
       btn.style.height = `${(Math.max(...ys) - Math.min(...ys)).toFixed(1)}px`;
     }
   });
+  const openExplore = (x: Explorable3D, btn: HTMLElement) => {
+    top.classList.add('dim');
+    prev.hidden = next.hidden = true;
+    explorePanel.open(x, btn);
+    stage.invalidate();
+  };
+  explorePanel.onClose = () => {
+    top.classList.remove('dim');
+    prev.hidden = next.hidden = false;
+    for (const s of spots) s.btn.hidden = false; // so focus can return to the hotspot before the next frame
+    stage.invalidate();
+  };
 
   const pageLabel = () => {
     const s = model.spread;
@@ -274,11 +300,11 @@ async function main(): Promise<void> {
     prev.hidden = next.hidden = false;
     buildSpots();
     // the hotspots were rebuilt: put keyboard focus back on the figure that was open
-    spots.find((s) => s.fig.id === fig.id)?.btn.focus({ preventScroll: true });
+    spots.find((s) => s.id === fig.id)?.btn.focus({ preventScroll: true });
   };
 
   const turn = async (dir: 1 | -1) => {
-    if (figureView.isOpen) return;
+    if (busy()) return;
     await model.turn(dir);
   };
   prev.addEventListener('click', () => void turn(-1));
@@ -290,7 +316,7 @@ async function main(): Promise<void> {
   const table = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1);
   let drag: { dir: 1 | -1; x0: number; t0: number; p: number; width: number; id: number } | null = null;
   canvas.addEventListener('pointerdown', (e) => {
-    if (figureView.isOpen || drag || e.button > 0) return;
+    if (busy() || drag || e.button > 0) return;
     const r = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), stage.camera);
     const hit = ray.ray.intersectPlane(table, new THREE.Vector3());
@@ -328,7 +354,7 @@ async function main(): Promise<void> {
       e.preventDefault();
       return;
     }
-    if (figureView.isOpen) return;
+    if (busy()) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') {
       e.preventDefault();
       void turn(1);

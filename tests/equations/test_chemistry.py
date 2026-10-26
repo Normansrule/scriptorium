@@ -63,3 +63,25 @@ def test_ph_examples():
     assert close(-math.log10(1.0e-3), 3.00)
     # one pH unit is a factor of ten; pH 3 vs pH 7 is 10 000×
     assert close(1.0e-3 / 1.0e-7, 10_000)
+
+
+# --- Explorables: the book's own expressions, evaluated from book.json --------------------------
+
+from explore_check import close as near, curve, find, readouts  # noqa: E402
+
+
+def test_explore_dilution():
+    b = find("molecular-shapes", "xpl-dilution")
+    r = readouts(b)
+    assert near(r["Solute carried over"], 0.100)  # 2.00 M × 50.0 mL, Eq. (eq-dilution)'s example
+    assert near(r["Final volume for 0.500 M"], 200)
+    assert near(curve(b, 200), 0.5)
+    assert near(readouts(b, V1=100)["Final volume for 0.500 M"], 400)
+
+
+def test_explore_ph():
+    b = find("molecular-shapes", "xpl-ph")
+    assert near(readouts(b)["pH"], 7.0)
+    assert near(readouts(b, c=1e-3)["pH"], 3.0)
+    assert near(readouts(b, c=1e-3)["Hydronium compared with pure water"], 1e4)
+    assert near(curve(b, 1e-5), 5.0)

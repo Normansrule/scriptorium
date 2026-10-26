@@ -325,7 +325,7 @@ async function edition3d(args: string[]): Promise<void> {
   const r = await exportEdition3D({ book, refs, models, csl: cslAssets(book.meta.citationStyle), webEdition: flag(args, 'web-edition', '../web/index.html') }, dir, out, (m) => process.stdout.write(`\r${m.padEnd(60)}`));
   process.stdout.write('\r'.padEnd(62) + '\r');
   const by = (mode: string) => r.manifest.figures.filter((f) => f.treatment.mode === mode).length;
-  console.log(`✓ 3D Edition → ${relative(process.cwd(), out)}: ${r.manifest.pages.length} pages, ${r.manifest.figures.length} figures (${by('model')} models, ${by('scene')} scenes, ${by('lift')} lift, ${by('flat')} flat) in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+  console.log(`✓ 3D Edition → ${relative(process.cwd(), out)}: ${r.manifest.pages.length} pages, ${r.manifest.figures.length} figures (${by('model')} models, ${by('scene')} scenes, ${by('lift')} lift, ${by('flat')} flat)${r.manifest.explorables.length ? `, ${r.manifest.explorables.length} live explorables` : ''} in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
   for (const w of r.warnings) console.log(`  ! ${w}`);
 }
 

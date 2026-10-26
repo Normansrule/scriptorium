@@ -26,10 +26,29 @@ Each block has a fixed structure, so it can't be padded and can't skip a step.
 | `experiment` | question · **safety** · what you need · what to do · **predict → observe → explain** · optional real data with its source | Hands-on only when low-risk; the domain's restricted-detail rules always apply |
 | `misconception` | the mistake · why it's tempting · what's true · **a test that tells them apart** | — |
 | `application` | where the idea is used for real · a worked number from practice | — |
+| `explore` | a question to answer by dragging · 1–4 sliders · up to 3 curves · live numbers · **what to notice** | Readouts re-computed from the book's own expressions by a test |
+| `quiz` (Check yourself) | one question · 2–5 answers, exactly one right · **why** for every answer, the wrong ones naming the slip | Exactly one right answer (schema) |
 | `figure` / `model3d` | caption states the takeaway first · alt text · credit and provenance | Lifts off the page in the 3D Edition |
 | Exercise | prompt · level · answer · full solution steps | Answer re-checked by a test |
 
-The verification report at the back of every book lists every automated check: equations, derivations, worked problems and exercise answers.
+The verification report at the back of every book lists every automated check: equations, derivations, worked problems, explorables and exercise answers.
+
+## Explorables and self-checks
+
+Reading that "doubling the voltage quadruples the energy" is one thing; dragging a slider and watching the parabola climb is another. An **explorable** gives the reader one to four sliders, a plot that redraws as they drag, and a few live numbers, around a question the sliders answer ("Which slider moves the 63.2 % crossing?"). *Pin* keeps an earlier curve for comparison; *Sweep* plays the first slider across its range.
+
+The same block serves every edition:
+
+| Edition | What the reader gets |
+|---|---|
+| Web | Live sliders, plot and numbers (one small script, `assets/viewer3d.js`); without script, the printed still |
+| Print | A still with three curves (the first slider low, default and high) or three marked points, the slider ranges, the numbers at the defaults, what to notice, and a link and QR code to the live one |
+| Ebook | The still and the link |
+| 3D Edition | A **Try it** hotspot on the printed box opens the live version over the book |
+
+Every expression uses the safe expression language of the code-drawn plots, so a model can propose an explorable without running code. The build drops one whose expressions use names that are not its sliders, and a Python test evaluates the book's own expressions (not a copy) at the defaults and checks them against the physics with Pint.
+
+A **Check yourself** question ends a section where a mistake is worth catching. Each wrong answer is a slip a real student makes, and choosing it shows why it is wrong; choosing the right one shows why it is right. On the web this is plain HTML and CSS; in print, the answers are in the back of the book with the exercise solutions.
 
 ## Concision rules
 
@@ -55,5 +74,5 @@ Start from the concrete (a question, an everyday case), then the idea, then the 
 ## Next
 
 - **A visual vocabulary per book:** each recurring concept keeps one colour and one mark in every figure, the way the best illustrated books give each actor a consistent look. Figures already share colour-blind-safe roles (`src/core/style.ts`); the next step makes the mapping from concept to role part of the book source.
-- **Living diagrams:** a process animates with a scrubbable timeline in the 3D Edition (four scene kits do this today: transistor, capacitor, RC circuit, blood vessel); next, print gets numbered stills of the same steps.
+- **Living diagrams:** a process animates with a scrubbable timeline in the 3D Edition (six scene kits do this today: transistor, capacitor, RC circuit, blood vessel, cell size, electron groups); next, print gets numbered stills of the same steps, the way explorables already print theirs.
 - **The flagship chapter:** the transistor, with every block type and its scene kit.

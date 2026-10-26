@@ -111,15 +111,33 @@ export interface PlotSpec {
   width?: number;
   height?: number;
   samples?: number;
+  /** where the legend goes when there are two or more series: inside the plot's top-left corner (default) or under the axis, clear of every curve */
+  legend?: 'inside' | 'below';
 }
 
 export function plot(spec: PlotSpec, mode: Mode): string {
   const pal = palette(mode);
   const W = spec.width ?? FIG_WIDTH_PX;
-  const H = spec.height ?? 270;
+  const below = spec.legend === 'below' && spec.series.length >= 2;
+  // rows the legend needs under the plot (same wrapping rule as the drawing below)
+  let legendRows = 0;
+  if (below) {
+    let x = 0;
+    legendRows = 1;
+    for (const s of spec.series) {
+      const w = 27 + s.label.length * 6.2 + 14;
+      if (x + w > W - 70 && x > 0) {
+        legendRows++;
+        x = 0;
+      }
+      x += w;
+    }
+  }
+  const plotH = spec.height ?? 270;
+  const H = plotH + (below ? legendRows * 18 + 8 : 0);
   const m = { l: 52, r: 18, t: 14, b: 44 };
   const pw = W - m.l - m.r;
-  const ph = H - m.t - m.b;
+  const ph = plotH - m.t - m.b;
   const lx = (v: number) => (spec.x.log ? Math.log10(v) : v);
   const X = (v: number) => m.l + ((lx(v) - lx(spec.x.from)) / (lx(spec.x.to) - lx(spec.x.from))) * pw;
   const ly = (v: number) => (spec.y.log ? Math.log10(v) : v);
@@ -145,7 +163,7 @@ export function plot(spec: PlotSpec, mode: Mode): string {
   // axes
   parts.push(line(m.l, m.t + ph, m.l + pw, m.t + ph, pal.muted, 1));
   parts.push(line(m.l, m.t, m.l, m.t + ph, pal.muted, 1));
-  parts.push(text(m.l + pw / 2, H - 6, spec.x.label, { anchor: 'middle', fill: pal.ink, size: 12 }));
+  parts.push(text(m.l + pw / 2, plotH - 6, spec.x.label, { anchor: 'middle', fill: pal.ink, size: 12 }));
   parts.push(`<text transform="translate(13 ${(m.t + ph / 2).toFixed(1)}) rotate(-90)" font-size="12" fill="${pal.ink}" text-anchor="middle">${esc(spec.y.label)}</text>`);
 
   // reference lines
@@ -159,15 +177,37 @@ export function plot(spec: PlotSpec, mode: Mode): string {
   spec.series.forEach((s, i) => {
     const f = compile(s.expr);
     const color = s.role ? pal.role(s.role) : pal.ink;
-    const pts: string[] = [];
+    // A curve that leaves the plot stops at the edge and starts again where it comes back, rather
+    // than running along the frame (which would read as a real flat stretch).
+    const segs: string[][] = [];
+    let cur: string[] | null = null;
+    let prevOut: string | null = null;
+    const inRange = (v: number) => (spec.y.log ? v > 0 && ly(v) <= ly(spec.y.to) + 1e-9 && ly(v) >= ly(spec.y.from) - 1e-9 : v <= spec.y.to + 1e-9 && v >= spec.y.from - (spec.y.to - spec.y.from) * 0.02);
     for (let k = 0; k <= n; k++) {
       const u = k / n;
       const xv = spec.x.log ? 10 ** (lx(spec.x.from) + u * (lx(spec.x.to) - lx(spec.x.from))) : spec.x.from + u * (spec.x.to - spec.x.from);
       const yv = f({ x: xv, ...(s.vars ?? {}) });
-      if (Number.isFinite(yv)) pts.push(`${X(xv).toFixed(1)},${Y(clampY(yv)).toFixed(1)}`);
+      if (!Number.isFinite(yv)) {
+        cur = null;
+        continue;
+      }
+      const pt = `${X(xv).toFixed(1)},${Y(clampY(yv)).toFixed(1)}`;
+      if (inRange(yv)) {
+        if (!cur) {
+          cur = prevOut ? [prevOut] : [];
+          segs.push(cur);
+        }
+        cur.push(pt);
+        prevOut = null;
+      } else {
+        if (cur) cur.push(pt); // reach the edge, then stop
+        cur = null;
+        prevOut = pt;
+      }
     }
     const dash = dashes[i % dashes.length]!;
-    parts.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.25" stroke-linejoin="round"${dash !== 'none' ? ` stroke-dasharray="${dash}"` : ''}/>`);
+    const d = segs.filter((g) => g.length > 1).map((g) => `M${g.join(' L')}`).join(' ');
+    parts.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="2.25" stroke-linejoin="round"${dash !== 'none' ? ` stroke-dasharray="${dash}"` : ''}/>`);
     if (s.direct !== false && s.label) {
       const at = s.labelAt ?? spec.x.to;
       const yv = f({ x: at, ...(s.vars ?? {}) });
@@ -179,16 +219,19 @@ export function plot(spec: PlotSpec, mode: Mode): string {
   if (spec.series.length >= 2) {
     const rowH = 18;
     const items: string[] = [];
-    let lxPos = m.l + 10;
+    const left = below ? 10 : m.l + 10;
+    const right = below ? W - 60 : m.l + pw;
+    const top = below ? plotH + 4 : m.t + 11;
+    let lxPos = left;
     let row = 0;
     let maxRight = lxPos;
     spec.series.forEach((s, i) => {
       const w = 27 + s.label.length * 6.2 + 14;
-      if (lxPos + w > m.l + pw && lxPos > m.l + 10) {
+      if (lxPos + w > right && lxPos > left) {
         row++;
-        lxPos = m.l + 10;
+        lxPos = left;
       }
-      const ly = m.t + 11 + row * rowH;
+      const ly = top + row * rowH;
       const color = s.role ? pal.role(s.role) : pal.ink;
       const dash = dashes[i % dashes.length]!;
       items.push(`<line x1="${lxPos}" y1="${ly}" x2="${lxPos + 22}" y2="${ly}" stroke="${color}" stroke-width="2.25"${dash !== 'none' ? ` stroke-dasharray="${dash}"` : ''}/>`);
@@ -196,7 +239,7 @@ export function plot(spec: PlotSpec, mode: Mode): string {
       lxPos += w;
       maxRight = Math.max(maxRight, lxPos);
     });
-    parts.push(`<rect x="${m.l + 3}" y="${m.t + 1}" width="${maxRight - m.l - 10}" height="${(row + 1) * rowH + 2}" rx="4" fill="${pal.paper}" stroke="${pal.rule}"/>`);
+    if (!below) parts.push(`<rect x="${m.l + 3}" y="${m.t + 1}" width="${maxRight - m.l - 10}" height="${(row + 1) * rowH + 2}" rx="4" fill="${pal.paper}" stroke="${pal.rule}"/>`);
     parts.push(...items);
   }
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 210" width="432" height="210" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Four electron groups spread out in 3D</title>
+<desc id="d">Left: a central carbon with four bonds to hydrogen in a flat square, 90 degrees apart. Right: the same four bonds arranged as a tetrahedron, drawn with a wedge towards the reader and dashes away from the reader, 109.5 degrees apart.</desc>
+<rect width="432" height="210" fill="#0D1117"/>
+<line x1="108" y1="100" x2="56" y2="100" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<circle cx="56" cy="100" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="56.0" y="104.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<line x1="108" y1="100" x2="160" y2="100" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<circle cx="160" cy="100" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="160.0" y="104.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<line x1="108" y1="100" x2="108" y2="48" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<circle cx="108" cy="48" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="108.0" y="52.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<line x1="108" y1="100" x2="108" y2="152" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<circle cx="108" cy="152" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="108.0" y="156.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<circle cx="108" cy="100" r="15" fill="#555" stroke="#E6EDF3" stroke-width="1.2"/><text x="108.0" y="104.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">C</text>
+<path d="M126,100 A18,18 0 0 0 108,82" fill="none" stroke="#E0651F" stroke-width="2"/>
+<text x="130.0" y="80.0" font-size="12" fill="#E0651F" text-anchor="start" font-weight="600">90°</text>
+<text x="108.0" y="186.0" font-size="12" fill="#E6EDF3" text-anchor="middle" font-weight="600">Flat square: 90° apart</text>
+<text x="108.0" y="201.0" font-size="11" fill="#8B949E" text-anchor="middle">groups crowd each other</text>
+<line x1="318" y1="104" x2="318" y2="42" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<line x1="318" y1="104" x2="262" y2="134" stroke="#E6EDF3" stroke-width="3" stroke-linecap="round"/>
+<path d="M318,104 L360.6286531798933,149.69242746964062 L367.3713468201067,142.30757253035938 Z" fill="#E6EDF3"/>
+<line x1="326.8439237299342" y1="105.68822445678965" x2="327.0022301162196" y2="104.15792938936418" stroke="#E6EDF3" stroke-width="1.6"/><line x1="335.68784745986846" y1="107.37644891357931" x2="336.00446023243927" y2="104.31585877872837" stroke="#E6EDF3" stroke-width="1.6"/><line x1="344.53177118980267" y1="109.06467337036896" x2="345.0066903486589" y2="104.47378816809258" stroke="#E6EDF3" stroke-width="1.6"/><line x1="353.3756949197369" y1="110.75289782715862" x2="354.0089204648785" y2="104.63171755745677" stroke="#E6EDF3" stroke-width="1.6"/><line x1="362.21961864967113" y1="112.44112228394827" x2="363.01115058109815" y2="104.78964694682095" stroke="#E6EDF3" stroke-width="1.6"/><line x1="371.0635423796054" y1="114.12934674073793" x2="372.0133806973177" y2="104.94757633618514" stroke="#E6EDF3" stroke-width="1.6"/>
+<circle cx="318" cy="42" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="318.0" y="46.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<circle cx="262" cy="134" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="262.0" y="138.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<circle cx="364" cy="146" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="364.0" y="150.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<circle cx="376" cy="110" r="11" fill="#d8d8d8" stroke="#E6EDF3" stroke-width="1.2"/><text x="376.0" y="114.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">H</text>
+<circle cx="318" cy="104" r="15" fill="#555" stroke="#E6EDF3" stroke-width="1.2"/><text x="318.0" y="108.0" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">C</text>
+<path d="M318,84 A20,20 0 0 0 300,114" fill="none" stroke="#3D95C9" stroke-width="2"/>
+<text x="288.0" y="90.0" font-size="12" fill="#3D95C9" text-anchor="end" font-weight="600">109.5°</text>
+<text x="318.0" y="186.0" font-size="12" fill="#E6EDF3" text-anchor="middle" font-weight="600">Tetrahedron: 109.5° apart</text>
+<text x="318.0" y="201.0" font-size="11" fill="#8B949E" text-anchor="middle">as far apart as 3D allows</text>
+<line x1="196.0" y1="100.0" x2="231.0" y2="100.0" stroke="#8B949E" stroke-width="1.5" stroke-linecap="round"/><path d="M236.0,100.0 L229.8,103.2 L229.8,96.8 Z" fill="#8B949E"/>
+<text x="426.0" y="14.0" font-size="10" fill="#8B949E" text-anchor="end">wedge: towards you · dashes: away</text>
+</svg>

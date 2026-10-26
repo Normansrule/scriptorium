@@ -68,9 +68,16 @@ export class KitBuilder {
     this.labels.push({ text, at: v, part });
   }
 
-  finish(spec: Omit<FigureObject, 'group' | 'radius' | 'labels' | 'setCut' | 'setExplode' | 'setXray' | 'dispose' | 'abilities'> & { abilities?: Partial<FigureObject['abilities']>; afterXray?: (on: boolean) => void }): FigureObject {
+  finish(
+    spec: Omit<FigureObject, 'group' | 'radius' | 'labels' | 'setCut' | 'setExplode' | 'setXray' | 'dispose' | 'abilities'> & {
+      abilities?: Partial<FigureObject['abilities']>;
+      afterXray?: (on: boolean) => void;
+      /** replaces the default explode (each part along its own direction), e.g. for parts that move on the timeline too */
+      setExplode?: (k: number) => void;
+    },
+  ): FigureObject {
     setClipping(this.group, this.cut.plane);
-    const { tick, afterXray, abilities, ...rest } = spec;
+    const { tick, afterXray, abilities, setExplode, ...rest } = spec;
     return {
       ...rest,
       group: this.group,
@@ -78,9 +85,11 @@ export class KitBuilder {
       labels: this.labels,
       abilities: { cutaway: true, explode: true, xray: true, animate: !!spec.setTime, labels: true, ...abilities },
       setCut: (k) => this.cut.set(k),
-      setExplode: (k) => {
-        for (const p of this.parts) p.obj.position.copy(p.base).addScaledVector(p.dir, k);
-      },
+      setExplode:
+        setExplode ??
+        ((k) => {
+          for (const p of this.parts) p.obj.position.copy(p.base).addScaledVector(p.dir, k);
+        }),
       setXray: (on) => {
         setXray(this.group, on, this.edges);
         afterXray?.(on);

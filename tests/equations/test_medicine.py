@@ -42,3 +42,37 @@ def test_resistance_radius_examples():
     assert rel.subs(r, 2) == sp.Rational(1, 16)
     # flow = ΔP / R at fixed ΔP: one sixteenth the resistance → 16× the flow
     assert 1 / rel.subs(r, 2) == 16
+
+
+# --- Explorables: the book's own expressions, evaluated from book.json --------------------------
+
+from explore_check import close as near, curve, find, readouts  # noqa: E402
+
+
+def test_explore_cardiac_output():
+    b = find("heart-and-vessels", "xpl-cardiac-output")
+    r = readouts(b)
+    CO = ((75 / u.minute) * (70 * u.mL)).to("L/min").magnitude
+    assert near(r["Cardiac output"], CO) and near(CO, 5.25)
+    assert near(r["Blood pumped per hour"], CO * 60)
+    # the notice: 70 bpm × 100 mL and 100 bpm × 70 mL both pump 7 L/min
+    assert near(readouts(b, HR=70, SV=100)["Cardiac output"], 7.0)
+    assert near(readouts(b, HR=100, SV=70)["Cardiac output"], 7.0)
+    # the dot sits on the line
+    assert near(curve(b, 75), CO)
+    # sliders stay inside the textbook's resting ranges (55–100 mL)
+    sv = next(p for p in b["params"] if p["name"] == "SV")
+    assert (sv["min"], sv["max"]) == (55, 100)
+
+
+def test_explore_vessel_radius():
+    b = find("heart-and-vessels", "xpl-vessel-radius")
+    assert near(readouts(b)["Resistance (× original)"], 1.0)
+    at80 = readouts(b, r=80)
+    assert near(at80["Resistance (× original)"], 1 / 0.8**4) and round(at80["Resistance (× original)"], 1) == 2.4
+    assert round(at80["Flow at the normal pressure (× original)"], 2) == 0.41
+    # flow halves at about 84 % of the radius
+    assert round(100 * 0.5 ** 0.25) == 84
+    assert near(readouts(b, r=50)["Resistance (× original)"], 16)
+    # the curve is flow = ΔP/R: linear in the pressure difference
+    assert near(curve(b, 2, r=80), 2 * curve(b, 1, r=80))

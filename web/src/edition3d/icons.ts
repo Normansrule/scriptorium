@@ -15,5 +15,6 @@ export const ICON = {
   pause: path('<path d="M8 5v14M16 5v14"/>'),
   reset: path('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>'),
   book: path('<path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5v13c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13"/>'),
+  sliders: path('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
   info: path('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/>'),
 };

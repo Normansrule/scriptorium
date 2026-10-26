@@ -7,14 +7,16 @@ import type { Figure3D } from '../../../src/edition3d/manifest.ts';
 import type { BookModel } from './book.ts';
 import { ICON } from './icons.ts';
 import { capacitorKit } from './kits/capacitor.ts';
+import { cellKit } from './kits/cell.ts';
 import { mosfetKit } from './kits/mosfet.ts';
 import { rcLoopKit } from './kits/rc-loop.ts';
 import { vesselKit } from './kits/vessel.ts';
+import { vseprKit } from './kits/vsepr.ts';
 import { liftCard, moleculeObject, type FigureObject } from './objects.ts';
 import { easeInOut, easeOut, type Stage } from './stage.ts';
 import type { Theme } from './theme.ts';
 
-export const KITS: Record<string, () => FigureObject> = { mosfet: mosfetKit, capacitor: capacitorKit, 'rc-loop': rcLoopKit, vessel: vesselKit };
+export const KITS: Record<string, () => FigureObject> = { mosfet: mosfetKit, capacitor: capacitorKit, 'rc-loop': rcLoopKit, vessel: vesselKit, cell: cellKit, vsepr: vseprKit };
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, html = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -154,8 +156,14 @@ export class FigureView {
       tex.anisotropy = this.stage.renderer.capabilities.getMaxAnisotropy();
       obj = liftCard(tex, tex.image.height / tex.image.width, this.theme.paper);
     } else return;
-    // frame by the object's real size, measured upright at scale 1
+    // frame by the object's real size, measured upright at scale 1 — at both ends of its timeline,
+    // so a part that grows (a cell, a vessel) stays in view when it plays
     const box = new THREE.Box3().setFromObject(obj.group);
+    if (obj.setTime) {
+      obj.setTime(1);
+      box.union(new THREE.Box3().setFromObject(obj.group));
+      obj.setTime(0);
+    }
     if (!box.isEmpty()) {
       const sphere = box.getBoundingSphere(new THREE.Sphere());
       obj.radius = sphere.radius;

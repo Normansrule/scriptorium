@@ -71,6 +71,8 @@ Block is one of:
  {"kind":"experiment","id":"exp-<kebab>","type":"hands-on"|"demonstration"|"thought"|"data","question":string,"setup":[string],"procedure":[string],"predict":string,"observe":string,"explain":string,"safety":string}
  {"kind":"misconception","wrong":string,"tempting":string,"right":string,"test":string}
  {"kind":"application","title":string,"text":string,"numbers":string?}
+ {"kind":"explore","id":"xpl-<kebab>","title":string,"prompt":string,"equation":"eq-<id>"?,"params":[{"name":"<letter, e.g. R>","label":string,"unit":string,"min":number,"max":number,"step":number,"value":number,"log":bool}],"plot":{"x":{"label":string,"from":number,"to":number,"log":bool},"y":{"label":string,"from":number,"to":number,"log":bool},"series":[{"label":string,"expr":string,"role":"signal"|"accent"}],"levels":[{"y":number,"label":string}]},"readouts":[{"label":string,"expr":string,"unit":string,"digits":number}],"notice":string,"test":"pending"}
+ {"kind":"quiz","id":"chk-<kebab>","question":string,"options":[{"text":string,"correct":bool,"why":string}]}
 Plot expressions use only: numbers, x, + - * / ^, parentheses, exp ln log10 sqrt sin cos tan atan abs, pi, e. At most 3 series.${
     p.figureTypes.some((f) => f.id === 'molecule-3d' || f.id === 'structure-3d')
       ? `
@@ -85,6 +87,8 @@ Where they fit the section:
 - Put a "misconception" in "limits" when students commonly get the idea wrong.
 - Put an "application" in "intuition" or "limits" showing where the idea is used for real.
 - Add an "experiment" when one shows the idea: "hands-on" only for low-risk activities with household or teaching-lab materials (low voltage, no heat sources, no chemicals beyond kitchen ones, no living organisms); otherwise "demonstration", "thought" or "data". "safety" is always filled in. Follow the domain's restricted-detail rules strictly: no procedures for anything hazardous.
+- Add an "explore" when the reader learns most by changing a value and watching what happens: 1–3 sliders (each a parameter used in the expressions; the plot's horizontal variable is x), one to three curves, and up to three live numbers ("readouts"). "prompt" is a question the sliders answer; "notice" is the answer in one or two sentences. Units in the expressions must match the slider units (say so in the labels). At most one per section.
+- End a section with a "quiz" when there is a mistake worth catching: one question, 3–4 answers, exactly one correct; every wrong answer is a slip a real student makes, and its "why" names that slip.
 - Give 2–3 "exercises" per section, graded core → challenge, each with the answer and a full worked solution.`;
 }
 

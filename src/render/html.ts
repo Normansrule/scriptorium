@@ -5,7 +5,8 @@
  * here, and the finished page is sanitized again with DOMPurify before it is written.
  */
 import katex from 'katex';
-import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Exercise, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
+import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Exercise, type Experiment, type Explore, type Misconception, type Model3D, type Problem, type Quiz, type Reference, type Section } from '../core/book.ts';
+import { formatValue, readouts, stillSvg, stillValues } from './explore.ts';
 import type { Model } from '../core/molecule.ts';
 import { styleCss } from '../core/bookstyle.ts';
 import { cssVariables, fonts } from '../core/style.ts';
@@ -180,6 +181,67 @@ function misconception(b: Misconception, ctx: HtmlContext): string {
 </div>`;
 }
 
+const svgUrl = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+/**
+ * An explorable. Without script (print-like readers, the ebook) it is a still with three curves,
+ * the slider ranges and the numbers at the defaults; assets/viewer3d.js swaps in live sliders.
+ */
+function explore(b: Explore, ctx: HtmlContext): string {
+  const num = ctx.numbering.explore.get(b.id)!;
+  const epub = ctx.target === 'epub';
+  const eq = b.equation ? ` <a class="to-eq" href="#${b.equation}">Eq. (${ctx.numbering.equation.get(b.equation) ?? b.equation})</a>` : '';
+  const { values } = stillValues(b);
+  const still = stillSvg(b, 'light');
+  const desc = still.match(/<desc id="d">([^<]*)<\/desc>/)?.[1] ?? b.title;
+  const params = b.params
+    .map((p) => `<tr><th scope="row">${escHtml(p.label)}</th><td>${escHtml(formatValue(p.min, 3))} to ${escHtml(formatValue(p.max, 3))}${p.unit ? ` ${escHtml(p.unit)}` : ''}</td><td>${escHtml(formatValue(p.value, 3))}${p.unit ? ` ${escHtml(p.unit)}` : ''}</td></tr>`)
+    .join('');
+  const outs = readouts(b, values)
+    .map((r) => `<li><span class="xpl-label">${escHtml(r.label)}</span> <output>${escHtml(r.text)}${r.unit ? ` ${escHtml(r.unit)}` : ''}</output></li>`)
+    .join('');
+  const link = epub && ctx.webUrl ? `<p class="interactive">Move the sliders yourself in the web edition: <a href="${escHtml(`${ctx.webUrl}#${b.id}`)}">${escHtml(`${ctx.webUrl}#${b.id}`)}</a></p>` : '';
+  const data = epub ? '' : ` data-explore="${escHtml(JSON.stringify(b))}"`;
+  return `<div class="learn explore" id="${b.id}"${data}>
+  <div class="learn-head"><span class="learn-kind">Explore ${num}</span><span class="xpl-title">${escHtml(b.title)}</span>${eq}</div>
+  <p class="statement">${md(b.prompt, ctx)}</p>
+  <div class="xpl-plot"><img src="${svgUrl(still)}" alt="${desc}"${epub ? '/' : ''}></div>
+  <div class="xpl-static">
+    <table class="xpl-params"><thead><tr><th scope="col">Slider</th><th scope="col">Range</th><th scope="col">Default</th></tr></thead><tbody>${params}</tbody></table>
+    ${outs ? `<ul class="xpl-readouts" aria-label="At the default values">${outs}</ul>` : ''}
+  </div>
+  <p class="xpl-notice"><span class="label">What to notice:</span> ${md(b.notice, ctx)}</p>${link}
+  <p class="check">Readouts re-checked by <code>${escHtml(b.test)}</code></p>
+</div>`;
+}
+
+/**
+ * A self-check. On the web, choosing an answer reveals why it is right or wrong (CSS only: a radio
+ * button and the sibling that follows it). In the ebook the answer sits behind "Show the answer".
+ */
+function quiz(b: Quiz, ctx: HtmlContext): string {
+  const num = ctx.numbering.quiz.get(b.id)!;
+  const letter = (i: number) => String.fromCharCode(97 + i);
+  const head = `<div class="learn-head"><span class="learn-kind">Check yourself ${num}</span></div>
+  <p class="statement">${md(b.question, ctx)}</p>`;
+  if (ctx.target === 'epub') {
+    const right = b.options.findIndex((o) => o.correct);
+    return `<div class="learn quiz" id="${b.id}">
+  ${head}
+  <ol class="quiz-static" type="a">${b.options.map((o) => `<li>${md(o.text, ctx)}</li>`).join('')}</ol>
+  <details><summary>Show the answer</summary><p><strong>(${letter(right)})</strong> ${md(b.options[right]!.why, ctx)}</p></details>
+</div>`;
+  }
+  return `<div class="learn quiz" id="${b.id}">
+  ${head}
+  <ul class="quiz-options">${b.options
+    .map(
+      (o, i) => `<li class="${o.correct ? 'is-right' : 'is-wrong'}"><input type="radio" name="${b.id}" id="${b.id}-${letter(i)}"><label for="${b.id}-${letter(i)}"><span class="opt-letter" aria-hidden="true">${letter(i)}</span> ${md(o.text, ctx)}</label><p class="quiz-why"><strong>${o.correct ? 'Right.' : 'Not quite.'}</strong> ${md(o.why, ctx)}</p></li>`,
+    )
+    .join('')}</ul>
+</div>`;
+}
+
 function exerciseList(ch: Chapter, ctx: HtmlContext): string {
   if (!ch.exercises.length) return '';
   const one = (e: Exercise) => `<li id="${e.id}"><span class="ex-num">${ctx.numbering.exercise.get(e.id)}</span><span class="level ${e.level}">${LEVEL[e.level]}</span> ${md(e.prompt, ctx)}
@@ -225,6 +287,10 @@ function block(b: Block, ctx: HtmlContext): string {
       return experiment(b, ctx);
     case 'misconception':
       return misconception(b, ctx);
+    case 'explore':
+      return explore(b, ctx);
+    case 'quiz':
+      return quiz(b, ctx);
     case 'application':
       return `<aside class="learn application"><div class="learn-head"><span class="learn-kind">In practice</span> <span class="app-title">${escHtml(b.title)}</span></div><p>${md(b.text, ctx)}</p>${b.numbers ? `<p class="numbers">${md(b.numbers, ctx)}</p>` : ''}</aside>`;
     default: {
@@ -237,9 +303,9 @@ function block(b: Block, ctx: HtmlContext): string {
 
 export { block as htmlBlock };
 
-/** True when any block in the book needs the 3D viewer script. */
+/** True when any block in the book needs the page's one script (3D models and explorables). */
 export function hasModels(book: Book): boolean {
-  return book.chapters.some((c) => c.sections.some((s) => [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits].some((b) => b.kind === 'model3d')));
+  return book.chapters.some((c) => c.sections.some((s) => [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits].some((b) => b.kind === 'model3d' || b.kind === 'explore')));
 }
 
 function layer(name: string, cls: string, blocks: Block[], ctx: HtmlContext): string {
@@ -386,7 +452,7 @@ a { color: var(--sc-signal); }
 .toc { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 1.5rem 1rem; border-right: 1px solid var(--sc-rule); font: 15px/1.45 "${fonts.sans}", system-ui, sans-serif; background: var(--sc-panel); }
 .toc-title { font-weight: 600; margin: 0 0 1rem; }
 .toc ol { list-style: none; padding-left: 0; margin: .2rem 0; } .toc ol ol { padding-left: .9rem; } .toc li { margin: .25rem 0; } .toc a { color: var(--sc-ink); text-decoration: none; } .toc a:hover { color: var(--sc-signal); text-decoration: underline; }
-main { max-width: 46rem; padding: 2.5rem 2rem 6rem; margin: 0 auto; }
+main { max-width: 46rem; padding: 2.5rem 2rem 6rem; margin: 0 auto; overflow-wrap: break-word; }
 h1, h2, h3, h4, .label, .layer-label, .kicker, figcaption, .eq-where caption, table.report, .toc { font-family: "${fonts.sans}", system-ui, sans-serif; }
 h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 .3rem; } .subtitle { font: 1.25rem/1.3 "${fonts.sans}", sans-serif; color: var(--sc-muted); margin: 0 0 1rem; }
 .byline { color: var(--sc-muted); font-family: "${fonts.sans}", sans-serif; } .colophon { font-size: .85rem; color: var(--sc-muted); }
@@ -426,6 +492,7 @@ table.report { border-collapse: collapse; font-size: .82rem; width: 100%; } .rep
 .status { font-weight: 600; } .status.verified { color: var(--sc-verified); } .status.failed, .status.unverified { color: var(--sc-accent); }
 code { font-size: .88em; }
 .katex { font-size: 1.05em; }
+
 .hook { font-size: 1.2rem; line-height: 1.5; margin: 1rem 0 1.4rem; padding-left: .9rem; border-left: 3px solid var(--bk-mark); }
 .prereq { margin: .6rem 0 0; font-size: .92rem; }
 .learn { border: 1px solid var(--sc-rule); border-left: 4px solid var(--bk-mark); border-radius: 10px; padding: .9rem 1.1rem; margin: 1.6rem 0; }
@@ -459,10 +526,48 @@ code { font-size: .88em; }
 .application { background: var(--bk-tint); border: 0; border-left: 4px solid var(--bk-mark); } .app-title { color: var(--sc-muted); } .numbers { font-size: .92rem; }
 table.data { border-collapse: collapse; font-size: .88rem; margin: .5rem 0; font-variant-numeric: tabular-nums; } table.data th, table.data td { border-bottom: 1px solid var(--sc-rule); padding: .25rem .8rem .25rem 0; text-align: left; }
 .data-source { font-size: .8rem; color: var(--sc-muted); }
+.explore .xpl-title { color: var(--sc-muted); font-weight: 400; }
+.xpl-plot img, .xpl-plot svg { display: block; width: 100%; height: auto; border-radius: 6px; }
+.xpl-static { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .4rem 1.4rem; align-items: start; margin: .5rem 0; font-family: "${fonts.sans}", sans-serif; }
+table.xpl-params { border-collapse: collapse; font-size: .85rem; } .xpl-params th, .xpl-params td { text-align: left; padding: .15rem .8rem .15rem 0; border-bottom: 1px solid var(--sc-rule); font-variant-numeric: tabular-nums; } .xpl-params thead th { color: var(--sc-muted); font-weight: 600; }
+.xpl-readouts { list-style: none; padding: 0; margin: 0; display: grid; gap: .3rem; }
+.xpl-readouts li { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem .6rem; border-radius: 6px; background: var(--bk-tint); font-size: .9rem; }
+.xpl-readouts output { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--bk-heading); }
+.xpl-notice { font-size: .95rem; } .interactive { font: .9rem "${fonts.sans}", sans-serif; overflow-wrap: anywhere; }
+.xpl-controls { display: grid; gap: .55rem; margin: .6rem 0; font-family: "${fonts.sans}", sans-serif; }
+.xpl-slider { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 6.5rem; gap: .7rem; align-items: center; font-size: .9rem; }
+.xpl-slider input[type=range] { width: 100%; accent-color: var(--bk-mark); min-height: 1.6rem; }
+.xpl-slider output { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.xpl-live { display: block; } .xpl-live .xpl-readouts { margin: .4rem 0 .6rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.xpl-svg svg { display: block; width: 100%; height: auto; border-radius: 6px; }
+.xpl-buttons button:disabled { opacity: .5; cursor: default; }
+.xpl-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+.xpl-buttons button { font: .85rem "${fonts.sans}", sans-serif; border: 1px solid var(--sc-rule); background: var(--sc-panel); color: var(--sc-ink); border-radius: 999px; padding: .3rem .8rem; cursor: pointer; transition: transform .12s ease, border-color .15s ease; }
+.xpl-buttons button:hover { border-color: var(--bk-mark); } .xpl-buttons button:active { transform: scale(.97); }
+.xpl-buttons button:focus-visible, .xpl-slider input:focus-visible { outline: 2px solid var(--sc-signal); outline-offset: 2px; }
+@media (max-width: 560px) { .xpl-slider { grid-template-columns: 1fr 6rem; } .xpl-slider input[type=range] { grid-column: 1 / -1; grid-row: 2; } }
+.quiz-options { list-style: none; padding: 0; margin: .5rem 0 0; display: grid; gap: .45rem; }
+.quiz-options li { position: relative; }
+.quiz-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.quiz-options label { display: flex; gap: .65rem; align-items: baseline; padding: .55rem .8rem; border: 1.5px solid var(--sc-rule); border-radius: 10px; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, transform .12s ease; }
+.quiz-options label:hover { border-color: var(--bk-mark); }
+.quiz-options label:active { transform: scale(.995); }
+.quiz-options input:focus-visible + label { outline: 2px solid var(--sc-signal); outline-offset: 2px; }
+.opt-letter { flex: none; display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bk-tint); color: var(--bk-heading); font: 600 .8rem/1 "${fonts.sans}", sans-serif; }
+.quiz-why { display: none; margin: .35rem 0 .2rem .8rem; padding-left: .7rem; font-size: .95rem; border-left: 3px solid var(--sc-rule); }
+.quiz-options input:checked ~ .quiz-why { display: block; }
+.quiz-options .is-right input:checked + label { border-color: var(--sc-verified); background: color-mix(in srgb, var(--sc-verified) 9%, transparent); }
+.quiz-options .is-right input:checked + label .opt-letter { background: var(--sc-verified); color: var(--sc-paper); }
+.quiz-options .is-right .quiz-why { border-color: var(--sc-verified); }
+.quiz-options .is-wrong input:checked + label { border-color: var(--sc-accent); background: color-mix(in srgb, var(--sc-accent) 8%, transparent); }
+.quiz-options .is-wrong .quiz-why { border-color: var(--sc-accent); }
+.quiz-options .is-right .quiz-why strong { color: var(--sc-verified); } .quiz-options .is-wrong .quiz-why strong { color: var(--sc-accent); }
+@media (prefers-reduced-motion: no-preference) { .quiz-options input:checked ~ .quiz-why { animation: sc-reveal .22s cubic-bezier(.2,.8,.2,1); } @keyframes sc-reveal { from { opacity: 0; transform: translateY(-4px); } } }
 .exercises { list-style: none; padding: 0; } .exercises > li { padding: .6rem 0; border-top: 1px solid var(--sc-rule); }
 .ex-num { font: 600 .9rem "${fonts.sans}", sans-serif; margin-right: .4rem; }
 .exercises details { margin-top: .4rem; } .exercises summary { cursor: pointer; font: .9rem "${fonts.sans}", sans-serif; color: var(--sc-signal); }
-@media (max-width: 820px) { body { display: block; font-size: 17px; } .toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--sc-rule); } main { padding: 1.5rem 16px 4rem; } h1 { font-size: 1.9rem; } }
+@media (max-width: 820px) { table.report, table.eq-where, table.data, table.key-eqs { display: block; max-width: 100%; overflow-x: auto; } .report td, .report th { overflow-wrap: anywhere; } .eq-where .unit { white-space: normal; } body { display: block; font-size: 17px; } .toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--sc-rule); } main { padding: 1.5rem 16px 4rem; } h1 { font-size: 1.9rem; } }
 @media print { .toc { display: none; } body { display: block; } }
 `;
 }

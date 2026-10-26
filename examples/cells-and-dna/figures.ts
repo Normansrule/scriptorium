@@ -11,7 +11,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { plot } from '../../src/render/svg.ts';
+import { palette, plot, svgDoc, text } from '../../src/render/svg.ts';
 import { renderMoleculeSvg, STILL } from '../../src/render/molecule-svg.ts';
 import type { Atom, Model } from '../../src/core/molecule.ts';
 import type { Mode } from '../../src/core/style.ts';
@@ -54,7 +54,42 @@ const VIEWS = [
   { label: 'angled', yaw: 30, pitch: -25 },
 ];
 
+/**
+ * Three spherical cells drawn to the same scale (radius 1, 2 and 4 µm), each with its surface
+ * area, volume and the ratio 3/r. The numbers are Eq. (eq-sa-volume) evaluated in the drawing, so
+ * they cannot drift from the equation the test re-derives.
+ */
+function cellScale(mode: Mode): string {
+  const pal = palette(mode);
+  const W = 432;
+  const H = 230;
+  const px = 16; // pixels per µm
+  const parts: string[] = [];
+  const fill = mode === 'light' ? '#fbe4dc' : '#3a2522';
+  const membrane = mode === 'light' ? '#c0645a' : '#e0857c';
+  const fmt = (v: number) => (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)).replace(/\.?0+$/, '');
+  const base = 150;
+  let x = 30;
+  for (const r of [1, 2, 4]) {
+    const R = r * px;
+    const cx = x + R;
+    parts.push(`<circle cx="${cx}" cy="${base - R}" r="${R}" fill="${fill}" stroke="${membrane}" stroke-width="2.5"/>`);
+    parts.push(`<circle cx="${cx}" cy="${base - R}" r="${Math.max(3, R * 0.32)}" fill="${pal.panel}" stroke="${pal.muted}" stroke-width="1.2"/>`);
+    const A = 4 * Math.PI * r * r;
+    const V = (4 / 3) * Math.PI * r ** 3;
+    const cy = base + 22;
+    parts.push(text(cx, cy, `r = ${r} µm`, { anchor: 'middle', fill: pal.ink, size: 12, weight: 600 }));
+    parts.push(text(cx, cy + 16, `A = ${fmt(A)} µm²`, { anchor: 'middle', fill: pal.muted, size: 11 }));
+    parts.push(text(cx, cy + 30, `V = ${fmt(V)} µm³`, { anchor: 'middle', fill: pal.muted, size: 11 }));
+    parts.push(text(cx, cy + 46, `A/V = ${fmt(3 / r)} per µm`, { anchor: 'middle', fill: pal.role('signal'), size: 11.5, weight: 600 }));
+    x = cx + R + (r === 4 ? 0 : 58);
+  }
+  parts.push(text(W - 8, 18, 'same scale', { anchor: 'end', fill: pal.muted, size: 10.5 }));
+  return svgDoc(W, H, 'Bigger cells have less surface for their volume', 'Three spherical cells of radius 1, 2 and 4 micrometres drawn to the same scale. Surface area 12.57, 50.27 and 201.1 square micrometres; volume 4.19, 33.51 and 268.1 cubic micrometres; surface area to volume ratio 3, 1.5 and 0.75 per micrometre.', parts.join('\n'), pal);
+}
+
 const plots: Record<string, (mode: Mode) => string> = {
+  'cell-scale': cellScale,
   'sa-volume': (mode) =>
     plot(
       {

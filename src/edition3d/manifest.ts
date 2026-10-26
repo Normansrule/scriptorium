@@ -50,6 +50,20 @@ export const Figure3D = z.object({
 });
 export type Figure3D = z.infer<typeof Figure3D>;
 
+/**
+ * An explorable on a page: the 3D Edition puts a "try it" hotspot on its printed box and opens the
+ * live version (sliders, plot, numbers) over the book. `block` is the book's own explore block.
+ */
+export const Explorable3D = z.object({
+  id: z.string().regex(/^xpl-[a-z0-9-]+$/),
+  number: z.string(),
+  title: z.string(),
+  page: z.number().int().min(1),
+  rect: Rect,
+  block: z.record(z.string(), z.unknown()),
+});
+export type Explorable3D = z.infer<typeof Explorable3D>;
+
 export const Book3D = z.object({
   format: z.literal('scriptorium-3d'),
   version: z.literal(1),
@@ -63,6 +77,7 @@ export const Book3D = z.object({
   /** pixels per point the page images were rendered at */
   pageScale: z.number().positive(),
   figures: z.array(Figure3D),
+  explorables: z.array(Explorable3D).default([]),
   /** relative link to the 2D web edition (reduced-motion fallback), if published alongside */
   webEdition: z.string().optional(),
   /** the book's style (meta.style), so the viewer can match its binding and interface */

@@ -224,3 +224,45 @@ def test_exercise_design():
     nearest = min((v * 1e3 for v in e12), key=lambda v: abs(v - R))
     assert nearest == 4.7e3
     assert close(nearest * 10e-6 * math.log(3) * 1e3, 51.6, rel=2e-3)
+
+
+# --- Explorables: the book's own expressions, evaluated from book.json --------------------------
+
+from explore_check import close as near, curve, find, readouts  # noqa: E402
+
+
+def test_explore_energy():
+    b = find("rc-circuits", "xpl-energy")
+    r = readouts(b)
+    U12 = (0.5 * (100 * u.uF) * (12 * u.V) ** 2).to("mJ").magnitude
+    assert near(r["Energy at 12 V"], U12) and near(U12, 7.2)
+    assert near(r["Energy at 12 V"] / r["Energy at 6 V"], 4)  # twice the voltage, four times the energy
+    # the curve is the same law: at 12 V it passes through the readout, and capacitance scales it
+    assert near(curve(b, 12), U12)
+    assert near(curve(b, 12, C=200) / curve(b, 12), 2)
+
+
+def test_explore_charging():
+    b = find("rc-circuits", "xpl-charging")
+    r = readouts(b)
+    tau = ((10 * u.kohm) * (100 * u.uF)).to("s").magnitude
+    assert near(r["Time constant τ = RC"], tau) and near(tau, 1.0)
+    assert near(r["Time to reach 99 % (τ ln 100)"], tau * math.log(100))
+    # the curve crosses 63.2 % at t = τ for any R and C (the explorable's "notice")
+    for R, C in [(10, 100), (47, 100), (10, 470), (2.2, 33)]:
+        t = ((R * u.kohm) * (C * u.uF)).to("s").magnitude
+        assert near(curve(b, t, R=R, C=C), 1 - math.exp(-1))
+    assert near(b["plot"]["levels"][0]["y"], 1 - math.exp(-1), rel=1e-3)
+
+
+def test_explore_lowpass():
+    b = find("rc-circuits", "xpl-lowpass")
+    r = readouts(b)
+    fc = (1 / (2 * math.pi * (1.6 * u.kohm) * (100 * u.nF))).to("Hz").magnitude
+    assert near(r["Cutoff frequency, 1/(2πRC)"], fc) and round(fc) == 995
+    assert near(curve(b, fc), 20 * math.log10(1 / math.sqrt(2)))  # −3.01 dB at the cutoff
+    # ten times R moves the cutoff down tenfold; far above it the slope is −20 dB per decade
+    assert near(readouts(b, R=16)["Cutoff frequency, 1/(2πRC)"], fc / 10)
+    assert abs((curve(b, 100 * fc) - curve(b, 10 * fc)) + 20) < 0.1
+    g10k = 20 * math.log10(1 / math.sqrt(1 + (10000 / fc) ** 2))
+    assert near(r["Gain at 10 kHz"], g10k)

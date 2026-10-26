@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 230" width="432" height="230" role="img" aria-labelledby="t d" font-family="'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Bigger cells have less surface for their volume</title>
+<desc id="d">Three spherical cells of radius 1, 2 and 4 micrometres drawn to the same scale. Surface area 12.57, 50.27 and 201.1 square micrometres; volume 4.19, 33.51 and 268.1 cubic micrometres; surface area to volume ratio 3, 1.5 and 0.75 per micrometre.</desc>
+<rect width="432" height="230" fill="#0D1117"/>
+<circle cx="46" cy="134" r="16" fill="#3a2522" stroke="#e0857c" stroke-width="2.5"/>
+<circle cx="46" cy="134" r="5.12" fill="#161B22" stroke="#8B949E" stroke-width="1.2"/>
+<text x="46.0" y="172.0" font-size="12" fill="#E6EDF3" text-anchor="middle" font-weight="600">r = 1 µm</text>
+<text x="46.0" y="188.0" font-size="11" fill="#8B949E" text-anchor="middle">A = 12.6 µm²</text>
+<text x="46.0" y="202.0" font-size="11" fill="#8B949E" text-anchor="middle">V = 4.19 µm³</text>
+<text x="46.0" y="218.0" font-size="11.5" fill="#3D95C9" text-anchor="middle" font-weight="600">A/V = 3 per µm</text>
+<circle cx="152" cy="118" r="32" fill="#3a2522" stroke="#e0857c" stroke-width="2.5"/>
+<circle cx="152" cy="118" r="10.24" fill="#161B22" stroke="#8B949E" stroke-width="1.2"/>
+<text x="152.0" y="172.0" font-size="12" fill="#E6EDF3" text-anchor="middle" font-weight="600">r = 2 µm</text>
+<text x="152.0" y="188.0" font-size="11" fill="#8B949E" text-anchor="middle">A = 50.3 µm²</text>
+<text x="152.0" y="202.0" font-size="11" fill="#8B949E" text-anchor="middle">V = 33.5 µm³</text>
+<text x="152.0" y="218.0" font-size="11.5" fill="#3D95C9" text-anchor="middle" font-weight="600">A/V = 1.5 per µm</text>
+<circle cx="306" cy="86" r="64" fill="#3a2522" stroke="#e0857c" stroke-width="2.5"/>
+<circle cx="306" cy="86" r="20.48" fill="#161B22" stroke="#8B949E" stroke-width="1.2"/>
+<text x="306.0" y="172.0" font-size="12" fill="#E6EDF3" text-anchor="middle" font-weight="600">r = 4 µm</text>
+<text x="306.0" y="188.0" font-size="11" fill="#8B949E" text-anchor="middle">A = 201 µm²</text>
+<text x="306.0" y="202.0" font-size="11" fill="#8B949E" text-anchor="middle">V = 268 µm³</text>
+<text x="306.0" y="218.0" font-size="11.5" fill="#3D95C9" text-anchor="middle" font-weight="600">A/V = 0.75 per µm</text>
+<text x="424.0" y="18.0" font-size="10.5" fill="#8B949E" text-anchor="end">same scale</text>
+</svg>

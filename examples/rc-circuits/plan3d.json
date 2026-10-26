@@ -8,7 +8,7 @@
     "mode": "scene",
     "kit": "capacitor"
    },
-   "reason": "The figure describes a parallel-plate capacitor; the \"capacitor\" scene shows two plates, the dielectric between them, the charge on each plate and the electric field lines across the gap. Needs your approval.",
+   "reason": "It matches the scene kit “Parallel-plate capacitor”, which shows two plates, the dielectric between them, the charge on each plate and the electric field lines across the gap. Needs your approval.",
    "score": 1,
    "approved": true
   },
@@ -27,7 +27,7 @@
     "mode": "scene",
     "kit": "rc-loop"
    },
-   "reason": "The figure describes an RC charging circuit (real parts); the \"rc-loop\" scene shows battery, switch, colour-coded resistor and electrolytic capacitor wired in a loop, with the moving charge and bars for capacitor voltage and current. Needs your approval.",
+   "reason": "It matches the scene kit “RC charging circuit (real parts)”, which shows battery, switch, colour-coded resistor and electrolytic capacitor wired in a loop, with the moving charge and bars for capacitor voltage and current. Needs your approval.",
    "score": 1,
    "approved": true
   },

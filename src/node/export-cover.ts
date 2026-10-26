@@ -8,12 +8,16 @@ import type { Paper, TrimSize } from '../kdp/specs.ts';
 import { fonts } from '../core/style.ts';
 import { buildCover, buildEbookCover, type CoverResult, type EbookCoverResult } from '../export/cover.ts';
 import type { Rasterize } from '../export/engine.ts';
+import { join } from 'node:path';
 import { FONT_FILES, nodeEngine } from './export-pdf.ts';
+import { REPO_ROOT } from './load.ts';
 
 export { lightEdgeShare } from '../export/cover.ts';
 export type { CoverResult, EbookCoverResult };
 
-const font = { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: fonts.sans };
+// The book fonts, plus a small fallback (a renamed subset of DejaVu Sans, see assets/fonts) for the
+// subscript letters and symbols they lack, such as the s in Vₛ.
+const font = { fontFiles: [...FONT_FILES, join(REPO_ROOT, 'assets', 'fonts', 'ScriptoriumFallback-Regular.ttf')], loadSystemFonts: false, defaultFontFamily: fonts.sans };
 
 /**
  * resvg rasterizer. Figures arrive as nested SVG images whose <text> resvg will not lay out

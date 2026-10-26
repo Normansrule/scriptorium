@@ -10,7 +10,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { plot } from '../../src/render/svg.ts';
+import { arrow, palette, plot, svgDoc, text } from '../../src/render/svg.ts';
 import { renderMoleculeSvg, STILL, type Annotation } from '../../src/render/molecule-svg.ts';
 import type { Model } from '../../src/core/molecule.ts';
 import type { Mode } from '../../src/core/style.ts';
@@ -83,7 +83,67 @@ export const MODELS: Record<string, { model: Model; views: Array<{ label: string
   },
 };
 
+/**
+ * Four electron groups around a central atom, two ways: flat (a square, 90° between neighbours)
+ * and in 3D (a tetrahedron, 109.5°, Eq. (eq-tetrahedral)). The tetrahedron is drawn in the usual
+ * wedge-and-dash perspective: solid wedges come towards the reader, dashed ones go away.
+ */
+function electronGroups(mode: Mode): string {
+  const pal = palette(mode);
+  const W = 432;
+  const H = 210;
+  const parts: string[] = [];
+  const lobe = (x1: number, y1: number, x2: number, y2: number, style: 'line' | 'wedge' | 'dash') => {
+    if (style === 'line') return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${pal.ink}" stroke-width="3" stroke-linecap="round"/>`;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const L = Math.hypot(dx, dy);
+    const nx = (-dy / L) * 5;
+    const ny = (dx / L) * 5;
+    if (style === 'wedge') return `<path d="M${x1},${y1} L${x2 + nx},${y2 + ny} L${x2 - nx},${y2 - ny} Z" fill="${pal.ink}"/>`;
+    const out: string[] = [];
+    for (let k = 1; k <= 6; k++) {
+      const t = k / 6.5;
+      const w = t;
+      out.push(`<line x1="${x1 + dx * t + nx * w}" y1="${y1 + dy * t + ny * w}" x2="${x1 + dx * t - nx * w}" y2="${y1 + dy * t - ny * w}" stroke="${pal.ink}" stroke-width="1.6"/>`);
+    }
+    return out.join('');
+  };
+  const atom = (x: number, y: number, r: number, f: string, label: string) =>
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" stroke="${pal.ink}" stroke-width="1.2"/>` + text(x, y + 4, label, { anchor: 'middle', fill: mode === 'light' && f !== '#555' ? pal.ink : '#fff', size: 11, weight: 600 });
+  const C = '#555';
+  const Hc = mode === 'light' ? '#f4f4f4' : '#d8d8d8';
+  // left: flat square
+  const ax = 108;
+  const ay = 100;
+  const d = 52;
+  for (const [x, y] of [[ax - d, ay], [ax + d, ay], [ax, ay - d], [ax, ay + d]] as const) {
+    parts.push(lobe(ax, ay, x, y, 'line'));
+    parts.push(atom(x, y, 11, Hc, 'H'));
+  }
+  parts.push(atom(ax, ay, 15, C, 'C'));
+  parts.push(`<path d="M${ax + 18},${ay} A18,18 0 0 0 ${ax},${ay - 18}" fill="none" stroke="${pal.role('accent')}" stroke-width="2"/>`);
+  parts.push(text(ax + 22, ay - 20, '90°', { fill: pal.role('accent'), size: 12, weight: 600 }));
+  parts.push(text(ax, 186, 'Flat square: 90° apart', { anchor: 'middle', fill: pal.ink, size: 12, weight: 600 }));
+  parts.push(text(ax, 201, 'groups crowd each other', { anchor: 'middle', fill: pal.muted, size: 11 }));
+  // right: tetrahedron (wedge-and-dash)
+  const bx = 318;
+  const by = 104;
+  const tips: Array<[number, number, 'line' | 'wedge' | 'dash']> = [[bx, by - 62, 'line'], [bx - 56, by + 30, 'line'], [bx + 46, by + 42, 'wedge'], [bx + 58, by + 6, 'dash']];
+  for (const [x, y, st] of tips) parts.push(lobe(bx, by, x, y, st));
+  for (const [x, y] of tips) parts.push(atom(x, y, 11, Hc, 'H'));
+  parts.push(atom(bx, by, 15, C, 'C'));
+  parts.push(`<path d="M${bx},${by - 20} A20,20 0 0 0 ${bx - 18},${by + 10}" fill="none" stroke="${pal.role('signal')}" stroke-width="2"/>`);
+  parts.push(text(bx - 30, by - 14, '109.5°', { anchor: 'end', fill: pal.role('signal'), size: 12, weight: 600 }));
+  parts.push(text(bx, 186, 'Tetrahedron: 109.5° apart', { anchor: 'middle', fill: pal.ink, size: 12, weight: 600 }));
+  parts.push(text(bx, 201, 'as far apart as 3D allows', { anchor: 'middle', fill: pal.muted, size: 11 }));
+  parts.push(arrow(196, 100, 236, 100, pal.muted, 1.5));
+  parts.push(text(W - 6, 14, 'wedge: towards you · dashes: away', { anchor: 'end', fill: pal.muted, size: 10 }));
+  return svgDoc(W, H, 'Four electron groups spread out in 3D', 'Left: a central carbon with four bonds to hydrogen in a flat square, 90 degrees apart. Right: the same four bonds arranged as a tetrahedron, drawn with a wedge towards the reader and dashes away from the reader, 109.5 degrees apart.', parts.join('\n'), pal);
+}
+
 const plots: Record<string, (mode: Mode) => string> = {
+  'electron-groups': electronGroups,
   dilution: (mode) =>
     plot(
       {

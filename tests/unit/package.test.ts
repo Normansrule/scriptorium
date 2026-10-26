@@ -37,7 +37,7 @@ describe('in-app KDP package', () => {
       { engine, rasterize: resvgRasterize, toXhtml, onStep: (s) => steps.push(s) },
     );
     expect(res.failures).toEqual([]);
-    expect(res.pages).toBe(33);
+    expect(res.pages).toBe(40);
     expect(Object.keys(res.files).sort()).toEqual(['UPLOAD-CHECKLIST.txt', 'ai-disclosure.json', 'book.epub', 'book.pdf', 'cover.pdf', 'ebook-cover.jpg', 'kdp-metadata.txt', 'preflight.json']);
     expect(strFromU8(unzipSync(res.files['book.epub']!)['mimetype']!)).toBe('application/epub+zip');
     expect(strFromU8(res.files['UPLOAD-CHECKLIST.txt']!)).toMatch(/All automated checks passed/);

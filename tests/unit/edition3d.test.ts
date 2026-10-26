@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Book } from '../../src/core/book.ts';
 import { buildEdition3D, figureRects } from '../../src/edition3d/build.ts';
-import { DATA_WORDS, effective, inSentence, planBook, propose, scoreForScene } from '../../src/edition3d/convert.ts';
+import { DATA_WORDS, effective, planBook, propose, scoreForScene } from '../../src/edition3d/convert.ts';
 import { KITS } from '../../src/edition3d/kits.ts';
 import { Book3D } from '../../src/edition3d/manifest.ts';
 import { splitPages } from '../../src/edition3d/pages.ts';
@@ -89,17 +89,18 @@ describe('2D → 3D converter', () => {
       ['fig-rc-circuit', 'rc-loop'],
     ]);
     expect(scenes(heart)).toEqual([['fig-vessel-narrowing', 'vessel']]);
+    expect(scenes(loadBook(join(REPO_ROOT, 'examples/cells-and-dna')).book)).toEqual([['fig-cell-scale', 'cell']]);
+    expect(scenes(loadBook(join(REPO_ROOT, 'examples/molecular-shapes')).book)).toEqual([['fig-electron-groups', 'vsepr']]);
     // every kit is vetoed by plot words, whatever else the figure says
     for (const kit of KITS) expect(scoreForScene(`A ${DATA_WORDS[0]} of ${kit.keywords.join(' and ')}`, kit)).toBe(0);
     // the RC loop is not a filter, and the vessel is not a heart valve
     expect(propose(fig('Schematic of an RC low-pass filter with a resistor and a capacitor.')).proposed).toEqual({ mode: 'lift' });
   });
 
-  it('names a kit grammatically in its plain-words reason', () => {
-    expect(inSentence('RC charging circuit (real parts)')).toBe('an RC charging circuit (real parts)');
-    expect(inSentence('Parallel-plate capacitor')).toBe('a parallel-plate capacitor');
-    expect(inSentence('MOSFET (n-channel, cross-section)')).toBe('a MOSFET (n-channel, cross-section)');
-    expect(inSentence('Blood vessel (flow and radius)')).toBe('a blood vessel (flow and radius)');
+  it('explains a scene proposal in plain words', () => {
+    const p = propose(fig('Cross-section of a MOSFET showing the gate oxide and the channel.'));
+    expect(p.reason).toMatch(/^It matches the scene kit “MOSFET \(n-channel, cross-section\)”, which shows source, drain, gate/);
+    expect(p.reason).toMatch(/Needs your approval\.$/);
   });
 
   it('describes every kit fully, with swatch colours for the gallery', () => {
@@ -115,13 +116,15 @@ describe('2D → 3D converter', () => {
     const { book } = loadBook(join(REPO_ROOT, 'examples/cells-and-dna'));
     const first = planBook(book);
     expect(first.entries.map((e) => [e.id, e.proposed.mode])).toEqual([
+      ['fig-cell-scale', 'scene'],
       ['fig-sa-volume', 'lift'],
       ['fig-dna', 'model'],
     ]);
+    const at = (p: typeof first) => p.entries.find((e) => e.id === 'fig-sa-volume')!;
     const decided = { ...first, entries: first.entries.map((e) => (e.id === 'fig-sa-volume' ? { ...e, approved: false, chosen: { mode: 'flat' as const } } : e)) };
-    expect(effective(planBook(book, decided).entries[0]!)).toEqual({ mode: 'flat' });
+    expect(effective(at(planBook(book, decided)))).toEqual({ mode: 'flat' });
     const changed = { ...decided, entries: decided.entries.map((e) => (e.id === 'fig-sa-volume' ? { ...e, proposed: { mode: 'scene' as const, kit: 'mosfet' } } : e)) };
-    expect(planBook(book, changed).entries[0]!.chosen).toBeUndefined();
+    expect(at(planBook(book, changed)).chosen).toBeUndefined();
   });
 });
 
@@ -132,7 +135,7 @@ describe('buildEdition3D', () => {
       { book, refs, models, files: figureFiles(dir), csl: cslAssets(book.meta.citationStyle), pageScale: 0.5 },
       { engine: nodeEngine(dir), rasterize: resvgRasterize, encodeJpeg: jpegJsEncode },
     );
-    expect(r.manifest.pages).toHaveLength(15); // same as the print interior
+    expect(r.manifest.pages).toHaveLength(19); // same as the print interior
     expect(r.warnings).toEqual([]);
     for (const p of r.manifest.pages) expect([...r.files[p]!.slice(0, 2)]).toEqual([0xff, 0xd8]); // JPEG
     const byId = new Map(r.manifest.figures.map((f) => [f.id, f]));

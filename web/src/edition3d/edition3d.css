@@ -119,3 +119,34 @@ kbd { font: inherit; font-size: 0.8125rem; padding: 1px 6px; border: 1px solid v
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
+
+/* explorables: a "Try it" hotspot on the printed box, and the live version in a panel over the book */
+.spot-explore .spot-pill { background: var(--ink); color: var(--ground); }
+.xpl-overlay { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--ground) 55%, transparent); backdrop-filter: blur(3px); animation: xpl-fade 180ms var(--ease-out); }
+.xpl-dialog { width: min(720px, 100%); max-height: calc(100% - 24px); overflow: auto; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6); padding: 16px 20px 20px; animation: xpl-rise 220ms var(--ease-out); backdrop-filter: blur(14px); }
+@keyframes xpl-fade { from { opacity: 0; } }
+@keyframes xpl-rise { from { opacity: 0; transform: translateY(12px) scale(0.985); } }
+.xpl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.xpl-head h2 { margin: 0; font-size: 1.15rem; line-height: 1.25; font-weight: 600; }
+.xpl-kicker { color: var(--accent); margin-right: 4px; }
+.xpl-head .btn { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
+.xpl-head .btn svg { width: 20px; height: 20px; }
+.xpl-prompt { margin: 0 0 10px; color: var(--ink); }
+.xpl-plot svg, .xpl-svg svg { display: block; width: 100%; height: auto; border-radius: 8px; }
+.xpl-controls { display: grid; gap: 10px; margin: 12px 0 8px; }
+.xpl-slider { display: grid; grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr) 6.5rem; gap: 12px; align-items: center; font-size: 0.9rem; }
+.xpl-slider input[type=range] { width: 100%; accent-color: var(--accent); min-height: 28px; }
+.xpl-slider output { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.xpl-readouts { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
+.xpl-readouts li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 10px; border-radius: 8px; background: color-mix(in srgb, var(--ink) 7%, transparent); font-size: 0.9rem; }
+.xpl-readouts output { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+.xpl-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.xpl-buttons button { font: inherit; font-size: 0.875rem; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: border-color 160ms var(--ease-out), transform 120ms var(--ease-out); }
+.xpl-buttons button:hover { border-color: var(--accent); }
+.xpl-buttons button:active { transform: scale(0.97); }
+.xpl-buttons button:disabled { opacity: 0.45; cursor: default; }
+.xpl-buttons button:focus-visible, .xpl-slider input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.xpl-notice { margin-top: 12px; color: var(--muted); }
+.xpl-notice summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.xpl-notice p { margin: 6px 0 0; }
+@media (max-width: 640px) { .xpl-slider { grid-template-columns: 1fr 6rem; } .xpl-slider input[type=range] { grid-column: 1 / -1; grid-row: 2; } }

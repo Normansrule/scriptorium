@@ -3,6 +3,16 @@
  "version": 1,
  "entries": [
   {
+   "id": "fig-electron-groups",
+   "proposed": {
+    "mode": "scene",
+    "kit": "vsepr"
+   },
+   "reason": "It matches the scene kit “Electron groups (VSEPR)”, which shows four electron groups around a central atom, each a lobe with a hydrogen at its tip. Needs your approval.",
+   "score": 1,
+   "approved": true
+  },
+  {
    "id": "fig-methane",
    "proposed": {
     "mode": "model"

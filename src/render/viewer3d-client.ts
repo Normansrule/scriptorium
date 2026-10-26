@@ -1,6 +1,7 @@
 /**
- * Interactive 3D viewer for the web book and the app. Bundled by esbuild into
- * assets/viewer3d.js (the only script a web book ever loads).
+ * Interactive parts of the web book and the app: the 3D model viewer here, and live explorables
+ * (explore-client.ts). Bundled by esbuild into assets/viewer3d.js (the only script a web book
+ * ever loads).
  *
  * It finds <figure class="model3d" data-model="…">, replaces the still images with a
  * rotatable drawing made by the same renderer as the print stills, and adds controls:
@@ -11,6 +12,7 @@
 import { Model } from '../core/molecule.ts';
 import { renderMoleculeSvg, type Annotation } from './molecule-svg.ts';
 import type { Mode } from '../core/style.ts';
+import { mountExplorables } from './explore-client.ts';
 
 interface ViewerData {
   model: unknown;
@@ -100,6 +102,7 @@ export function mountViewer(fig: HTMLElement): void {
 
 export function mountAll(root: ParentNode = document): void {
   root.querySelectorAll<HTMLElement>('figure.model3d[data-model]').forEach(mountViewer);
+  mountExplorables(root);
 }
 
 if (typeof document !== 'undefined' && document.currentScript) {

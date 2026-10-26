@@ -20,7 +20,12 @@ const draft = {
   summary: [{ kind: 'para', text: 'The time constant $\\tau = RC$ sets the speed [@sallen-1955-a-practical-method]. A made-up claim [@fake-2020].' }],
   intuition: [{ kind: 'para', text: 'Bigger R or C means slower charging.' }, { kind: 'plot', id: 'fig-charge', alt: 'Charging curve from zero to one.', caption: 'Charging slows down over time.', x: { label: 't/τ', from: 0, to: 5 }, y: { label: 'v/Vs', from: 0, to: 1 }, series: [{ label: 'v/Vs', expr: '1 - exp(-x)' }] }, { kind: 'plot', id: 'fig-evil', alt: 'An attempt to run code.', caption: 'x', x: { label: 'x', from: 0, to: 1 }, y: { label: 'y', from: 0, to: 1 }, series: [{ label: 'y', expr: 'process.exit(1)' }] }],
   formal: [{ kind: 'equation', id: 'eq-tau', intuition: 'Both slow it down.', latex: '\\tau = RC', where: [{ symbol: '\\tau', meaning: 'time constant', unit: 's' }], example: { text: '10 kΩ × 100 µF = 1 s', check: 'pending' }, validity: 'Ideal parts.' }],
-  limits: [{ kind: 'para', text: 'Real parts leak.' }],
+  limits: [
+    { kind: 'para', text: 'Real parts leak.' },
+    { kind: 'explore', id: 'xpl-tau', title: 'Drag R and C', prompt: 'Which slider moves the curve?', params: [{ name: 'R', label: 'R', unit: 'kΩ', min: 1, max: 100, step: 1, value: 10 }], plot: { x: { label: 't (s)', from: 0, to: 10 }, y: { label: 'v/Vs', from: 0, to: 1 }, series: [{ label: 'v', expr: '1 - exp(-x / (R / 10))' }] }, readouts: [{ label: 'τ', expr: 'R / 10', unit: 's' }], notice: 'R stretches the curve.', test: 'pending' },
+    { kind: 'explore', id: 'xpl-bad', title: 'Uses a name it does not have', prompt: 'x', params: [{ name: 'R', label: 'R', min: 1, max: 2, step: 1, value: 1 }], plot: { x: { label: 'x', from: 0, to: 1 }, y: { label: 'y', from: 0, to: 1 }, series: [{ label: 'y', expr: 'x * L' }] }, notice: 'x', test: 'pending' },
+    { kind: 'quiz', id: 'chk-two-right', question: 'Pick one', options: [{ text: 'a', correct: true, why: 'a' }, { text: 'b', correct: true, why: 'b' }] },
+  ],
   takeaways: ['τ = RC.'],
   terms: [{ term: 'time constant', definition: 'RC, in seconds.' }],
   uncited_claims: [],
@@ -59,6 +64,10 @@ describe('pipeline', () => {
     expect(st.report.some((r) => r.message.includes('looks like instructions'))).toBe(true);
     expect(st.report.some((r) => r.message.includes('Plot dropped'))).toBe(true);
     expect(st.figures['fig-charge']?.light).toContain('<svg');
+    // explorables: a good one stays (unverified until a test checks it); one using a name it has no slider for is dropped; so is a check with two right answers
+    expect(st.report.some((r) => r.where.endsWith('xpl-tau') && r.message.includes('unverified'))).toBe(true);
+    expect(st.report.some((r) => r.where.endsWith('xpl-bad') && /uses "L", which is not one of the sliders/.test(r.message))).toBe(true);
+    expect(st.report.some((r) => r.where.endsWith('chk-two-right') && r.message.includes('exactly one correct answer'))).toBe(true);
     expect(st.report.some((r) => r.where.includes('eq-tau') && r.message.includes('unverified'))).toBe(true);
     expect(st.book!.glossary[0]!.term).toBe('time constant');
 

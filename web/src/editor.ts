@@ -405,5 +405,54 @@ function blockEditor(b: Block, changed: () => void, siblings: Block[], index: nu
       t.addEventListener('input', () => { b.title = t.value; changed(); });
       return box('In practice', field('Where it is used', t), field('How the idea applies', prose(b.text, 'In practice', (v) => { b.text = v; changed(); }, 3)));
     }
+    case 'explore': {
+      const t = h('input', { 'aria-label': 'Explore title' });
+      t.value = b.title;
+      t.addEventListener('input', () => { b.title = t.value; changed(); });
+      // one row per slider: label, unit, low, default, high (numbers are re-checked by the build)
+      const num = (get: () => number, set: (v: number) => void, label: string) => {
+        const i = h('input', { type: 'number', 'aria-label': label, step: 'any', class: 'num' });
+        i.value = String(get());
+        i.addEventListener('change', () => {
+          const v = Number(i.value);
+          if (Number.isFinite(v)) { set(v); changed(); } else i.value = String(get());
+        });
+        return i;
+      };
+      const rows = b.params.map((p) =>
+        h('tr', {},
+          h('th', { scope: 'row' }, h('code', {}, p.name)),
+          h('td', {}, (() => { const i = h('input', { 'aria-label': `Label for ${p.name}` }); i.value = p.label; i.addEventListener('input', () => { p.label = i.value; changed(); }); return i; })()),
+          h('td', {}, num(() => p.min, (v) => (p.min = v), `Lowest ${p.name}`)),
+          h('td', {}, num(() => p.value, (v) => (p.value = v), `Default ${p.name}`)),
+          h('td', {}, num(() => p.max, (v) => (p.max = v), `Highest ${p.name}`)),
+          h('td', {}, p.unit || '—'),
+        ),
+      );
+      return box('Explore (sliders and a live plot)',
+        field('Title', t),
+        field('What to try (a question the sliders answer)', prose(b.prompt, 'What to try', (v) => { b.prompt = v; changed(); }, 2)),
+        h('table', { class: 'param-table' },
+          h('thead', {}, h('tr', {}, ...['Slider', 'Label', 'Low', 'Default', 'High', 'Unit'].map((x) => h('th', { scope: 'col' }, x)))),
+          h('tbody', {}, ...rows),
+        ),
+        h('p', { class: 'hint' }, `Curves: ${b.plot.series.map((x) => x.expr).join(' · ')}. Readouts are re-checked at the defaults by ${b.test}; if you change a default, update that test too.`),
+        field('What to notice (printed under the stills)', prose(b.notice, 'What to notice', (v) => { b.notice = v; changed(); }, 2)),
+      );
+    }
+    case 'quiz': {
+      const group = `correct-${b.id}`;
+      const opts = b.options.map((o, i) => {
+        const r = h('input', { type: 'radio', name: group, 'aria-label': `Answer ${String.fromCharCode(97 + i)} is the correct one` });
+        r.checked = o.correct;
+        r.addEventListener('change', () => { b.options.forEach((x, j) => (x.correct = j === i)); changed(); redraw(); });
+        return h('div', { class: `quiz-option-edit${o.correct ? ' is-right' : ''}` },
+          h('label', { class: 'correct-pick' }, r, h('span', {}, `Answer (${String.fromCharCode(97 + i)})`), h('small', {}, o.correct ? 'the right answer' : 'mark as the right answer')),
+          field('What the answer says', prose(o.text, `Answer ${i + 1}`, (v) => { o.text = v; changed(); }, 1)),
+          field(o.correct ? 'Why it is right' : 'Why it is wrong (name the slip)', prose(o.why, `Why ${i + 1}`, (v) => { o.why = v; changed(); }, 1)),
+        );
+      });
+      return box('Check yourself', field('Question', prose(b.question, 'Question', (v) => { b.question = v; changed(); }, 2)), ...opts);
+    }
   }
 }

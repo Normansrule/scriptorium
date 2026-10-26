@@ -163,6 +163,33 @@
               {
                 "kind": "para",
                 "text": "Every insulator has a limit. Above a certain electric field it breaks down and conducts, which is why each capacitor has a maximum voltage rating [@openstax-up2, Table 8.1]."
+              },
+              {
+                "kind": "quiz",
+                "id": "chk-plate-gap",
+                "question": "You halve the gap between a parallel-plate capacitor's plates and change nothing else. What happens to its capacitance?",
+                "options": [
+                  {
+                    "text": "It halves.",
+                    "correct": false,
+                    "why": "That would be true if $C$ grew with the gap. It shrinks with the gap: $d$ is in the denominator of $C = \\kappa\\varepsilon_0 A/d$."
+                  },
+                  {
+                    "text": "It doubles.",
+                    "correct": true,
+                    "why": "$C = \\kappa\\varepsilon_0 A/d$: halving $d$ doubles $C$. Closer plates hold more charge for each volt."
+                  },
+                  {
+                    "text": "It quadruples.",
+                    "correct": false,
+                    "why": "No square here: $d$ appears to the first power, so the change is a factor of two, not four."
+                  },
+                  {
+                    "text": "It stays the same, because the plates did not change.",
+                    "correct": false,
+                    "why": "The plate area did not change, but the gap is part of the geometry too: $C$ depends on $A/d$."
+                  }
+                ]
               }
             ],
             "takeaways": [
@@ -227,6 +254,61 @@
                 "caption": "Energy grows with the square of the voltage: at 12 V a 100 µF capacitor stores 7.2 mJ, and doubling the voltage would store four times as much.",
                 "credit": "Drawn by examples/rc-circuits/figures.ts from $U = \\tfrac12 CV^2$.",
                 "provenance": "code-drawn"
+              },
+              {
+                "kind": "explore",
+                "id": "xpl-energy",
+                "title": "Capacitance, voltage and stored energy",
+                "equation": "eq-energy",
+                "prompt": "Drag the capacitance. How does the whole curve change? Then read the curve at 6 V and at 12 V: how many times more energy is stored at twice the voltage?",
+                "params": [
+                  {
+                    "name": "C",
+                    "label": "Capacitance C",
+                    "unit": "µF",
+                    "min": 10,
+                    "max": 470,
+                    "step": 1,
+                    "value": 100,
+                    "log": true
+                  }
+                ],
+                "plot": {
+                  "x": {
+                    "label": "Voltage across the capacitor, V (V)",
+                    "from": 0,
+                    "to": 15
+                  },
+                  "y": {
+                    "label": "Stored energy, U (mJ)",
+                    "from": 0,
+                    "to": 55
+                  },
+                  "series": [
+                    {
+                      "label": "U = ½CV²",
+                      "expr": "0.5 * C * 1e-6 * x^2 * 1000",
+                      "role": "signal"
+                    }
+                  ],
+                  "levels": []
+                },
+                "readouts": [
+                  {
+                    "label": "Energy at 6 V",
+                    "expr": "0.5 * C * 1e-6 * 6^2 * 1000",
+                    "unit": "mJ",
+                    "digits": 2
+                  },
+                  {
+                    "label": "Energy at 12 V",
+                    "expr": "0.5 * C * 1e-6 * 12^2 * 1000",
+                    "unit": "mJ",
+                    "digits": 2
+                  }
+                ],
+                "notice": "Capacitance scales the whole parabola up or down: twice the capacitance, twice the energy at every voltage. Voltage counts twice: at 12 V the capacitor always holds four times what it holds at 6 V.",
+                "test": "tests/equations/test_rc_book.py::test_explore_energy"
               }
             ],
             "limits": [
@@ -241,6 +323,33 @@
               {
                 "kind": "para",
                 "text": "Real capacitors also lose charge slowly through their insulator (leakage), so stored energy fades over time."
+              },
+              {
+                "kind": "quiz",
+                "id": "chk-energy-voltage",
+                "question": "A capacitor charged to 6 V stores 2 mJ. You charge the same capacitor to 12 V. How much energy does it store now?",
+                "options": [
+                  {
+                    "text": "4 mJ",
+                    "correct": false,
+                    "why": "That treats energy as proportional to voltage. It goes with the square: $U = \\tfrac12 CV^2$."
+                  },
+                  {
+                    "text": "8 mJ",
+                    "correct": true,
+                    "why": "Twice the voltage, $2^2 = 4$ times the energy: $4 \\times 2\\,\\text{mJ} = 8\\,\\text{mJ}$."
+                  },
+                  {
+                    "text": "2 mJ, because it is the same capacitor",
+                    "correct": false,
+                    "why": "Same $C$, but $U$ also depends on $V$. The capacitance is fixed; the energy is not."
+                  },
+                  {
+                    "text": "16 mJ",
+                    "correct": false,
+                    "why": "That squares the factor twice. One square: $(12/6)^2 = 4$, so 8 mJ."
+                  }
+                ]
               }
             ],
             "takeaways": [
@@ -433,6 +542,80 @@
                 "provenance": "code-drawn"
               },
               {
+                "kind": "explore",
+                "id": "xpl-charging",
+                "title": "How R and C set the charging speed",
+                "equation": "eq-charging",
+                "prompt": "Drag R, then C. Which slider moves the point where the curve crosses 63.2 %? Can either slider move the 63.2 % level itself?",
+                "params": [
+                  {
+                    "name": "R",
+                    "label": "Resistance R",
+                    "unit": "kΩ",
+                    "min": 1,
+                    "max": 100,
+                    "step": 1,
+                    "value": 10,
+                    "log": true
+                  },
+                  {
+                    "name": "C",
+                    "label": "Capacitance C",
+                    "unit": "µF",
+                    "min": 10,
+                    "max": 470,
+                    "step": 1,
+                    "value": 100,
+                    "log": true
+                  }
+                ],
+                "plot": {
+                  "x": {
+                    "label": "Time after the switch closes, t (s)",
+                    "from": 0,
+                    "to": 10
+                  },
+                  "y": {
+                    "label": "Capacitor voltage ÷ supply, vC/Vs",
+                    "from": 0,
+                    "to": 1.05
+                  },
+                  "series": [
+                    {
+                      "label": "vC/Vs = 1 − e^(−t/RC)",
+                      "expr": "1 - exp(-x / (R * C / 1000))",
+                      "role": "signal"
+                    }
+                  ],
+                  "levels": [
+                    {
+                      "y": 0.632,
+                      "label": "63.2 %: reached at t = τ"
+                    }
+                  ]
+                },
+                "readouts": [
+                  {
+                    "label": "Time constant τ = RC",
+                    "expr": "R * C / 1000",
+                    "unit": "s",
+                    "digits": 2
+                  },
+                  {
+                    "label": "Time to reach 99 % (τ ln 100)",
+                    "expr": "ln(100) * R * C / 1000",
+                    "unit": "s",
+                    "digits": 2
+                  }
+                ],
+                "notice": "Both sliders do the same thing: they change τ = RC, which stretches or squeezes the curve along the time axis. Its shape never changes, and it always crosses 63.2 % at exactly t = τ.",
+                "test": "tests/equations/test_rc_book.py::test_explore_charging",
+                "stills": [
+                  3.3,
+                  33
+                ]
+              },
+              {
                 "kind": "problem",
                 "id": "prb-threshold",
                 "level": "core",
@@ -513,6 +696,33 @@
                 "tone": "consensus",
                 "title": "How settled is this?",
                 "text": "The exponential charging law is standard textbook physics for ideal parts [@openstax-up2, §10.5]. Real capacitors add leakage, which acts like a resistor across the capacitor: it lowers the final voltage a little and shortens the time constant. For good parts in low-voltage circuits the ideal law is the right starting model; precision timing needs the data sheet."
+              },
+              {
+                "kind": "quiz",
+                "id": "chk-tau-trade",
+                "question": "You double the resistor and halve the capacitor in an RC circuit. What happens to the time constant?",
+                "options": [
+                  {
+                    "text": "It doubles.",
+                    "correct": false,
+                    "why": "That looks only at the resistor. Halving the capacitor cancels it: $\\tau = RC$."
+                  },
+                  {
+                    "text": "It halves.",
+                    "correct": false,
+                    "why": "That looks only at the capacitor. The resistor doubled, which undoes it."
+                  },
+                  {
+                    "text": "It stays the same.",
+                    "correct": true,
+                    "why": "$\\tau = (2R)(C/2) = RC$. The circuit charges exactly as fast as before."
+                  },
+                  {
+                    "text": "It quadruples.",
+                    "correct": false,
+                    "why": "The two changes go in opposite directions, so they cancel rather than multiply."
+                  }
+                ]
               }
             ],
             "takeaways": [
@@ -588,6 +798,33 @@
               {
                 "kind": "para",
                 "text": "A voltmeter connected to watch the discharge is itself a resistor in parallel, with input resistance $R_m$. The capacitor then drains through both, so the effective resistance becomes $R R_m / (R + R_m)$ and the discharge speeds up. This matters when $R$ is not much smaller than $R_m$; check your meter's input resistance in its manual."
+              },
+              {
+                "kind": "quiz",
+                "id": "chk-half-life",
+                "question": "How long does a discharging capacitor take to fall to half its starting voltage?",
+                "options": [
+                  {
+                    "text": "One time constant, τ",
+                    "correct": false,
+                    "why": "After one $\\tau$ it has fallen to 36.8 %, past halfway. Half is reached earlier."
+                  },
+                  {
+                    "text": "About 0.693 τ",
+                    "correct": true,
+                    "why": "Set $e^{-t/\\tau} = \\tfrac12$: $t = \\tau \\ln 2 \\approx 0.693\\,\\tau$."
+                  },
+                  {
+                    "text": "τ/2",
+                    "correct": false,
+                    "why": "That assumes the voltage falls in a straight line. It falls fastest at first, so half comes a little later than $\\tau/2$."
+                  },
+                  {
+                    "text": "It never gets to half",
+                    "correct": false,
+                    "why": "It never reaches zero, but it passes every level above zero, half included, at a definite time."
+                  }
+                ]
               }
             ],
             "takeaways": [
@@ -798,6 +1035,33 @@
               {
                 "kind": "para",
                 "text": "The cutoff is not a wall. At $f_c$ the signal is already down to 70.7 % of its amplitude, and above it the gain keeps falling gradually. A simple RC filter only weakens unwanted frequencies; it does not remove them."
+              },
+              {
+                "kind": "quiz",
+                "id": "chk-cutoff-gain",
+                "question": "A sine wave at exactly the cutoff frequency goes into an RC low-pass filter. What amplitude comes out?",
+                "options": [
+                  {
+                    "text": "Half the input amplitude",
+                    "correct": false,
+                    "why": "Half the amplitude is $-6\\,\\text{dB}$. At cutoff the gain is $1/\\sqrt2$, which is $-3\\,\\text{dB}$."
+                  },
+                  {
+                    "text": "About 70.7 % of the input amplitude",
+                    "correct": true,
+                    "why": "$\\lvert H(f_c)\\rvert = 1/\\sqrt{1 + 1^2} = 1/\\sqrt2 \\approx 0.707$."
+                  },
+                  {
+                    "text": "Nothing: the cutoff is where the filter stops passing signals",
+                    "correct": false,
+                    "why": "Signals above the cutoff still pass, only weaker: the gain falls gradually, by 20 dB per decade far above it."
+                  },
+                  {
+                    "text": "The full amplitude: the filter only starts cutting above the cutoff",
+                    "correct": false,
+                    "why": "The fall starts gently well below $f_c$; by $f_c$ the gain is already down to 0.707."
+                  }
+                ]
               }
             ],
             "takeaways": [
@@ -864,6 +1128,77 @@
                 "caption": "Changing $C$ slides the whole curve along the frequency axis without changing its shape: ten times the capacitance gives one tenth the cutoff.",
                 "credit": "Drawn by examples/rc-circuits/figures.ts from Eq. (eq-gain), $R = 1.6$ kΩ.",
                 "provenance": "code-drawn"
+              },
+              {
+                "kind": "explore",
+                "id": "xpl-lowpass",
+                "title": "Tuning a low-pass filter",
+                "equation": "eq-gain",
+                "prompt": "Drag R and C and watch the corner of the curve. Pin a curve, then make R ten times bigger: how far does the corner move, and does the slope above it change?",
+                "params": [
+                  {
+                    "name": "R",
+                    "label": "Resistance R",
+                    "unit": "kΩ",
+                    "min": 0.1,
+                    "max": 100,
+                    "step": 0.1,
+                    "value": 1.6,
+                    "log": true
+                  },
+                  {
+                    "name": "C",
+                    "label": "Capacitance C",
+                    "unit": "nF",
+                    "min": 1,
+                    "max": 1000,
+                    "step": 1,
+                    "value": 100,
+                    "log": true
+                  }
+                ],
+                "plot": {
+                  "x": {
+                    "label": "Frequency, f (Hz)",
+                    "from": 10,
+                    "to": 100000,
+                    "log": true
+                  },
+                  "y": {
+                    "label": "Gain (dB)",
+                    "from": -60,
+                    "to": 5
+                  },
+                  "series": [
+                    {
+                      "label": "Gain = 20 log10 |H(f)|",
+                      "expr": "20 * log10(1 / sqrt(1 + (2 * pi * x * R * 1000 * C * 1e-9)^2))",
+                      "role": "signal"
+                    }
+                  ],
+                  "levels": [
+                    {
+                      "y": -3,
+                      "label": "−3 dB: the cutoff"
+                    }
+                  ]
+                },
+                "readouts": [
+                  {
+                    "label": "Cutoff frequency, 1/(2πRC)",
+                    "expr": "1 / (2 * pi * R * 1000 * C * 1e-9)",
+                    "unit": "Hz",
+                    "digits": 0
+                  },
+                  {
+                    "label": "Gain at 10 kHz",
+                    "expr": "20 * log10(1 / sqrt(1 + (2 * pi * 10000 * R * 1000 * C * 1e-9)^2))",
+                    "unit": "dB",
+                    "digits": 1
+                  }
+                ],
+                "notice": "R and C only slide the curve left and right: ten times the product RC moves the cutoff down by a factor of ten. The shape stays the same, falling 20 dB per decade far above the cutoff.",
+                "test": "tests/equations/test_rc_book.py::test_explore_lowpass"
               }
             ],
             "limits": [

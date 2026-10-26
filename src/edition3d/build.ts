@@ -10,7 +10,7 @@
  * invisible anchors added so each figure's place on its page is known. The anchors take no space;
  * the page count is checked against the interior to prove it.
  */
-import type { Book, Reference } from '../core/book.ts';
+import { allBlocks, type Book, type Explore, type Reference } from '../core/book.ts';
 import type { Model } from '../core/molecule.ts';
 import { roles } from '../core/style.ts';
 import { parseInline, type InlineToken } from '../render/inline.ts';
@@ -23,7 +23,7 @@ import { cleanTypstSvg } from '../export/cover.ts';
 import type { EncodeJpeg, Rasterize, TypstEngine } from '../export/engine.ts';
 import { buildInterior } from '../export/pdf.ts';
 import { effective, figuresOf, planBook } from './convert.ts';
-import { Book3D, type Figure3D, type Plan3D, type Rect } from './manifest.ts';
+import { Book3D, type Explorable3D, type Figure3D, type Plan3D, type Rect } from './manifest.ts';
 import { splitPages } from './pages.ts';
 
 export interface Edition3DInput {
@@ -151,6 +151,8 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
   const lay = interior.layout;
   const textWidth = (lay.trimWidthIn - lay.insideIn - lay.outsideIn) * PT_PER_IN;
   const figs = figuresOf(book);
+  const exploreBlocks = new Map<string, Explore>();
+  for (const { block } of allBlocks(book)) if (block.kind === 'explore') exploreBlocks.set(block.id, block);
   const rects = figureRects(anchors, new Map(figs.map((f) => [f.id, f.width])), textWidth);
   const plan = planBook(book, input.plan);
   const figures: Figure3D[] = [];
@@ -204,6 +206,21 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
     });
   }
 
+  // explorables: their anchors sit inside the printed box (9 pt inset, 2.5 pt left edge)
+  const explorables: Explorable3D[] = [];
+  const INSET = 9;
+  const starts = new Map<string, Anchor>();
+  for (const a of anchors.filter(isAnchor)) {
+    if (!a.id.startsWith('xpl-')) continue;
+    if (a.edge === 'start') starts.set(a.id, a);
+    else {
+      const s0 = starts.get(a.id);
+      const blockData = exploreBlocks.get(a.id);
+      if (!s0 || !blockData || s0.page !== a.page || a.y <= s0.y) continue;
+      explorables.push({ id: a.id, number: numbering.explore.get(a.id) ?? '', title: blockData.title, page: s0.page, rect: { x: s0.x - INSET - 2.5, y: s0.y - INSET, w: textWidth, h: a.y - s0.y + 2 * INSET }, block: blockData as unknown as Record<string, unknown> });
+    }
+  }
+
   const manifest = Book3D.parse({
     format: 'scriptorium-3d',
     version: 1,
@@ -214,6 +231,7 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
     pages: pagePaths,
     pageScale: scale,
     figures,
+    explorables,
     webEdition: input.webEdition,
     style: book.meta.style,
     cloth: roles.signal.light,

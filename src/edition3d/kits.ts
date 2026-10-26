@@ -59,6 +59,24 @@ export const KITS: KitInfo[] = [
     animation: 'The vessel narrows to half its radius and back: resistance rises as 1/r⁴, flow falls as r⁴ and the cells slow as r².',
     swatch: ['#c0645a', '#f2c4b8', '#b3202a', '#0072b2'],
   },
+  {
+    id: 'cell',
+    title: 'Cell size (surface and volume)',
+    shows: 'A reference cell of radius 1 µm beside one that grows to 4 µm: membrane with transport proteins, cytoplasm and nucleus, and supplies crossing the membrane.',
+    keywords: ['cell', 'cells', 'spherical', 'sphere', 'membrane', 'surface area', 'volume', 'radius'],
+    notWhen: ['dna', 'helix', 'protein structure'],
+    animation: 'The cell grows from 1 to 4 µm: membrane ×16, volume ×64, so the membrane per cubic micrometre falls to a quarter (3/r) and the cytoplasm pales.',
+    swatch: ['#c0645a', '#f6c9bb', '#009e73', '#f0e442'],
+  },
+  {
+    id: 'vsepr',
+    title: 'Electron groups (VSEPR)',
+    shows: 'Four electron groups around a central atom, each a lobe with a hydrogen at its tip.',
+    keywords: ['electron group', 'electron groups', 'tetrahedron', 'tetrahedral', 'vsepr', 'lone pair', 'lone pairs', 'bond angle', 'central atom'],
+    notWhen: ['orbital diagram', 'energy level'],
+    animation: 'The groups spread from a flat square (90°) to a tetrahedron (109.5°); then two become lone pairs and the bond angle closes towards the measured 104.5° of water.',
+    swatch: ['#4a4f57', '#0072b2', '#d55e00', '#f4f4f4'],
+  },
 ];
 
 export const kitById = (id: string): KitInfo | undefined => KITS.find((k) => k.id === id);

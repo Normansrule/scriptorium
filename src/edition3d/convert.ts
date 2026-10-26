@@ -32,13 +32,6 @@ const has = (hay: string, phrase: string) => hay.includes(` ${phrase} `);
 /** A figure that plots data stays the author's chart: a scene shows a thing, not a measurement. */
 export const DATA_WORDS = ['plot', 'plots', 'graph', 'chart', 'curve', 'curves', 'histogram', 'axis', 'axes'];
 
-/** A kit title inside a sentence: "an RC charging circuit", "a parallel-plate capacitor", "a MOSFET". */
-export function inSentence(title: string): string {
-  const acronym = /^[A-Z]{2,}/.test(title);
-  const t = acronym ? title : title.charAt(0).toLowerCase() + title.slice(1);
-  // "an" before a vowel sound; of the acronyms, "RC" is read letter by letter ("ar-see"), "MOSFET" as a word
-  return `${/^(RC|[aeiou])/i.test(t) ? 'an' : 'a'} ${t}`;
-}
 
 /**
  * How strongly a kit fits a figure, 0–1, from the figure's own words (alt text and caption).
@@ -71,7 +64,7 @@ export function propose(fig: FigureLike): PlanEntry {
     return {
       id: fig.id,
       proposed: { mode: 'scene', kit: best.kit.id },
-      reason: `The figure describes ${inSentence(best.kit.title)}; the "${best.kit.id}" scene shows ${best.kit.shows.charAt(0).toLowerCase()}${best.kit.shows.slice(1)} Needs your approval.`,
+      reason: `It matches the scene kit “${best.kit.title}”, which shows ${best.kit.shows.charAt(0).toLowerCase()}${best.kit.shows.slice(1)} Needs your approval.`,
       score: best.score,
       approved: false,
     };

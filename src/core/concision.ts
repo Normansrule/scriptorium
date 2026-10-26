@@ -24,7 +24,7 @@ export interface ConcisionReport {
   findings: Finding[];
   /** words of running prose (paragraphs, lists, callouts) */
   proseWords: number;
-  /** figures, 3D models, derivations, worked problems, experiments */
+  /** figures, 3D models, derivations, worked problems, experiments, explorables */
   visuals: number;
   wordsPerVisual: number;
 }
@@ -104,8 +104,8 @@ export function lintText(raw: string, where: string): Finding[] {
   return out;
 }
 
-const SHOWS = new Set<Block['kind']>(['figure', 'model3d', 'equation', 'derivation', 'problem', 'experiment', 'list']);
-const VISUAL = new Set<Block['kind']>(['figure', 'model3d', 'derivation', 'problem', 'experiment']);
+const SHOWS = new Set<Block['kind']>(['figure', 'model3d', 'equation', 'derivation', 'problem', 'experiment', 'explore', 'list']);
+const VISUAL = new Set<Block['kind']>(['figure', 'model3d', 'derivation', 'problem', 'experiment', 'explore']);
 const PROSE = new Set<Block['kind']>(['para', 'list', 'callout']);
 
 export function lintBook(book: Book): ConcisionReport {
@@ -146,6 +146,6 @@ export function concisionSummary(r: ConcisionReport): string {
   const counts = new Map<Rule, number>();
   for (const f of r.findings) counts.set(f.rule, (counts.get(f.rule) ?? 0) + 1);
   const parts = [...counts].map(([k, v]) => `${v} ${k.replace('-', ' ')}`);
-  const density = `${r.wordsPerVisual} words of prose per figure, derivation, problem or experiment (target ≤ ${LIMITS.wordsPerVisual})`;
+  const density = `${r.wordsPerVisual} words of prose per figure, derivation, problem, experiment or explorable (target ≤ ${LIMITS.wordsPerVisual})`;
   return `${r.findings.length ? `${r.findings.length} places to tighten (${parts.join(', ')})` : 'No padding found'}; ${density}.`;
 }

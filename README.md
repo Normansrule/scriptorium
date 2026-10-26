@@ -37,21 +37,27 @@
 
 <p align="center"><img src="assets/rendered/screens/learning-blocks.png" alt="Two boxes from the web book. Left, Derivation 2.1: the goal, the assumptions, six numbered steps from Kirchhoff's voltage law to the charging equation, each with a one-line reason, and a check of the limits and units. Right, Worked problem 2.1: given, find, a one-line strategy, four numbered steps solving for the time a logic input switches, the answer 1.20 seconds and a check." width="880"></p>
 
+**New — explorables and self-checks.** Sections can now ask the reader to *do* something. An **explorable** gives one to four sliders, a plot that redraws as you drag, and live numbers, around a question the sliders answer; *Pin* keeps a curve to compare against, *Sweep* plays a slider across its range. A **Check yourself** question shows why each answer is right or wrong the moment you pick it, and every wrong answer names a slip real students make. Print gets a three-curve still with the numbers at the defaults and a QR code to the live version, plus the answers at the back; the 3D Edition puts a **Try it** button on the printed box. Every expression is the book's own safe expression language, and a test evaluates it straight from `book.json` against the physics. Each sample book now has two to three explorables and two to five checks.
+
+<p align="center"><img src="assets/rendered/screens/explorables.png" alt="Top left: Explore 2.1 in the web edition, a charging curve with a pinned earlier curve for comparison, sliders for resistance and capacitance, and live readouts of the time constant and the time to reach 99 percent. Top right: the same explorable opened over the 3D Edition's book in a dark panel. Bottom: Check yourself 2.1 twice; on the left the wrong answer 'It doubles' is chosen and the reason appears, on the right the right answer 'It stays the same' is chosen, marked green with its reason." width="880"></p>
+
+*The same explorable in the web edition and over the 3D book, and a self-check after a wrong and a right answer.*
+
 **New — book styles.** Six looks for a book's chrome: Classic, Bookcloth, Plate & Field, Sentence & Window, Lagoon and Orchard. A style colours chapter openers, headings, learning-block edges and step numbers in print, the ebook, the web edition and the 3D Edition (whose binding and interface follow it). Figures never change colour, so blue still means the main quantity in every book, and every pairing passes WCAG AA contrast in light and dark mode (tested). Pick one in the editor, or set `"style"` in `book.json`. In the web edition, learning blocks and figures rise into place as you scroll, when your device welcomes motion.
 
 <p align="center"><img src="assets/rendered/screens/book-styles.png" alt="Four printed chapter openers side by side. Bookcloth: a deep-blue Chapter 1 chip, blue headings and an orange bar beside the hook. Lagoon: teal chip and headings with a pale teal goals box. Orchard: plum chip and headings with a lilac goals box. Sentence and Window: olive chip and headings with a warm cream goals box." width="880"></p>
 
 *The four sample books, each in its own style. Same text, same figures; only the chrome changes.*
 
-**New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits can be cut away, exploded, X-rayed and played. Four kits so far: a **transistor** (the channel forms as the gate voltage rises), a **parallel-plate capacitor** (charge and field build up), an **RC circuit** as real parts on a board (the charge slows as the capacitor fills) and a **blood vessel** (narrow it to half its radius and watch the cells slow, at sixteen times the resistance). A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
+**New — the 3D Edition (preview).** The same book, page for page, as a 3D book you can turn: figures lift off the page, the book's own 3D models rise and rotate, and scene kits can be cut away, exploded, X-rayed and played. Six kits so far: a **transistor** (the channel forms as the gate voltage rises), a **parallel-plate capacitor** (charge and field build up), an **RC circuit** as real parts on a board (the charge slows as the capacitor fills), a **blood vessel** (narrow it to half its radius and watch the cells slow, at sixteen times the resistance), a **growing cell** (sixteen times the membrane but sixty-four times the volume) and **electron groups** that push apart from a flat square into methane's tetrahedron, then squeeze into water's bent shape. A converter proposes a 3D treatment for every figure; scenes apply only after you approve them. Try it with `npm run cli -- edition3d examples/cells-and-dna`, or on the project site under *Samples → Read a sample in 3D*. Design and plan: [docs/PHASE-0.md](docs/PHASE-0.md).
 
 <p align="center"><img src="docs/phase-0/bookcloth-3d-popped.png" alt="The 3D Edition: an open book on a dark blue desk; the DNA model from Figure 1.2 has risen off the left page and floats above the book, with the figure's caption in a panel and controls to cut away, X-ray, reset or put it back." width="880"></p>
 
 *3D Edition preview — Figure 1.2 of the biology sample has lifted off its page; its dashed outline stays on the page.*
 
-<p align="center"><img src="assets/rendered/screens/scene-kits.png" alt="Four scene kits in the 3D Edition. Top left: a transistor cross-section with its inversion channel glowing between source and drain. Top right: a parallel-plate capacitor with orange and blue charges on the plates and field arrows through a yellow dielectric. Bottom left: a circuit board with a battery, switch, striped resistor and blue capacitor, glowing charges on the copper loop and two bars for voltage and current. Bottom right: a blood vessel split into a back wall and a glass front half, red blood cells inside and blue arrows showing the flow fastest in the middle." width="880"></p>
+<p align="center"><img src="assets/rendered/screens/scene-kits.png" alt="Six scene kits in the 3D Edition. Top row: a transistor cross-section with electrons in its channel; a parallel-plate capacitor with orange and blue charges and field arrows through a yellow dielectric; a circuit board with a battery, switch, striped resistor and blue capacitor, glowing charges on the copper loop. Bottom row: a blood vessel with a glass front half and red blood cells inside; a small reference cell beside a large cell studded with green transport proteins; a central oxygen atom with two hydrogens and two orange lone-pair lobes." width="880"></p>
 
-*The four scene kits, each mid-way through its timeline. Browse them under* Samples → Scene kits*, or open `3d.html?kit=vessel` directly.*
+*The six scene kits, each partway through its timeline. Browse them under* Samples → Scene kits*, or open `3d.html?kit=vessel` directly.*
 
 ---
 
@@ -67,13 +73,13 @@
 *Figure 2 — The app has three steps, one button each: Write (type a topic, press Generate), Edit (type into any paragraph; Preview shows the finished book), Publish (build, check and save the KDP package).*
 
 <p align="center">
-  <img src="assets/rendered/screens/gallery.png" alt="Four printed pages side by side: engineering, three charging curves for different resistors; chemistry, three views of a methane model with the 109.5 degree angle marked and a QR code; biology, three views of a DNA double helix with a scale bar and a QR code; medicine, a logarithmic plot of vessel resistance against radius." width="880">
+  <img src="assets/rendered/screens/gallery.png" alt="Four printed pages side by side: engineering, the charging curve and three charging curves for different resistors; chemistry, a diagram of four electron groups as a flat square and as a tetrahedron, above three views of a methane model with the 109.5 degree angle marked and a QR code; biology, three views of a DNA double helix with scale bars and a QR code; medicine, a logarithmic plot of vessel resistance against radius." width="880">
 </p>
 
 *Figure 3 — One printed page from each domain's sample book. 3D models print as three fixed views plus a QR code that opens the rotatable version.*
 
 <p align="center">
-  <img src="assets/rendered/screens/kdp-outputs.png" alt="Left: the build output, every line ticked: web book, 33-page print PDF, interior pre-flight 9 of 9, cover PDF 12.327 by 9.250 inches, cover pre-flight 9 of 9, ebook cover 1600 by 2560 pixels, EPUB with no EPUBCheck errors, metadata with no errors. Middle: the full-wrap paperback cover with the description on the back and the title on the front. Right: the ebook cover." width="880">
+  <img src="assets/rendered/screens/kdp-outputs.png" alt="Left: the build output, every line ticked: web book, 40-page print PDF, interior pre-flight 9 of 9, cover PDF 12.340 by 9.250 inches, cover pre-flight 9 of 9, ebook cover 1600 by 2560 pixels, EPUB with no EPUBCheck errors, metadata with no errors. Middle: the full-wrap paperback cover with the description on the back and the title on the front. Right: the ebook cover." width="880">
 </p>
 
 *Figure 4 — One command builds everything KDP asks for and checks it: interior PDF, full-wrap cover, ebook cover, EPUB 3 and a metadata sheet.*
@@ -96,7 +102,7 @@ Expected output of `npm run demo` (a few seconds):
 ```text
 ✓ Drew 18 figure and model files (light + dark)
 ✓ Web book  → dist/rc-circuits/web/index.html
-✓ Print PDF → dist/rc-circuits/book.pdf (33 pages, 6" × 9")
+✓ Print PDF → dist/rc-circuits/book.pdf (40 pages, 6" × 9")
 ✓ KDP interior pre-flight: 9/9 checks pass
 ✓ Cover PDF → dist/rc-circuits/cover.pdf (12.313" × 9.250", spine 0.063", no spine text)
 ✓ KDP cover pre-flight: 9/9 checks pass
@@ -114,12 +120,12 @@ Build all four sample books, then run the checks:
 
 ```bash
 npm run build:all -- --allow-short --epubcheck   # one-chapter samples are under KDP's 24-page minimum on purpose
-npm test                                         # 155 unit, export, app and pipeline tests
+npm test                                         # 171 unit, export, app and pipeline tests
 python -m pip install -r requirements.txt
 npm run test:equations                           # re-derives every equation in the four sample books
 ```
 
-Expected: a summary line per book ending `✓ rc-circuits  33 pages  all checks pass`, then `Tests  155 passed (155)` and `41 passed`.
+Expected: a summary line per book ending `✓ rc-circuits  40 pages  all checks pass`, then `Tests  171 passed (171)` and `49 passed`.
 
 Open the app — in a browser (the same one that runs on GitHub Pages) or as a desktop window:
 
@@ -320,7 +326,7 @@ Worked example: 6″ × 9″, 212 pages, white paper → spine = 212 × 0.002252
 
 *Figure 13 — The EPUB reflows to a phone screen; equations stay real text (MathML).*
 
-**Publishing from the app.** The app's Publish step builds the same files inside the browser or desktop window — Typst runs as WebAssembly, loaded only the first time you publish — and runs the same pre-flight. A test (`tests/unit/package.test.ts`) builds the engineering sample through this path and checks it matches the command line: 33 pages, every check passing. KDP has no upload API, so the app never uploads anything; it saves one package (`book.pdf`, `cover.pdf`, `book.epub`, `ebook-cover.jpg`, `kdp-metadata.txt`, `ai-disclosure.json`, `preflight.json`, `UPLOAD-CHECKLIST.txt`) for you to upload on kdp.amazon.com. Before the **Save** button unlocks, five guards must pass:
+**Publishing from the app.** The app's Publish step builds the same files inside the browser or desktop window — Typst runs as WebAssembly, loaded only the first time you publish — and runs the same pre-flight. A test (`tests/unit/package.test.ts`) builds the engineering sample through this path and checks it matches the command line: 40 pages, every check passing. KDP has no upload API, so the app never uploads anything; it saves one package (`book.pdf`, `cover.pdf`, `book.epub`, `ebook-cover.jpg`, `kdp-metadata.txt`, `ai-disclosure.json`, `preflight.json`, `UPLOAD-CHECKLIST.txt`) for you to upload on kdp.amazon.com. Before the **Save** button unlocks, five guards must pass:
 
 1. **Automated checks:** the book builds (no unknown citations, missing glossary terms or broken equations) and every interior, cover, ebook-cover and listing check passes.
 2. **Your confirmations:** you read the proof, checked the references, will match the cover text and answer the AI-content questions as listed — plus licensed-professional review for medicine.
@@ -345,9 +351,9 @@ The rules are pure functions tested in `tests/unit/publish-guard.test.ts`. Sampl
 
 ## Walkthrough
 
-1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 33-page 6″ × 9″ book, `cover.pdf` as a 12.327″ × 9.25″ wrap-around cover.
+1. **Build the sample.** `npm run demo` → `dist/rc-circuits/book.pdf` opens as a 40-page 6″ × 9″ book, `cover.pdf` as a 12.340″ × 9.25″ wrap-around cover.
 2. **Check the pre-flight report.** Open `dist/rc-circuits/preflight.json` → sections `interior`, `cover`, `ebookCover` and `metadata`, every check passing.
-3. **Re-derive the math.** `npm run test:equations` → `41 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm run test:equations`, and see which check names it.
+3. **Re-derive the math.** `npm run test:equations` → `49 passed`. Change a number in a worked example in `examples/rc-circuits/book.json`, rerun `npm run test:equations`, and see which check names it.
 4. **Rotate a molecule.** `npm run build:all -- --allow-short`, open `dist/molecular-shapes/web/index.html`, drag the methane model, then press **front**: the 109.5° label appears only when the angle is face-on.
 5. **Re-verify the references.** `npm run verify-refs` → one line per reference; the Sallen–Key paper is re-checked live against Crossref, the three web sources show when they were checked by hand.
 6. **Validate the ebook.** `npm run cli -- epubcheck dist/rc-circuits/book.epub` → `✓ EPUBCheck: no errors` (needs Java).
@@ -357,7 +363,7 @@ The rules are pure functions tested in `tests/unit/publish-guard.test.ts`. Sampl
    It pauses at the outline (edit `books/draft-*/outline.json`, press Enter) and before export, then builds the web book, PDF, cover and EPUB and prints how many tokens it used. Read `report.json` before publishing: every item marked `problem` needs a human decision.
 9. **Or use the app.** `npm run app` (or `npm run desktop`) → Settings → paste your key → **Write**: type a topic, press Generate, approve the plan → **Edit**: type changes, check Preview → **Publish**: Build and check, tick the confirmations, type the title, Save. Try the whole flow without a key on a sample book (Samples → any book → Publish makes a practice package).
 
-<img src="assets/rendered/screens/print-spread.png" alt="Two facing pages of the print PDF: the charging circuit diagram on the left; on the right the time-constant equation with its intuition sentence, symbol table with units, a shaded worked example and a validity note." width="880">
+<img src="assets/rendered/screens/print-spread.png" alt="Two facing pages of the print PDF in the Bookcloth style. Left: the charging circuit diagram, then the time-constant equation with its intuition sentence, symbol table with units, a shaded worked example, a validity note and the start of Derivation 2.1. Right: the derivation's six numbered steps, each with its reason, its check, then the charging equation with its symbols and worked example." width="880">
 
 *Figure 15 — A spread from the 6″ × 9″ print PDF. Each equation comes with an intuition sentence, a symbol table with units, a worked example re-checked by a test, and the conditions where it stops being valid.*
 
@@ -514,6 +520,7 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 5a | Web edition saved from the app (same files as the command line) with GitHub Pages steps; desktop app fixes for WSL graphics and missing keychains | **Done** |
 | 1a (Living Textbook Forge) | Learning blocks (derivation, worked problem, experiment, common mistake, in practice, graded practice with solutions), chapter hooks and prerequisites, concision check, drafting and review prompts that use them; flagship blocks in the engineering sample | **Done** |
 | 0 (Living Textbook Forge) | Audit, research, architecture, three visual concepts; 3D Edition prototype (page turns, pop-off figures, transistor kit, converter v0) | **Gate: waiting for review** ([docs/PHASE-0.md](docs/PHASE-0.md)) |
+| 0c (Living Textbook Forge) | Explorables (live sliders, plot and numbers; print stills; 3D Edition panel) and self-checks (instant feedback; answers at the back), in every sample with tests that evaluate the book's own expressions; two more scene kits (cell size, electron groups) and their diagrams; readable schema errors | **Done** |
 | 0b (Living Textbook Forge) | Book styles (six, WCAG-tested, shared by print, ebook, web and 3D); three more scene kits (capacitor, RC circuit, blood vessel) with a gallery; converter never turns a data plot into a scene; scroll-in motion for the web edition | **Done** |
 | 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |

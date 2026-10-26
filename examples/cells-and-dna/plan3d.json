@@ -3,6 +3,16 @@
  "version": 1,
  "entries": [
   {
+   "id": "fig-cell-scale",
+   "proposed": {
+    "mode": "scene",
+    "kit": "cell"
+   },
+   "reason": "It matches the scene kit “Cell size (surface and volume)”, which shows a reference cell of radius 1 µm beside one that grows to 4 µm: membrane with transport proteins, cytoplasm and nucleus, and supplies crossing the membrane. Needs your approval.",
+   "score": 1,
+   "approved": true
+  },
+  {
    "id": "fig-sa-volume",
    "proposed": {
     "mode": "lift"

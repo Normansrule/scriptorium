@@ -202,7 +202,88 @@ export const Application = z.object({
   numbers: Inline.optional(),
 });
 
-export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure, Model3D, Derivation, Problem, Experiment, Misconception, Application]);
+const ParamName = z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,15}$/, 'a parameter name is a letter followed by letters, digits or _');
+const ROLE = z.enum(['signal', 'accent', 'verified', 'external']);
+
+/**
+ * An explorable: the reader moves sliders and watches a plot and a few numbers respond. The web
+ * edition runs it live (assets/viewer3d.js); print and the ebook show three stills (the first
+ * slider at its low, default and high values), the numbers at the defaults, and what to notice.
+ * Every expression uses the safe expression language in src/core/expr.ts (`x` is the plot's
+ * horizontal variable; parameters by name), so the model can propose one without running code.
+ */
+export const Explore = z
+  .object({
+    kind: z.literal('explore'),
+    id: z.string().regex(/^xpl-[a-z0-9-]+$/),
+    title: z.string().min(3).max(90),
+    /** What to try, as a question the sliders answer. */
+    prompt: Inline,
+    /** The equation it brings to life, if any. */
+    equation: z.string().regex(/^eq-[a-z0-9-]+$/).optional(),
+    params: z
+      .array(
+        z.object({
+          name: ParamName,
+          /** shown next to the slider: "Resistance R" */
+          label: z.string().min(1).max(40),
+          unit: z.string().max(12).default(''),
+          min: z.number(),
+          max: z.number(),
+          step: z.number().positive(),
+          value: z.number(),
+          /** a logarithmic slider, for values that span decades */
+          log: z.boolean().default(false),
+        }),
+      )
+      .min(1)
+      .max(4),
+    plot: z.object({
+      x: z.object({ label: z.string(), from: z.number(), to: z.number(), log: z.boolean().default(false) }),
+      y: z.object({ label: z.string(), from: z.number(), to: z.number(), log: z.boolean().default(false) }),
+      series: z.array(z.object({ label: z.string().max(40), expr: z.string().max(300), role: ROLE.default('signal') })).min(1).max(3),
+      /** horizontal reference levels, e.g. 63.2 % */
+      levels: z.array(z.object({ y: z.number(), label: z.string().max(40) })).max(3).default([]),
+      /** a "you are here" line: x given by an expression of the sliders (e.g. "r"), with a dot on each curve */
+      marker: z.object({ x: z.string().max(120), label: z.string().max(40) }).optional(),
+    }),
+    /** Live numbers under the plot, e.g. the time constant. */
+    readouts: z.array(z.object({ label: z.string().max(50), expr: z.string().max(300), unit: z.string().max(12).default(''), digits: z.number().int().min(0).max(6).default(2) })).max(4).default([]),
+    /** Low and high values of the first slider for the printed still (default: halfway to each end). */
+    stills: z.tuple([z.number(), z.number()]).optional(),
+    /** What the reader should notice; printed under the stills. */
+    notice: Inline,
+    /** Re-computes the readouts at the default values, e.g. "tests/equations/test_rc_book.py::test_explore_charging". */
+    test: z.string(),
+  })
+  .superRefine((b, ctx) => {
+    const names = new Set<string>();
+    for (const p of b.params) {
+      if (p.name === 'x' || names.has(p.name)) ctx.addIssue({ code: 'custom', message: `Parameter "${p.name}" is reserved or repeated.` });
+      names.add(p.name);
+      if (!(p.min < p.max) || p.value < p.min || p.value > p.max) ctx.addIssue({ code: 'custom', message: `Parameter "${p.name}" needs min < max and a default between them.` });
+      if (p.log && p.min <= 0) ctx.addIssue({ code: 'custom', message: `Parameter "${p.name}" is logarithmic, so its minimum must be above zero.` });
+    }
+    const first = b.params[0];
+    if (b.stills && first && b.stills.some((v) => v < first.min || v > first.max)) ctx.addIssue({ code: 'custom', message: 'The still values must lie in the first slider\'s range.' });
+    for (const axis of [b.plot.x, b.plot.y]) {
+      if (!(axis.from < axis.to)) ctx.addIssue({ code: 'custom', message: `Axis "${axis.label}" needs from < to.` });
+      if (axis.log && axis.from <= 0) ctx.addIssue({ code: 'custom', message: `Axis "${axis.label}" is logarithmic, so it must start above zero.` });
+    }
+  });
+
+/** A one-question self-check with instant feedback: why each answer is right or wrong. */
+export const Quiz = z
+  .object({
+    kind: z.literal('quiz'),
+    id: z.string().regex(/^chk-[a-z0-9-]+$/),
+    question: Inline,
+    /** Two to five answers, exactly one correct; every answer explains itself, wrong ones name the slip. */
+    options: z.array(z.object({ text: Inline, correct: z.boolean().default(false), why: Inline })).min(2).max(5),
+  })
+  .refine((q) => q.options.filter((o) => o.correct).length === 1, { message: 'A check needs exactly one correct answer.' });
+
+export const Block = z.discriminatedUnion('kind', [Paragraph, ListBlock, Callout, Equation, Figure, Model3D, Derivation, Problem, Experiment, Misconception, Application, Explore, Quiz]);
 export type Block = z.infer<typeof Block>;
 export type Equation = z.infer<typeof Equation>;
 export type Figure = z.infer<typeof Figure>;
@@ -212,6 +293,8 @@ export type Problem = z.infer<typeof Problem>;
 export type Experiment = z.infer<typeof Experiment>;
 export type Misconception = z.infer<typeof Misconception>;
 export type Application = z.infer<typeof Application>;
+export type Explore = z.infer<typeof Explore>;
+export type Quiz = z.infer<typeof Quiz>;
 
 /** End-of-chapter practice: graded, with an answer and a full worked solution (printed at the back). */
 export const Exercise = z.object({
@@ -383,6 +466,10 @@ export function blockTexts(b: Block): string[] {
       return [b.wrong, b.tempting, b.right, b.test];
     case 'application':
       return [b.text, ...(b.numbers ? [b.numbers] : [])];
+    case 'explore':
+      return [b.prompt, b.notice];
+    case 'quiz':
+      return [b.question, ...b.options.flatMap((o) => [o.text, o.why])];
   }
 }
 
@@ -403,7 +490,7 @@ export function allInlineText(book: Book): string[] {
 }
 
 /** Every automated check the book points to, labelled the way the book numbers it. */
-export function allChecks(book: Book, label: (kind: 'equation' | 'derivation' | 'problem' | 'exercise', id: string) => string): Array<{ label: string; test: string }> {
+export function allChecks(book: Book, label: (kind: 'equation' | 'derivation' | 'problem' | 'exercise' | 'explore', id: string) => string): Array<{ label: string; test: string }> {
   const out: Array<{ label: string; test: string }> = [];
   for (const ch of book.chapters) {
     for (const s of ch.sections)
@@ -411,6 +498,7 @@ export function allChecks(book: Book, label: (kind: 'equation' | 'derivation' | 
         if (b.kind === 'equation') out.push({ label: label('equation', b.id), test: b.example.check });
         if (b.kind === 'derivation') out.push({ label: label('derivation', b.id), test: b.test });
         if (b.kind === 'problem') out.push({ label: label('problem', b.id), test: b.test });
+        if (b.kind === 'explore') out.push({ label: label('explore', b.id), test: b.test });
       }
     for (const e of ch.exercises) out.push({ label: label('exercise', e.id), test: e.test });
   }

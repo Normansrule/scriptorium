@@ -24,8 +24,11 @@ describe('web edition', () => {
     expect(html).not.toMatch(/<script(?![^>]*src="assets\/viewer3d\.js")/); // the only script is our viewer
   });
 
-  it('leaves out the viewer when the book has no 3D models, and refuses to build without fonts', () => {
-    const { dir, book, refs } = loadBook(join(REPO_ROOT, 'examples/rc-circuits'));
+  it('leaves out the script when nothing in the book is interactive, and refuses to build without fonts', () => {
+    const { dir, book: full, refs } = loadBook(join(REPO_ROOT, 'examples/rc-circuits'));
+    // the same book with its explorables taken out has no 3D models and nothing live
+    const book = structuredClone(full);
+    for (const ch of book.chapters) for (const s of ch.sections) for (const k of ['summary', 'intuition', 'formal', 'limits'] as const) s.layers[k] = s.layers[k].filter((b) => b.kind !== 'explore');
     const input = { book, refs, files: figureFiles(dir), csl: cslAssets(book.meta.citationStyle) };
     expect(Object.keys(buildWebBook(input, nodeWebAssets(false), nodeSanitizer()))).not.toContain('assets/viewer3d.js');
     expect(() => buildWebBook(input, { ...nodeWebAssets(false), fonts: {} }, nodeSanitizer())).toThrow(/needs the font/);

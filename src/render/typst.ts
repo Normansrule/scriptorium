@@ -3,7 +3,8 @@
  * in src/kdp/specs.ts. Every text string goes through `escMarkup`; math goes through the
  * LaTeX→Typst converter; nothing from the book is ever emitted as raw Typst code.
  */
-import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Experiment, type Misconception, type Model3D, type Problem, type Reference, type Section } from '../core/book.ts';
+import { allChecks, type Block, type Book, type Chapter, type Derivation, type Equation, type Experiment, type Explore, type Misconception, type Model3D, type Problem, type Quiz, type Reference, type Section } from '../core/book.ts';
+import { formatValue, readouts, stillSvg, stillValues } from './explore.ts';
 import { qrSvg } from './qr.ts';
 import { styleTypst } from '../core/bookstyle.ts';
 import { fonts, roles, surface } from '../core/style.ts';
@@ -167,8 +168,8 @@ const EXP_LABEL: Record<string, string> = { 'hands-on': 'Hands-on', demonstratio
 const label = (t: string) => `#text(font: "${fonts.sans}", weight: "semibold", size: 8.5pt, fill: ${C.muted})[${escMarkup(t)}]`;
 
 /** A boxed learning block with a heading line; breakable so long derivations can cross a page. */
-function learnBox(head: string, body: string, edge = 'bk-mark'): string {
-  return `#block(width: 100%, inset: 9pt, stroke: (rest: 0.75pt + ${C.rule}, left: 2.5pt + ${edge}), radius: 4pt, breakable: true)[
+function learnBox(head: string, body: string, edge = 'bk-mark', breakable = true): string {
+  return `#block(width: 100%, inset: 9pt, stroke: (rest: 0.75pt + ${C.rule}, left: 2.5pt + ${edge}), radius: 4pt, breakable: ${breakable})[
   #set par(justify: false)
   #text(font: "${fonts.sans}", weight: "semibold", size: 9pt, fill: bk-heading)[${head}]
   #v(2pt)
@@ -221,6 +222,47 @@ function typstMisconception(b: Misconception, ctx: TypstContext): string {
   return learnBox('Common mistake', `  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 8pt, [${label('The mistake')}], [${md(b.wrong, ctx)}], [${label('Why it’s tempting')}], [${md(b.tempting, ctx)}], [${label('What’s true')}], [${md(b.right, ctx)}], [${label('How to tell')}], [${md(b.test, ctx)}])`, C.accent);
 }
 
+/** An explorable in print: the three-curve still, the slider ranges, the numbers at the defaults, and a link to the live one. */
+function typstExplore(b: Explore, ctx: TypstContext): string {
+  const eq = b.equation ? ` #text(weight: "regular", fill: ${C.muted})[· Eq. (${ctx.numbering.equation.get(b.equation) ?? b.equation})]` : '';
+  const still = stillSvg(b, 'light');
+  const desc = (still.match(/<desc id="d">([^<]*)<\/desc>/)?.[1] ?? b.title).replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const { values } = stillValues(b);
+  const cells = b.params.flatMap((p) => [`[${escMarkup(p.label)}]`, `[${escMarkup(`${formatValue(p.min, 3)} to ${formatValue(p.max, 3)}${p.unit ? ` ${p.unit}` : ''}`)}]`, `[*${escMarkup(`${formatValue(p.value, 3)}${p.unit ? ` ${p.unit}` : ''}`)}*]`]);
+  const outs = readouts(b, values).map((r) => `[${escMarkup(r.label)}], [*${escMarkup(`${r.text}${r.unit ? ` ${r.unit}` : ''}`)}*]`);
+  const url = ctx.webUrl ? `${ctx.webUrl}#${b.id}` : '';
+  const tryIt = url
+    ? `\n  #grid(columns: (1fr, 0.55in), gutter: 8pt, align: (left + horizon, right + horizon), [#text(size: 8.5pt, fill: ${C.muted})[Move the sliders yourself in the web edition: ${escMarkup(url)}]], [#image(bytes("${escString(qrSvg(url))}"), format: "svg", width: 0.55in, alt: "QR code linking to the live version")])`
+    : '';
+  // anchors inside the box (they take no space): the 3D Edition puts a "try it" hotspot on the box
+  return learnBox(
+    `${anchor(b.id, 'start', ctx)}Explore ${ctx.numbering.explore.get(b.id)} #h(4pt) #text(weight: "regular", fill: ${C.muted})[${escMarkup(b.title)}]${eq}`,
+    `  #strong[${md(b.prompt, ctx)}]
+  #block(breakable: false)[#image(bytes("${escString(still)}"), format: "svg", width: 100%, alt: "${escString(desc)}")]
+  #set text(size: 8.5pt)
+  #grid(columns: (1.35fr, 1fr), gutter: 10pt,
+    [#table(columns: 3, stroke: none, inset: (x: 3pt, y: 2pt), [#text(fill: ${C.muted})[Slider]], [#text(fill: ${C.muted})[Range]], [#text(fill: ${C.muted})[Default]], ${cells.join(', ')})],
+    [${outs.length ? `#table(columns: 2, stroke: none, fill: bk-tint, inset: (x: 4pt, y: 3pt), ${outs.join(', ')})` : ''}])
+  #set text(size: 10.5pt)
+  ${label('What to notice')} ${md(b.notice, ctx)}${tryIt}${anchor(b.id, 'end', ctx)}`,
+    'bk-mark',
+    false,
+  );
+}
+
+/** A self-check in print: lettered answers; the answer and why are in the back of the book. */
+function typstQuiz(b: Quiz, ctx: TypstContext): string {
+  return learnBox(
+    `Check yourself ${ctx.numbering.quiz.get(b.id)} #h(1fr) #text(weight: "regular", size: 8pt, fill: ${C.muted})[answer at the back]`,
+    `  ${md(b.question, ctx)}
+  #grid(columns: (auto, 1fr), row-gutter: 5pt, column-gutter: 6pt, ${b.options.map((o, i) => `[#text(font: "${fonts.sans}", weight: "semibold", fill: bk-heading)[(${String.fromCharCode(97 + i)})]], [${md(o.text, ctx)}]`).join(', ')})`,
+    'bk-mark',
+    false,
+  );
+}
+
+const quizzesOf = (c: Chapter): Quiz[] => c.sections.flatMap((s) => [...s.layers.summary, ...s.layers.intuition, ...s.layers.formal, ...s.layers.limits]).filter((b): b is Quiz => b.kind === 'quiz');
+
 /** Extension point: extra block kinds register a Typst renderer here. */
 export const extraTypstBlocks: Record<string, (b: Block, ctx: TypstContext) => string> = {};
 
@@ -260,6 +302,10 @@ function block(b: Block, ctx: TypstContext): string {
       return typstExperiment(b, ctx);
     case 'misconception':
       return typstMisconception(b, ctx);
+    case 'explore':
+      return typstExplore(b, ctx);
+    case 'quiz':
+      return typstQuiz(b, ctx);
     case 'application':
       return `#block(width: 100%, inset: 9pt, fill: bk-tint, stroke: (left: 2.5pt + bk-mark), radius: 4pt, breakable: false)[
   #text(font: "${fonts.sans}", weight: "semibold", size: 9pt, fill: bk-heading)[In practice] #text(font: "${fonts.sans}", size: 9pt, fill: ${C.muted})[${escMarkup(b.title)}] \\
@@ -347,15 +393,23 @@ ${ch.furtherReading.map((id) => `- #link(<ref-${id}>)[\\[${ctx.numbering.cite.ge
 `;
 }
 
-/** "Solutions to practice": every exercise's answer and worked solution, by chapter. */
+/** "Solutions to practice": every self-check answer, and every exercise's answer and worked solution, by chapter. */
 function solutions(book: Book, ctx: TypstContext): string {
-  if (!book.chapters.some((c) => c.exercises.length)) return '';
+  if (!book.chapters.some((c) => c.exercises.length || quizzesOf(c).length)) return '';
+  const quizAnswers = (c: Chapter) =>
+    quizzesOf(c)
+      .map((q) => {
+        const i = q.options.findIndex((o) => o.correct);
+        return `#block(breakable: false, below: 8pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt)[Check yourself ${ctx.numbering.quiz.get(q.id)}] #h(4pt) #strong[(${String.fromCharCode(97 + i)})] ${md(q.options[i]!.why, ctx)}]`;
+      })
+      .join('\n');
   return `#pagebreak(to: "odd", weak: true)
 = Solutions to practice
 ${book.chapters
-  .filter((c) => c.exercises.length)
+  .filter((c) => c.exercises.length || quizzesOf(c).length)
   .map(
     (c) => `== ${escMarkup(c.title)}
+${quizAnswers(c)}
 ${c.exercises
   .map((e) => `#block(breakable: true, below: 10pt)[#text(font: "${fonts.sans}", weight: "semibold", size: 9.5pt)[${ctx.numbering.exercise.get(e.id)}] #h(4pt) ${label('Answer')} #strong[${md(e.answer, ctx)}]
 ${typstSteps(e.solution, ctx)}]`)
@@ -373,6 +427,13 @@ export function allEquations(book: Book): Equation[] {
 }
 
 /** The report's opening sentence, true to what was actually checked (shared with the web and EPUB renderers). */
+/** "equations, derivations and exercise solutions": the kinds of check a book actually has, in a fixed order. */
+function checkKinds(kinds: string[]): string {
+  const names: Array<[string, string]> = [['equation', 'equations'], ['derivation', 'derivations'], ['problem', 'worked problems'], ['explore', 'explorables'], ['exercise', 'exercise solutions']];
+  const have = names.filter(([k]) => kinds.includes(k)).map(([, n]) => n);
+  return have.length > 1 ? `${have.slice(0, -1).join(', ')} and ${have.at(-1)}` : (have[0] ?? 'checks');
+}
+
 export function verificationSummary(book: Book, refs: Reference[]): string {
   const checks = allChecks(book, (kind) => kind);
   const eqOnly = checks.every((c) => c.label === 'equation');
@@ -390,7 +451,7 @@ export function verificationSummary(book: Book, refs: Reference[]): string {
         ? ` ${unchecked} of ${checks.length} ${eqOnly ? 'equations have' : 'equations, derivations and solutions have'} no automated check yet and must be checked by hand before publishing.`
         : eqOnly
           ? ` All ${checks.length} key equations and worked examples are re-derived by the automated tests listed below.`
-          : ` All ${checks.length} equations, derivations, worked problems and exercise solutions are re-derived by the automated tests listed below.`;
+          : ` All ${checks.length} ${checkKinds(checks.map((c) => c.label))} are re-derived by the automated tests listed below.`;
   return a + b;
 }
 

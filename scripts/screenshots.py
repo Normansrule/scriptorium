@@ -50,6 +50,17 @@ def pdf_pages(pdf: Path, first: int, last: int, dpi: int = 110) -> list[Image.Im
     return pages
 
 
+def page_with(pdf: Path, phrase: str) -> int:
+    """1-based number of the first page whose text contains `phrase` (whitespace-insensitive), so the
+    pictures follow the book when pages move."""
+    text = subprocess.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True, text=True, check=True).stdout
+    want = " ".join(phrase.split())
+    for i, page in enumerate(text.split("\f")):
+        if want in " ".join(page.split()):
+            return i + 1
+    raise SystemExit(f"no page in {pdf} contains {phrase!r}")
+
+
 def frame(img: Image.Image, pad: int = 2) -> Image.Image:
     """A thin gray outline so white pages read against a white README."""
     out = Image.new("RGB", (img.width + 2 * pad, img.height + 2 * pad), (208, 215, 222))
@@ -162,12 +173,20 @@ def main() -> None:
 
         page = browser.new_page(device_scale_factor=1.5)
 
-        # 4. Print spread from the engineering sample (pages 14–15: the charging circuit and the time constant).
-        spread = row([frame(i) for i in pdf_pages(DIST / "rc-circuits" / "book.pdf", 14, 15)], gap=0, bg=PAPER_BG["light"])
+        # 4. Print spread from the engineering sample: the charging circuit and the time constant.
+        rc_pdf = DIST / "rc-circuits" / "book.pdf"
+        first = page_with(rc_pdf, "Figure 2.1 — The charging circuit")
+        first -= first % 2  # start on a left-hand (even) page so it reads as a spread
+        spread = row([frame(i) for i in pdf_pages(rc_pdf, first, first + 1)], gap=0, bg=PAPER_BG["light"])
         save(spread, "print-spread.png")
 
         # 5. Gallery: one page per profile.
-        picks = [("rc-circuits", 16), ("molecular-shapes", 8), ("cells-and-dna", 10), ("heart-and-vessels", 10)]
+        picks = [
+            ("rc-circuits", page_with(DIST / "rc-circuits" / "book.pdf", "Figure 2.3 — Changing the resistor")),
+            ("molecular-shapes", page_with(DIST / "molecular-shapes" / "book.pdf", "Figure 1.2 — Methane")),
+            ("cells-and-dna", page_with(DIST / "cells-and-dna" / "book.pdf", "Figure 1.3 —")),
+            ("heart-and-vessels", page_with(DIST / "heart-and-vessels" / "book.pdf", "Figure 1.3 — Resistance scales")),
+        ]
         save(row([frame(pdf_pages(DIST / d / "book.pdf", n, n)[0]) for d, n in picks], gap=28, bg=PAPER_BG["light"], height=1000), "gallery.png")
 
         # 6. Before / after: a section's drafted JSON next to its typeset page.

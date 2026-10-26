@@ -213,3 +213,15 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .style-name { font-weight: 600; font-size: .92rem; }
 .style-desc { font-size: .8rem; line-height: 1.35; color: var(--sc-muted); }
 @media (prefers-reduced-motion: reduce) { .style-card { transition: none; } .style-card:active { transform: none; } }
+
+/* Editor: explorables and self-checks */
+.param-table { width: 100%; border-collapse: collapse; margin: .6rem 0; font-size: .9rem; }
+.param-table th { text-align: left; font-weight: 600; padding: .2rem .4rem; color: var(--sc-muted); }
+.param-table td { padding: .2rem .3rem; }
+.param-table input { width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
+.quiz-option-edit { margin: .9rem 0; padding: .2rem 0 .2rem .9rem; border-left: 3px solid var(--sc-rule); }
+.quiz-option-edit.is-right { border-left-color: var(--sc-verified); }
+.correct-pick { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; font-weight: 600; margin-bottom: .2rem; }
+.correct-pick input { width: auto; margin: 0; accent-color: var(--sc-verified); }
+.correct-pick small { font-weight: 400; color: var(--sc-muted); }
+.is-right .correct-pick small { color: var(--sc-verified); font-weight: 600; }

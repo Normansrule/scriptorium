@@ -16,6 +16,9 @@ export interface Numbering {
   problem: Map<string, string>;
   experiment: Map<string, string>;
   exercise: Map<string, string>;
+  /** explorables and self-checks: "2.1" within each chapter */
+  explore: Map<string, string>;
+  quiz: Map<string, string>;
   /** reference id → citation number, in bibliography order */
   cite: Map<string, number>;
 }
@@ -34,6 +37,8 @@ export function numberBook(book: Book): Numbering {
   const problem = new Map<string, string>();
   const experiment = new Map<string, string>();
   const exercise = new Map<string, string>();
+  const explore = new Map<string, string>();
+  const quiz = new Map<string, string>();
   const cite = new Map<string, number>();
   const addCite = (id: string) => {
     if (!cite.has(id)) cite.set(id, cite.size + 1);
@@ -44,7 +49,7 @@ export function numberBook(book: Book): Numbering {
   book.chapters.forEach((ch, ci) => {
     let f = 0;
     let e = 0;
-    const n = { derivation: 0, problem: 0, experiment: 0 };
+    const n = { derivation: 0, problem: 0, experiment: 0, explore: 0, quiz: 0 };
     scan(ch.goals);
     if (ch.hook) scan([ch.hook]);
     scan(ch.prerequisites);
@@ -56,6 +61,8 @@ export function numberBook(book: Book): Numbering {
         if (b.kind === 'derivation') derivation.set(b.id, `${ci + 1}.${++n.derivation}`);
         if (b.kind === 'problem') problem.set(b.id, `${ci + 1}.${++n.problem}`);
         if (b.kind === 'experiment') experiment.set(b.id, `${ci + 1}.${++n.experiment}`);
+        if (b.kind === 'explore') explore.set(b.id, `${ci + 1}.${++n.explore}`);
+        if (b.kind === 'quiz') quiz.set(b.id, `${ci + 1}.${++n.quiz}`);
         scan(blockTexts(b));
       }
       scan(l.takeaways);
@@ -67,7 +74,7 @@ export function numberBook(book: Book): Numbering {
     });
   });
   for (const ch of book.chapters) ch.furtherReading.forEach(addCite);
-  return { figure, equation, derivation, problem, experiment, exercise, cite };
+  return { figure, equation, derivation, problem, experiment, exercise, explore, quiz, cite };
 }
 
 /** Replace "Eq. (eq-id)" and "Figure fig-id" references in plain strings with their numbers. */
@@ -77,11 +84,21 @@ export function resolveRefs(text: string, n: Numbering): string {
     .replace(/\b(fig-[a-z0-9-]+)\b/g, (m) => n.figure.get(m) ?? m)
     .replace(/\b(drv-[a-z0-9-]+)\b/g, (m) => n.derivation.get(m) ?? m)
     .replace(/\b(prb-[a-z0-9-]+)\b/g, (m) => n.problem.get(m) ?? m)
-    .replace(/\b(exp-[a-z0-9-]+)\b/g, (m) => n.experiment.get(m) ?? m);
+    .replace(/\b(exp-[a-z0-9-]+)\b/g, (m) => n.experiment.get(m) ?? m)
+    .replace(/\b(xpl-[a-z0-9-]+)\b/g, (m) => n.explore.get(m) ?? m)
+    .replace(/\b(chk-[a-z0-9-]+)\b/g, (m) => n.quiz.get(m) ?? m);
 }
 
 /** How the book names each automated check: "Eq. (2.1)", "Derivation 2.1", "Problem 2.1", "Exercise 2.1". */
-export function checkLabel(n: Numbering): (kind: 'equation' | 'derivation' | 'problem' | 'exercise', id: string) => string {
+export function checkLabel(n: Numbering): (kind: 'equation' | 'derivation' | 'problem' | 'exercise' | 'explore', id: string) => string {
   return (kind, id) =>
-    kind === 'equation' ? `Eq. (${n.equation.get(id)})` : kind === 'derivation' ? `Derivation ${n.derivation.get(id)}` : kind === 'problem' ? `Problem ${n.problem.get(id)}` : `Exercise ${n.exercise.get(id)}`;
+    kind === 'equation'
+      ? `Eq. (${n.equation.get(id)})`
+      : kind === 'derivation'
+        ? `Derivation ${n.derivation.get(id)}`
+        : kind === 'problem'
+          ? `Problem ${n.problem.get(id)}`
+          : kind === 'explore'
+            ? `Explore ${n.explore.get(id)}`
+            : `Exercise ${n.exercise.get(id)}`;
 }
