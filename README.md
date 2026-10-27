@@ -72,6 +72,14 @@ Press **P** for pop-ups on or off (off by default when your device asks for redu
 
 *The pop-up book: cards stand up off the spread and kept ones wait on the desk; a chapter banner counts what's inside and opens the chapter's overview; an explorable drives a scene.*
 
+**New — connections and spaced review.** Things that belong together are now tied together. When a book says an equation is shown by a figure, or an explorable brings an equation to life or drives a scene, the 3D Edition draws a **thread** between them, from one item's colour to the other's. Point at an item and its threads light up with dashes flowing along them. Every equation card, explorable and figure lists its connections, so you can follow an idea from the equation to its picture to the sliders and the 3D scene. Kept cards that belong together are tied on the desk too. Nothing is guessed: threads come only from links the book states, and the build checks them.
+
+**Study mode now remembers.** Each kept card sits in one of five boxes, a Leitner system: answer it right first time and it moves up a box and comes back later (tomorrow, then in 2, 4, 8 and 16 days); miss it and it comes back tomorrow. The Desk button shows how many cards are due, each card shows its box and when it is next due, and a chapter's overview shows how much of it you have studied. Spacing reviews out and testing yourself are the two study techniques with the strongest evidence [20]. Like the desk, the schedule stays in your browser.
+
+<p align="center"><img src="assets/rendered/screens/connections-review.png" alt="Four views of the 3D Edition. Top left: a spread of the engineering sample where a dashed thread arcs from Figure 1.1, edged in green, to Eq. 1.2, edged in orange, fading from green to orange. Top right: Figure 1.1's parallel-plate capacitor scene in 3D with its caption panel listing Connected: Its equation, Eq. 1.2, and Driven by, Explore 2.1. Bottom left: a spread with a thread from Eq. 1.3 to Figure 1.2, two kept cards on the table joined by another thread, and the Desk button showing 2 kept and 2 due. Bottom right: the desk drawer after a review, each card showing one of five pips filled and Next tomorrow, with a Practise ahead button." width="880"></p>
+
+*Threads join an equation to its figure on the spread; the figure's caption lists what it is connected to; kept cards are tied on the desk, and the Desk button counts what is due; after a review, each card shows its box and when it comes back.*
+
 ---
 
 ## What you'll see
@@ -538,6 +546,7 @@ Each sample book lists its own sources, with a verification record for each, in 
 | 0c (Living Textbook Forge) | Explorables (live sliders, plot and numbers; print stills; 3D Edition panel) and self-checks (instant feedback; answers at the back), in every sample with tests that evaluate the book's own expressions; two more scene kits (cell size, electron groups) and their diagrams; readable schema errors | **Done** |
 | 0b (Living Textbook Forge) | Book styles (six, WCAG-tested, shared by print, ebook, web and 3D); three more scene kits (capacitor, RC circuit, blood vessel) with a gallery; converter never turns a data plot into a scene; scroll-in motion for the web edition | **Done** |
 | 0d (Living Textbook Forge) | The pop-up book: cards stand up off each spread, chapter banners with counts and an overview; equation and check cards; explorables drive scenes (RC time constant, vessel radius, cell size); the desk (keep, fly to the table) and study mode | **Done** |
+| 0e (Living Textbook Forge) | Connections: threads between items the book links (equation ↔ figure ↔ explorable ↔ scene), on the spread and the desk, and a Connected list in every panel; spaced review (Leitner boxes, due badge, strength per card, chapter progress) | **Done** |
 | 1–7 | Book source format, 2D Edition polish, flagship chapter, 3D Edition, converter + living diagrams, cover designer, website and release | Planned in [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) |
 | 5 | arXiv search; code-signed installers | Next |
 

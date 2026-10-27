@@ -276,3 +276,28 @@ kbd { font: inherit; font-size: 0.8125rem; padding: 1px 6px; border: 1px solid v
 /* a chapter's pill rides on top of its banner, clear of the title */
 .spot-chapter .spot-pill { top: auto; right: auto; left: 50%; bottom: 100%; transform: translate(-50%, -6px); }
 @media (hover: hover) and (pointer: fine) { .spot-chapter:hover .spot-pill { transform: translate(-50%, -9px); } }
+
+/* ---- connections: what an item is stated to belong with */
+.connected { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.connected-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.link-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px 4px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--kind) 55%, transparent); background: color-mix(in srgb, var(--kind) 10%, transparent); color: var(--ink); font: inherit; font-size: 0.875rem; cursor: pointer; transition: background-color 140ms ease, transform 140ms var(--ease-out); }
+.link-chip:hover { background: color-mix(in srgb, var(--kind) 22%, transparent); }
+.link-chip:active { transform: scale(0.97); }
+.link-chip .chip { margin: 0; }
+.link-verb { color: var(--muted); }
+.link-hint { color: var(--muted); font-size: 0.8125rem; }
+.fig-caption .connected { margin-top: 10px; padding-top: 10px; }
+.fig-caption .connected-row { gap: 6px; }
+
+/* ---- spaced review: due badge and strength pips */
+.desk-btn .due { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; background: #f0e442; color: #1c1a02; font-size: 0.75rem; font-weight: 700; }
+.desk-btn .due[hidden] { display: none; }
+.strength { display: flex; align-items: center; gap: 8px; padding: 0 10px 10px; font-size: 0.8125rem; color: var(--muted); grid-column: 1 / -1; }
+.strength .pips { display: inline-flex; gap: 3px; }
+.strength .pips i { width: 14px; height: 6px; border-radius: 3px; background: var(--line); }
+.strength .pips i.on { background: var(--kind); }
+.strength.is-due .when { color: var(--ink); font-weight: 600; }
+.study-next { font-weight: 600; }
+.ch-progress { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: -10px; }
+.ch-progress span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #56b4e9, #009e73, #e69f00, #cc79a7); }
+.ch-progress-text { margin: 0; color: var(--muted); font-size: 0.8125rem; }

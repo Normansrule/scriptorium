@@ -11,24 +11,31 @@ import type { BookModel } from './book.ts';
 import { ICON } from './icons.ts';
 import { KIND } from './kinds.ts';
 import { checkContent, chip, el, type Modal } from './panel.ts';
+import { whenText, type ReviewStore } from './review.ts';
 
 interface Card {
   item: Item;
   tries: number;
 }
 
-export function startStudy(modal: Modal, model: BookModel, all: Item[], from: HTMLElement | null, onOpenItem: (it: Item) => void, source = 'your desk'): void {
-  const items = all.filter(studyable);
-  if (!items.length) return;
+export function startStudy(modal: Modal, model: BookModel, all: Item[], from: HTMLElement | null, onOpenItem: (it: Item) => void, source = 'your desk', review?: ReviewStore, ahead = false): void {
+  const studyableItems = all.filter(studyable);
+  if (!studyableItems.length) return;
+  // with spaced review, a session is the cards that are due (new ones count); if none are, the
+  // reader can practise ahead, which never moves a card
+  const due = review ? review.due(studyableItems) : studyableItems;
+  const practisingAhead = !!review && (ahead || !due.length);
+  const items = practisingAhead ? studyableItems : due;
   // a fair mix: shuffle once, so related items are not always back to back
   const deck: Card[] = items.map((item) => ({ item, tries: 0 })).sort(() => Math.random() - 0.5);
   let done = 0;
   let firstTime = 0;
   const total = deck.length;
+  const plural = `${total} card${total === 1 ? '' : 's'}`;
 
   modal.open({
-    kicker: 'Study',
-    title: `${total} card${total === 1 ? '' : 's'} from ${source}`,
+    kicker: practisingAhead ? 'Practise ahead' : 'Study',
+    title: practisingAhead ? `Nothing due: ${plural} from ${source}, for practice` : review ? `${plural} due from ${source}` : `${plural} from ${source}`,
     variant: 'study',
     from,
     build: (body) => {
@@ -52,9 +59,22 @@ export function startStudy(modal: Modal, model: BookModel, all: Item[], from: HT
 
       const finish = () => {
         const end = el('div', { class: 'study-end' });
-        end.append(el('p', { class: 'study-big' }, `${firstTime} of ${total} on the first try`), el('p', {}, firstTime === total ? 'Every card, first time. Try a harder chapter, or come back tomorrow: a day’s gap makes it stick.' : 'The ones you missed came back until you had them. Come back tomorrow and go through the desk once more.'));
+        end.append(el('p', { class: 'study-big' }, `${firstTime} of ${total} on the first try`));
+        if (review && !practisingAhead) {
+          // when each card comes back, grouped: "3 tomorrow · 1 in 4 days"
+          const groups = new Map<number, number>();
+          for (const it of items) {
+            const d = review.daysLeft(it.key);
+            groups.set(d, (groups.get(d) ?? 0) + 1);
+          }
+          const parts = [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([d, n]) => `${n} ${whenText(d)}`);
+          end.append(el('p', { class: 'study-next' }, `Next reviews: ${parts.join(' · ')}.`));
+          end.append(el('p', {}, firstTime === total ? 'Every card right first time: each one waits longer before it comes back.' : 'The ones you missed start again tomorrow; the rest wait longer. The gaps are what make it stick.'));
+        } else {
+          end.append(el('p', {}, practisingAhead ? 'Cards that weren’t due haven’t moved: practising ahead never changes a schedule.' : firstTime === total ? 'Every card, first time. Come back tomorrow: a day’s gap makes it stick.' : 'The ones you missed came back until you had them. Come back tomorrow and go through them once more.'));
+        }
         const again = el('button', { type: 'button', class: 'btn primary', 'data-autofocus': '' }, 'Go through it again');
-        again.addEventListener('click', () => startStudy(modal, model, items, from, onOpenItem, source));
+        again.addEventListener('click', () => startStudy(modal, model, studyableItems, from, onOpenItem, source, review, true));
         end.append(again);
         stage.append(end);
         again.focus();
@@ -65,6 +85,7 @@ export function startStudy(modal: Modal, model: BookModel, all: Item[], from: HT
         if (ok) {
           done++;
           if (card.tries === 0) firstTime++;
+          review?.grade(card.item.key, card.tries === 0); // only a due card moves
         } else {
           card.tries++;
           deck.splice(Math.min(deck.length, 2), 0, card); // see it again soon, not straight away

@@ -107,3 +107,51 @@ describe('the self-check card', () => {
     expect(firsts).toEqual([false]);
   });
 });
+
+describe('spaced review', () => {
+  it('schedules a card 1, 2, 4, 8, 16 days out as it is answered right, and back to tomorrow on a miss', async () => {
+    const { ReviewStore, dayNumber, INTERVALS } = await import('../../web/src/edition3d/review.ts');
+    localStorage.clear();
+    let t = new Date(2026, 9, 27, 23, 30).getTime(); // late evening: "tomorrow" is still the next calendar day
+    const r = new ReviewStore('rv:T', () => t);
+    const day = dayNumber(t);
+    expect(r.isDue('equation:eq-tau')).toBe(true); // new cards are due
+    expect(r.grade('equation:eq-tau', true)).toEqual({ box: 1, due: day + 1 });
+    expect(r.isDue('equation:eq-tau')).toBe(false);
+    expect(r.grade('equation:eq-tau', true)).toEqual({ box: 1, due: day + 1 }); // practising ahead never moves a card
+    for (const box of [2, 3, 4, 5, 5]) {
+      t += (r.get('equation:eq-tau')!.due - dayNumber(t)) * 86_400_000; // jump to its day
+      expect(r.isDue('equation:eq-tau')).toBe(true);
+      const rec = r.grade('equation:eq-tau', true)!;
+      expect(rec.box).toBe(box);
+      expect(rec.due - dayNumber(t)).toBe(INTERVALS[box]);
+    }
+    t += 16 * 86_400_000;
+    expect(r.grade('equation:eq-tau', false)).toEqual({ box: 1, due: dayNumber(t) + 1 });
+    expect(new ReviewStore('rv:T', () => t).get('equation:eq-tau')).toEqual({ box: 1, due: dayNumber(t) + 1 }); // survives a reload
+    localStorage.setItem('rv:T', '{"a": {"box": 9, "due": 1}, "b": "x"');
+    expect(new ReviewStore('rv:T', () => t).get('a')).toBeUndefined(); // broken storage starts fresh
+    localStorage.setItem('rv:T', '{"a": {"box": 9, "due": 1}, "b": {"box": 2, "due": 3}}');
+    const fresh = new ReviewStore('rv:T', () => t);
+    expect([fresh.get('a'), fresh.get('b')]).toEqual([undefined, { box: 2, due: 3 }]); // out-of-range boxes are dropped
+  });
+});
+
+describe('connections', () => {
+  it('links an equation to its figure and an explorable to its equation and the scenes it drives, both ways', async () => {
+    const { itemsOf, connections } = await import('../../web/src/edition3d/items.ts');
+    const linked = Book3D.parse({
+      ...book,
+      equations: [{ ...book.equations[0]!, figure: 'fig-a' }],
+      explorables: [{ id: 'xpl-a', number: '1.1', title: 'Try', page: 2, rect, block: { kind: 'explore', equation: 'eq-tau', drives: [{ kit: 'rc-loop', input: 'tau', expr: 'R*C' }] } }],
+    });
+    const items = itemsOf(linked);
+    const map = connections(items);
+    const say = (key: string) => (map.get(key) ?? []).map((l) => `${l.label} ${l.item.name}${l.drive ? ` (${l.drive})` : ''}`);
+    expect(say('equation:eq-tau')).toEqual(['Shown in Figure 1.1', 'Brought to life in Explore 1.1']);
+    expect(say('figure:fig-a')).toEqual(['Its equation Eq. (1.1)']);
+    expect(say('explore:xpl-a')).toEqual(['Brings to life Eq. (1.1)', 'Drives Figure 1.2 (to)']);
+    expect(say('scene:fig-b')).toEqual(['Driven by Explore 1.1 (from)']);
+    expect(say('check:chk-x')).toEqual([]);
+  });
+});

@@ -75,6 +75,44 @@ export function chapterCounts(contents: Item[]): Array<{ kind: ItemKind; n: numb
     .filter((c) => c.n > 0);
 }
 
+/** How two items belong together, said from one side ("Shown in Figure 1.2"). */
+export interface Link {
+  item: Item;
+  /** "Shown in", "Its equation", "Brought to life in", "Brings to life", "Drives", "Driven by" */
+  label: string;
+  /** an explorable that drives a scene: opening the scene from it should attach the sliders */
+  drive?: 'from' | 'to';
+}
+
+/**
+ * Every connection the book states, both ways: an equation and the figure that shows it
+ * (`equation.figure`), an explorable and the equation it brings to life (`explore.equation`), and
+ * an explorable and the scenes it drives (`explore.drives`). Nothing is guessed from the text.
+ */
+export function connections(items: Item[]): Map<string, Link[]> {
+  const map = new Map<string, Link[]>(items.map((i) => [i.key, []]));
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const link = (a: Item, b: Item, ab: string, ba: string, drive = false) => {
+    if (a === b || map.get(a.key)!.some((l) => l.item === b)) return;
+    map.get(a.key)!.push({ item: b, label: ab, ...(drive ? { drive: 'to' as const } : {}) });
+    map.get(b.key)!.push({ item: a, label: ba, ...(drive ? { drive: 'from' as const } : {}) });
+  };
+  for (const it of items) {
+    if (it.ref.kind === 'equation' && it.ref.data.figure) {
+      const f = byId.get(it.ref.data.figure);
+      if (f) link(it, f, 'Shown in', 'Its equation');
+    }
+    if (it.ref.kind === 'explore') {
+      const x = it.ref.data.block as { equation?: string; drives?: Array<{ kit: string }> };
+      const e = x.equation ? byId.get(x.equation) : undefined;
+      if (e) link(it, e, 'Brings to life', 'Brought to life in');
+      const kits = new Set((x.drives ?? []).map((d) => d.kit));
+      for (const f of items) if (f.ref.kind === 'scene' && f.ref.data.treatment.mode === 'scene' && kits.has(f.ref.data.treatment.kit)) link(it, f, 'Drives', 'Driven by', true);
+    }
+  }
+  return map;
+}
+
 /** Things a reader can keep and study (a chapter is a way in, not a card). */
 export const studyable = (i: Item) => i.kind !== 'chapter';
 

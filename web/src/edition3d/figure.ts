@@ -59,6 +59,8 @@ export class FigureView {
   driversFor: ((fig: Figure3D) => Explorable3D[]) | null = null;
   /** Extra buttons for the dock (Keep on desk…), made fresh for each figure. */
   toolsFor: ((fig: Figure3D) => HTMLElement[]) | null = null;
+  /** extra content for the caption panel (what this figure is connected to) */
+  extrasFor: ((fig: Figure3D) => HTMLElement | null) | null = null;
   private drive: HTMLElement | null = null;
 
   constructor(
@@ -317,6 +319,8 @@ export class FigureView {
     const alt = el('p', { class: 'sr-only' });
     alt.textContent = `Description: ${fig.alt}`;
     this.caption.append(h, p, c, alt, this.status);
+    const extra = this.extrasFor?.(fig);
+    if (extra) this.caption.append(extra);
     this.status.textContent = '';
     this.caption.hidden = false;
   }

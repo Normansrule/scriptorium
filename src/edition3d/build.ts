@@ -260,6 +260,7 @@ export async function buildEdition3D(input: Edition3DInput, deps: Edition3DDeps)
         symbols: block.where.map((w) => ({ symbol: latexToText(w.symbol), meaning: plain(w.meaning), unit: w.unit })),
         example: plain(block.example.text),
         validity: plain(block.validity),
+        ...(block.figure ? { figure: block.figure } : {}),
       });
     if (block.kind === 'quiz') checks.push({ id: block.id, number: numbering.quiz.get(block.id) ?? '', ...where, question: plain(block.question), options: block.options.map((o) => ({ text: plain(o.text), correct: o.correct, why: plain(o.why) })) });
   }

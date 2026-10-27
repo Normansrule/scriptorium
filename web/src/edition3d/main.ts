@@ -12,11 +12,13 @@
 import * as THREE from 'three';
 import { Book3D, type Explorable3D, type Figure3D } from '../../../src/edition3d/manifest.ts';
 import { DeskStore, DeskTable } from './desk.ts';
-import { chapterCounts, chapterItems, cutOut, itemsOf, type Item } from './items.ts';
+import { chapterCounts, chapterItems, connections, cutOut, itemsOf, type Item } from './items.ts';
 import { KIND } from './kinds.ts';
 import { checkContent, chip, el as panelEl, equationContent, exploreContent, Modal, plain } from './panel.ts';
 import { PopUps } from './popups.ts';
+import { Threads } from './threads.ts';
 import { startStudy } from './study.ts';
+import { ReviewStore, TOP_BOX, whenText } from './review.ts';
 import { KITS as KIT_INFO, kitById } from '../../../src/edition3d/kits.ts';
 import { BookModel } from './book.ts';
 import { FigureView, KITS, type CameraPose } from './figure.ts';
@@ -178,7 +180,7 @@ async function main(): Promise<void> {
     tools.append(nav);
   }
   const popBtn = el('button', { type: 'button', class: 'btn ghost', 'aria-pressed': 'true', title: 'Pop-up book: figures, equations and checks stand up off the page (P)', 'aria-keyshortcuts': 'P' }, `${ICON.popup}<span>Pop-up</span>`);
-  const deskBtn = el('button', { type: 'button', class: 'btn ghost desk-btn', title: 'Your desk: what you kept from the book (D)', 'aria-keyshortcuts': 'D' }, `${ICON.desk}<span>Desk</span><span class="count" aria-hidden="true">0</span>`);
+  const deskBtn = el('button', { type: 'button', class: 'btn ghost desk-btn', title: 'Your desk: what you kept from the book (D)', 'aria-keyshortcuts': 'D' }, `${ICON.desk}<span>Desk</span><span class="count" aria-hidden="true">0</span><span class="due" aria-hidden="true" hidden></span>`);
   if (!preview) tools.append(popBtn, deskBtn);
   const aboutBtn = el('button', { type: 'button', class: 'btn ghost', 'aria-expanded': 'false', 'aria-controls': 'about' }, `${ICON.info}<span>About</span>`);
   tools.append(aboutBtn);
@@ -189,8 +191,9 @@ async function main(): Promise<void> {
   const about = el('aside', { class: 'about', id: 'about', hidden: '' });
   about.innerHTML = `<h2>About this edition</h2>
     <p>The same book as the print edition, page for page. In pop-up mode, figures, equations and checks stand up as paper cards when you open a spread. Pull any of them out: figures lift off the page or come to life in 3D (rotate, cut open, explode, X-ray, play), equations open as cards with every symbol, explorables give you live sliders, and checks quiz you.</p>
-    <p>Keep what you want to remember: it lands on your desk in front of the book. Some explorables can drive a 3D scene: open the scene and choose “Drive with”. Study mode turns your desk into practice cards.</p>
-    <p class="legend">${(['figure', 'scene', 'equation', 'explore', 'check'] as const).map((k) => `<span class="chip" style="--chip:${KIND[k].color};--chip-ink:${KIND[k].ink}">${KIND[k].icon}${KIND[k].label}</span>`).join(' ')}</p>
+    <p>Coloured threads join things that belong together: an equation and the figure that shows it, an explorable and the equation it brings to life or the scene it drives. Point at one to light its threads; each panel lists its connections.</p>
+    <p>Keep what you want to remember: it lands on your desk in front of the book. Study mode turns your desk, or a chapter, into practice cards and remembers how you did: a card you get right comes back later each time (tomorrow, then in 2, 4, 8 and 16 days), and one you miss comes back tomorrow. All of this stays in this browser.</p>
+    <p class="legend">${(['figure', 'scene', 'equation', 'explore', 'check', 'chapter'] as const).map((k) => `<span class="chip" style="--chip:${KIND[k].color};--chip-ink:${KIND[k].ink}">${KIND[k].icon}${KIND[k].label}</span>`).join(' ')}</p>
     <h3>Keys</h3>
     <ul><li><kbd>←</kbd> <kbd>→</kbd> turn pages · <kbd>P</kbd> pop-ups on or off · <kbd>D</kbd> your desk</li><li><kbd>Tab</kbd> then <kbd>Enter</kbd> pull something out</li><li>Arrow keys rotate it · <kbd>X</kbd> X-ray · <kbd>L</kbd> labels · <kbd>Space</kbd> play · <kbd>R</kbd> reset · <kbd>Esc</kbd> back to the page</li></ul>`;
   if (book.disclosure) {
@@ -235,7 +238,33 @@ async function main(): Promise<void> {
   const items = itemsOf(book);
   const modal = new Modal(ui);
   const popups = new PopUps(stage, model, items, theme);
+  const links = connections(items);
+  const byKey = new Map(items.map((i) => [i.key, i]));
+  /** A thread ties on at the middle of an item's top edge: the standing card's, or the page's. */
+  const spreadEnd = (key: string): THREE.Vector3 | null => {
+    const it = byKey.get(key);
+    if (!it) return null;
+    const c = popups.corners(key) ?? model.figureRect(it.page, it.rect)?.corners;
+    if (!c) return null;
+    const p = c[0]!.clone().lerp(c[1]!, 0.5);
+    p.y += 0.012;
+    return p;
+  };
+  const threads = new Threads(stage, items, links, spreadEnd);
+  let raiseGen = 0;
+  /** Stand up this spread's pop-ups, then tie its threads once the cards have settled. */
+  const raiseSpread = async () => {
+    const gen = ++raiseGen;
+    threads.clear();
+    await popups.raise(visibleItems());
+    if (gen === raiseGen && !figureView.isOpen) threads.show(visibleItems().map((i) => i.key));
+  };
+  model.onTurnStart.add(() => {
+    raiseGen++;
+    threads.clear();
+  });
   const desk = new DeskStore(`scriptorium-desk:${book.title}`, items);
+  const review = new ReviewStore(`scriptorium-review:${book.title}`);
   deskTable = preview ? null : new DeskTable(stage, model, desk);
   const plotMode = () => (theme.id === 'plate' ? 'light' : 'dark') as 'light' | 'dark';
   type Spot = { item: Item; btn: HTMLButtonElement };
@@ -269,6 +298,13 @@ async function main(): Promise<void> {
       btn.style.setProperty('--kind-ink', k.ink);
       btn.setAttribute('aria-label', `${k.verb}: ${item.name}. ${item.title}`);
       btn.addEventListener('click', () => void openItem(item, btn));
+      // pointing at an item lights its threads
+      const lite = () => threads.highlight(item.key);
+      const unlite = () => threads.highlight(null);
+      btn.addEventListener('pointerenter', lite);
+      btn.addEventListener('pointerleave', unlite);
+      btn.addEventListener('focus', lite);
+      btn.addEventListener('blur', unlite);
       return { item, btn };
     });
     hotspots.append(...spots.map((s) => s.btn));
@@ -296,7 +332,39 @@ async function main(): Promise<void> {
     prev.hidden = next.hidden = open;
     if (!open) for (const s of spots) s.btn.hidden = false; // so focus can return to a hotspot before the next frame
     if (!open) setTimeout(reframe, 0);
+    if (!open) paintDesk(); // a study session may have changed what is due
     stage.invalidate();
+  };
+
+  // ---- connections: what each item is stated to belong with (equation ↔ figure ↔ explorable)
+  /** "Connected" row for a panel: each link is a button that opens the other item. */
+  const connectedRow = (item: Item, from?: HTMLElement): HTMLElement | null => {
+    const ls = links.get(item.key) ?? [];
+    if (!ls.length) return null;
+    const box = panelEl('section', { class: 'connected', 'aria-label': 'Connected in this book' });
+    box.append(panelEl('p', { class: 'mini-label' }, 'Connected'));
+    const row = panelEl('div', { class: 'connected-row' });
+    for (const l of ls) {
+      const b = panelEl('button', { type: 'button', class: 'link-chip' });
+      b.style.setProperty('--kind', KIND[l.item.kind].color);
+      b.append(panelEl('span', { class: 'link-verb' }, l.label), chip(l.item.kind, l.item.name));
+      if (l.drive === 'to') b.append(panelEl('span', { class: 'link-hint' }, 'in 3D, with these sliders'));
+      b.title = l.item.title;
+      b.addEventListener('click', async () => {
+        if (figureView.isOpen) await figureView.close();
+        const drive = l.drive === 'to' && item.ref.kind === 'explore' ? { drive: item.ref.data } : {};
+        void openItem(l.item, from, drive);
+      });
+      b.addEventListener('pointerenter', () => threads.highlight(l.item.key, item.key));
+      b.addEventListener('pointerleave', () => threads.highlight(null));
+      row.append(b);
+    }
+    box.append(row);
+    return box;
+  };
+  figureView.extrasFor = (fig) => {
+    const it = items.find((i) => i.id === fig.id);
+    return it ? connectedRow(it) : null;
   };
 
   /** Figures that a given explorable can drive (scenes whose kit its `drives` name). */
@@ -318,7 +386,7 @@ async function main(): Promise<void> {
     const counts = chapterCounts(inside);
     const studyBtn = el('button', { type: 'button', class: 'btn primary' }, `${ICON.study}<span>Study this chapter</span>`);
     studyBtn.disabled = !inside.length;
-    studyBtn.addEventListener('click', () => startStudy(modal, model, inside, from ?? null, (it) => void openItem(it, from), `Chapter ${ch.number}`));
+    studyBtn.addEventListener('click', () => startStudy(modal, model, inside, from ?? null, (it) => void openItem(it, from), `Chapter ${ch.number}`, review));
     const keepAll = el('button', { type: 'button', class: 'btn' }, `${ICON.keep}<span>Keep it all on my desk</span>`);
     keepAll.disabled = !inside.length;
     keepAll.addEventListener('click', () => {
@@ -345,6 +413,16 @@ async function main(): Promise<void> {
             row.append(t);
           }
           body.append(row);
+          // how far the reader has got with this chapter in study mode
+          const studied = inside.filter((it) => review.get(it.key)).length;
+          if (studied) {
+            const due = inside.filter((it) => review.get(it.key) && review.isDue(it.key)).length;
+            const bar = panelEl('div', { class: 'ch-progress', role: 'img', 'aria-label': `Studied ${studied} of ${inside.length}${due ? `, ${due} due for review` : ''}` });
+            const fill = panelEl('span');
+            fill.style.width = `${Math.round((studied / inside.length) * 100)}%`;
+            bar.append(fill);
+            body.append(bar, panelEl('p', { class: 'ch-progress-text', 'aria-hidden': 'true' }, `Studied ${studied} of ${inside.length}${due ? ` · ${due} due for review` : ''}`));
+          }
         }
         if (ch.goals.length) {
           const g = panelEl('section', { class: 'ch-goals' });
@@ -383,13 +461,15 @@ async function main(): Promise<void> {
       modal.close(true);
       modal.onChange?.(false);
       if (!model.figureRect(item.page, item.rect)) model.goToPage(item.page - 1);
+      raiseGen++;
+      threads.clear();
       await popups.foldAll();
       await openFigure(r.data, from, opts);
       return;
     }
     if (r.kind === 'explore') {
       const x = r.data;
-      const links = drivenFigures(x).map((f) => {
+      const driveBtns = drivenFigures(x).map((f) => {
         const b = el('button', { type: 'button', class: 'btn link-3d' }, `${ICON.link}<span>Drive Figure ${f.number} in 3D</span>`);
         b.addEventListener('click', () => {
           const fi = items.find((i) => i.id === f.id);
@@ -397,13 +477,36 @@ async function main(): Promise<void> {
         });
         return b;
       });
-      modal.open({ kind: 'explore', kicker: item.name, title: x.title, from, variant: 'wide', build: (body) => exploreContent(body, x, { mode: plotMode }), actions: [...links, keepButton(item)] });
+      modal.open({
+        kind: 'explore',
+        kicker: item.name,
+        title: x.title,
+        from,
+        variant: 'wide',
+        build: (body) => {
+          exploreContent(body, x, { mode: plotMode });
+          const row = connectedRow(item, from);
+          if (row) body.append(row);
+        },
+        actions: [...driveBtns, keepButton(item)],
+      });
       return;
     }
     if (r.kind === 'equation') {
       const pic = await cutOut(model, item);
       const e = r.data;
-      modal.open({ kind: 'equation', kicker: item.name, title: 'Equation card', from, build: (body) => equationContent(body, e, pic), actions: [keepButton(item)] });
+      modal.open({
+        kind: 'equation',
+        kicker: item.name,
+        title: 'Equation card',
+        from,
+        build: (body) => {
+          equationContent(body, e, pic);
+          const row = connectedRow(item, from);
+          if (row) body.append(row);
+        },
+        actions: [keepButton(item)],
+      });
       return;
     }
     if (r.kind === 'chapter') {
@@ -432,10 +535,26 @@ async function main(): Promise<void> {
   // ---- the desk: what the reader kept
   const paintDesk = () => {
     const n = desk.items.length;
+    const due = review.due(desk.items).length;
     const c = deskBtn.querySelector('.count')!;
     c.textContent = String(n);
     deskBtn.classList.toggle('has', n > 0);
-    deskBtn.setAttribute('aria-label', `Your desk: ${n} kept`);
+    const d = deskBtn.querySelector<HTMLElement>('.due')!;
+    d.hidden = !due;
+    d.textContent = `${due} due`;
+    deskBtn.setAttribute('aria-label', `Your desk: ${n} kept${due ? `, ${due} due for review` : ''}`);
+  };
+  /** How well a kept card is learned: five pips (its review box) and when it comes back. */
+  const strength = (it: Item): HTMLElement => {
+    const r = review.get(it.key);
+    const box = r?.box ?? 0;
+    const days = review.daysLeft(it.key);
+    const when = !r ? 'New' : days === 0 ? 'Due now' : `Next ${whenText(days)}`;
+    const s = panelEl('span', { class: `strength${review.isDue(it.key) ? ' is-due' : ''}`, role: 'img', 'aria-label': `${r ? `Box ${box} of ${TOP_BOX}` : 'Not studied yet'}; ${when.toLowerCase()}` });
+    const pips = panelEl('span', { class: 'pips', 'aria-hidden': 'true' });
+    for (let i = 1; i <= TOP_BOX; i++) pips.append(panelEl('i', i <= box ? { class: 'on' } : {}));
+    s.append(pips, panelEl('span', { class: 'when', 'aria-hidden': 'true' }, when));
+    return s;
   };
   desk.onChange.add(() => {
     paintDesk();
@@ -443,6 +562,9 @@ async function main(): Promise<void> {
   });
   paintDesk();
   if (deskTable) {
+    const table = deskTable;
+    const deskThreads = new Threads(stage, items, links, (k) => table.top(k));
+    table.onSynced = () => deskThreads.show(desk.items.map((i) => i.key));
     deskTable.onPick = (it) => void openItem(it);
     void deskTable.sync().then(reframe); // a desk kept from an earlier visit
   }
@@ -477,17 +599,27 @@ async function main(): Promise<void> {
             desk.toggle(it);
             openDesk(from);
           });
-          card.append(pic, open, rm);
+          card.append(pic, open, rm, strength(it));
           grid.append(card);
         }
         body.append(grid);
       },
       actions: desk.items.length
         ? [
-            (() => {
-              const b = el('button', { type: 'button', class: 'btn primary' }, `${ICON.study}<span>Study my desk</span>`);
-              b.addEventListener('click', () => startStudy(modal, model, desk.items, deskBtn, (it) => void openItem(it, deskBtn)));
-              return b;
+            ...(() => {
+              const due = review.due(desk.items).length;
+              const study = (ahead: boolean) => startStudy(modal, model, desk.items, deskBtn, (it) => void openItem(it, deskBtn), 'your desk', review, ahead);
+              const main = el('button', { type: 'button', class: 'btn primary' }, `${ICON.study}<span>${due ? `Review ${due} due` : 'Practise ahead'}</span>`);
+              main.addEventListener('click', () => study(!due));
+              if (!due) {
+                const next = Math.min(...desk.items.map((it) => review.daysLeft(it.key)));
+                main.title = `Nothing is due; your next review is ${whenText(next)}. Practising ahead doesn’t move any card.`;
+                return [main];
+              }
+              const all = el('button', { type: 'button', class: 'btn' }, 'Practise all');
+              all.title = 'Go through every kept card; only the due ones are scheduled';
+              all.addEventListener('click', () => study(true));
+              return due < desk.items.length ? [main, all] : [main];
             })(),
             (() => {
               const b = el('button', { type: 'button', class: 'btn ghost' }, 'Clear the desk');
@@ -517,7 +649,9 @@ async function main(): Promise<void> {
   popBtn.addEventListener('click', () => {
     popOn = !popOn;
     paintPop();
-    void popups.set(popOn, visibleItems());
+    raiseGen++;
+    threads.clear();
+    void popups.set(popOn, visibleItems()).then(() => threads.show(visibleItems().map((i) => i.key)));
     say(popOn ? 'Pop-ups on: figures, equations and checks stand up off the page.' : 'Pop-ups off: everything lies flat on the page.');
   });
 
@@ -532,13 +666,15 @@ async function main(): Promise<void> {
   model.onSpread.add(() => {
     pageLabel();
     buildSpots();
-    if (!figureView.isOpen) void popups.raise(visibleItems());
+    if (!figureView.isOpen) void raiseSpread();
     say(t2.textContent ?? '');
   });
 
   const openFigure = async (fig: Figure3D, btn?: HTMLElement, opts: { drive?: Explorable3D } = {}) => {
     top.classList.add('dim');
     prev.hidden = next.hidden = true;
+    raiseGen++;
+    threads.clear();
     await figureView.open(fig, btn, opts);
   };
   figureView.onClose = (fig) => {
@@ -546,7 +682,7 @@ async function main(): Promise<void> {
     prev.hidden = next.hidden = false;
     buildSpots();
     // the hotspots were rebuilt: put keyboard focus back on the figure that was open
-    if (popOn) void popups.raise(visibleItems());
+    void raiseSpread(); // (with pop-ups off, this just ties the threads on the flat page)
     spots.find((s) => s.item.id === fig.id)?.btn.focus({ preventScroll: true });
   };
 

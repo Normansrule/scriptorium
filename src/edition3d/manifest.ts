@@ -76,6 +76,8 @@ export const Equation3D = z.object({
   symbols: z.array(z.object({ symbol: z.string(), meaning: z.string(), unit: z.string() })),
   example: z.string(),
   validity: z.string(),
+  /** the figure that shows what changes when a variable changes */
+  figure: z.string().regex(/^fig-[a-z0-9-]+$/).optional(),
 });
 export type Equation3D = z.infer<typeof Equation3D>;
 

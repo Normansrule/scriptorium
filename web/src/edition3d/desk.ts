@@ -75,6 +75,8 @@ export class DeskTable {
   private ray = new THREE.Raycaster();
   /** a card was clicked */
   onPick: ((item: Item) => void) | null = null;
+  /** the cards have settled in their places (threads between them can be tied) */
+  onSynced: (() => void) | null = null;
 
   constructor(
     private stage: Stage,
@@ -126,6 +128,16 @@ export class DeskTable {
       });
     }, easeInOut);
     release();
+    this.onSynced?.();
+  }
+
+  /** The middle of a kept card's top edge, in world space (where a thread ties on). */
+  top(key: string): THREE.Vector3 | null {
+    const c = this.cards.find((x) => x.item.key === key);
+    if (!c) return null;
+    c.pivot.updateMatrixWorld(true);
+    const h = (c.mesh.geometry as THREE.BoxGeometry).parameters.height;
+    return c.mesh.localToWorld(new THREE.Vector3(0, h / 2, 0.01));
   }
 
   private async add(item: Item, fly: boolean): Promise<void> {
